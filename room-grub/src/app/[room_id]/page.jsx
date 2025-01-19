@@ -1,9 +1,13 @@
+
 import React from 'react';
 
-export default async function page(){
+
+export default async function page({params}){
+    const { room_id} = params;
+    console.log(params)
     return(
         <div>
-            <h2>Manage your room wisely</h2>
+            <h2>Manage your room wisely {room_id}</h2>
             <div>
                 <ul>
                     <li><a href = "">Members</a></li>
