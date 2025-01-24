@@ -3,6 +3,7 @@ import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import {FcGoogle} from 'react-icons/fc';
 import Image from 'next/image'
+import {login} from './action'
 
 export default function Login(){
     return(
@@ -20,7 +21,7 @@ export default function Login(){
                    width = {300}
                    height = {150}
                    className = 'w-full'/>
-            <Button sx= {{color: 'black',background: 'white', padding: 0.5, borderRadius: 2, fontSize: '18px'}}>
+            <Button sx= {{color: 'black',background: 'white', padding: 0.5, borderRadius: 2, fontSize: '18px'}} onClick = {login}>
                 <FcGoogle style={{ marginRight: '8px' }} />
                 Login with Google
             </Button>
