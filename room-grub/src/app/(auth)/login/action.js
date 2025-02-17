@@ -5,6 +5,7 @@ import { createClient } from '../../../utils/supabase/server'
 export async function login() {
   console.log('logging in')
   const supabase = await createClient();
+  console.log(supabase)
   const redirectUrl = '/auth/callback';
   const provider = 'google';
   const { data, error } = await supabase.auth.signInWithOAuth({
