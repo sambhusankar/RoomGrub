@@ -2,10 +2,12 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../utils/supabase/server'
 import { console } from 'inspector';
-//import db from '../../../database/index.js'
+import DB from '../../../database/index.js'
 
 export async function login() {
   console.log('logging in')
+  await DB.sequelize.authenticate();
+  console.log("database authenticated")
   const supabase = await createClient();
   const redirectUrl = '/auth/callback';
   const provider = 'google';

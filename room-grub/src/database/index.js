@@ -1,3 +1,28 @@
 import { Sequelize } from 'sequelize';
 import User from './models/User.model'
-console.log('db url', process.env.SUPABASE_DB_URL)
+import pg from 'pg'
+
+const sequelize = new Sequelize(process.env.SUPABASE_DB_URL, {
+    logging: false,
+    dialect: 'postgres',
+    dialectOptions: {
+        ssl : {
+            require: true,
+            rejectUnauthorized: false
+        }
+    },
+    dialectModule: pg
+});
+
+const Models = {
+    User: User(sequelize)
+}
+
+const DB = {
+    ...Models,
+    sequelize,
+    Sequelize,
+    sync: (...args) => sequelize.sync(...args),
+};
+
+export default DB;

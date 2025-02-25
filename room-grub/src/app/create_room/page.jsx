@@ -5,6 +5,9 @@ import {useRouter} from 'next/navigation'
 
 export default function page(){
     const router = useRouter()
+    function createRoom(){
+
+    }
     return(
         <div>
             <h2 class = "font-bold m-3">You are not joined any room</h2>
@@ -20,7 +23,7 @@ export default function page(){
                     }
                     
                 }}
-                onClick={() => router.push('/create_room/create')}>Create & Manage Your room</Button>
+                onClick={ () => createRoom()}>Create & Manage Your room</Button>
                 <p>--------------------- OR ------------------------</p>
                 <p class="m-5 text-gray">Tell your friend to add you as a member</p>
             </div>
