@@ -2,7 +2,7 @@ import { timeStamp } from 'console'
 import {DataTypes} from 'sequelize'
 const crypto = require('crypto')
 
-module.exports( function(sequelize){
+module.exports = function(sequelize){
     return sequelize.define('User', {
         id:{
             type: DataTypes.INTEGER,
@@ -36,4 +36,4 @@ module.exports( function(sequelize){
         timestamps:false
     }
 )
-})
+}
