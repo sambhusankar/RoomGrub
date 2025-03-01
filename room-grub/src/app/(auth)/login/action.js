@@ -1,11 +1,9 @@
 'use server'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../utils/supabase/server'
-import { console } from 'inspector';
 import DB from '../../../database/index.js'
 
 export async function login() {
-  console.log('logging in')
   await DB.sequelize.authenticate();
   console.log("database authenticated")
   const supabase = await createClient();
@@ -17,26 +15,22 @@ export async function login() {
         redirectTo: redirectUrl,
     }
   })
-
   if (error) {
       redirect('/login?message=Could not authenticate user')
   }
-
-  // try{
-  //   await db.User.findOrCreate({
-  //     where: {email: user.email},
-  //       defaults: {
-  //         email: user.email,
-  //         name: user.name
-  //       }
-  // })
-  // }catch(err){
-  //   console.log('error storing user in db', err)
-  // }
-  console.log('data',data);
-  console.log('error',error)
-  return redirect(data.url || 2)
+  if (!data || !data.url) {
+    console.error("OAuth Data Missing:", data);
+    return redirect('/login?message=Authentication failed');
   }
+
+  console.log("OAuth redirecting to:", data.url);
+  
+
+  
+  // Ensure session retrieval happens after OAuth redirect
+
+  return redirect(data.url);
+}
 
 export async function logout() {
   const supabase = await createClient();
