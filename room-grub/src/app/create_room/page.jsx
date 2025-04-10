@@ -2,11 +2,13 @@
 import React from 'react';
 import {Button} from '@mui/material'
 import {useRouter} from 'next/navigation'
+import {redirect} from 'next/navigation';
 
 export default function page(){
     const router = useRouter()
     function createRoom(){
-
+        console.log('testing')
+        redirect('/create_room/create')
     }
     return(
         <div>
