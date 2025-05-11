@@ -8,7 +8,7 @@ export default function page(){
     const router = useRouter()
     function createRoom(){
         console.log('testing')
-        redirect('/create_room/create')
+        redirect('/1')
     }
     return(
         <div>
