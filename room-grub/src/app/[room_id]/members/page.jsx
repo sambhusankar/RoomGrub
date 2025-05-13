@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 
 const MembersPage = () => {
-    const [members, setMembers] = useState(['ram', 'shyam', 'sita']);
+    const [members, setMembers] = useState(['ram', 'sumil', 'anil']);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -34,40 +34,25 @@ const MembersPage = () => {
     }
 
     return (
-        <div style={{ padding: '20px' }}>
-            <h1>Room Members</h1>
+        <div className="p-5 bg-white min-h-screen">
+            <h1 className="text-black text-2xl font-bold mb-5">Room Members</h1>
             {members.length === 0 ? (
-                <p>No friends added in your room.</p>
+                <p className="text-black">No friends added in your room.</p>
             ) : (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+                <div className="flex flex-wrap gap-5">
                     {members.map((member) => (
                         <div
                             key={member.id}
-                            style={{
-                                border: '1px solid #ccc',
-                                borderRadius: '8px',
-                                padding: '10px',
-                                width: '200px',
-                                textAlign: 'center',
-                                color: 'white',
-                            }}
+                            className="border border-gray-300 rounded-lg p-5 w-full max-w-xs text-center text-black bg-white h-40 flex flex-col justify-center"
                         >
-                            <h3>{member.name}</h3>
+                            <h3 className="text-lg font-semibold">{member.name}</h3>
                         </div>
                     ))}
                 </div>
             )}
             <button
                 onClick={handleAddFriend}
-                style={{
-                    marginTop: '20px',
-                    padding: '10px 20px',
-                    backgroundColor: '#007BFF',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                }}
+                className="mt-5 px-5 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
             >
                 Add Friend
             </button>
