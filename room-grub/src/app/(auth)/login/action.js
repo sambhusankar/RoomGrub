@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../../utils/supabase/server'
 import DB from '../../../database/index.js'
 
-export async function login() {
+export async function signInWithGoogle() {
   await DB.sequelize.authenticate();
   console.log("database authenticated")
   const supabase = await createClient();

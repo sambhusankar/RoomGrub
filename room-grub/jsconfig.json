@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@database": ["./src/database"]
+      "@/*": ["src/*"],
+      "@database": ["src/database"]
     }
   }
 }

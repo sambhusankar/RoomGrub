@@ -1,8 +1,8 @@
 import React from 'react';
 
 export default async function page({ params }) {
-    const { room_id } = params;
-    console.log(params);
+    const { room_id } = await params;
+
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col items-center p-4">
             <h2 className="text-sm font-bold text-gray-800 absolute top-4 left-4">
