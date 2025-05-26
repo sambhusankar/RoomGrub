@@ -3,12 +3,13 @@ import React from 'react';
 import {Button} from '@mui/material'
 import {useRouter} from 'next/navigation'
 import {redirect} from 'next/navigation';
+import {PrepareRoom} from './action.js'
 
 export default function page(){
     const router = useRouter()
     function createRoom(){
-        console.log('testing')
-        redirect('/1')
+        console.log("Creating a room ....")
+        PrepareRoom()
     }
     return(
         <div>

@@ -1,5 +1,10 @@
+import {PrepareRoom} from './action.js'
 
 export default function page(){
+    function createRoom(){
+        console.log("Creating a room ....")
+        PrepareRoom()
+    }
     return(
         <div>
             <h1>Create a room</h1>
@@ -17,10 +22,7 @@ export default function page(){
                 <button 
                     type="submit" 
                     className="p-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-                    onClick={() => {
-                        
-                        console.log('Room created');
-                    }}
+                    onClick={createRoom}
                 >   
                     Create Room
                 </button>
