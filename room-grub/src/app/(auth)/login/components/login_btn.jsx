@@ -1,8 +1,7 @@
 'use client'
-import { useSession, signIn } from 'next-auth/react'
 import Button from '@mui/material/Button'
 import { FcGoogle } from 'react-icons/fc';
-
+import signInWithGoogle from './action.js';
 export default function LoginBtn() {
     const { data: session } = useSession();
 
@@ -15,7 +14,7 @@ export default function LoginBtn() {
                 borderRadius: 2,
                 fontSize: '18px'
             }}
-            onClick={() => signIn('google', { callbackUrl: '/create_room' })}
+            onClick={signInwithGoogle}
         >
             <FcGoogle style={{ marginRight: '8px' }} />
             Login with Google
