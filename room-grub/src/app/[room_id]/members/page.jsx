@@ -1,7 +1,9 @@
 'use client'
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 const MembersPage = () => {
+    const router = useRouter()
     const [members, setMembers] = useState(['ram', 'sumil', 'anil']);
     const [loading, setLoading] = useState(true);
 
@@ -26,7 +28,8 @@ const MembersPage = () => {
 
     const handleAddFriend = () => {
         // Logic to add a new friend
-        alert('Add Friend button clicked!');
+        //lert('Add Friend button clicked!');
+        router.push(`${window.location.pathname}/add`)
     };
 
     if (loading) {

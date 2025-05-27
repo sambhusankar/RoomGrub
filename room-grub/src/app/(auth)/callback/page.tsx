@@ -26,20 +26,29 @@ export default function AuthCallback() {
       const { data: existingUser, error: fetchError } = await supabase
         .from("Users")
         .select('*')
-        //.eq('uid', user.id)
+        .eq('uid', user.id)
 
     console.log("==================================")
     console.log(existingUser, fetchError)
       if (existingUser.length == 0 && fetchError == null) {
         // Insert new user into `users` table
         console.log("No existing user ")
-        const { error: insertError } = await supabase
+        const {data: inviteData, error: inviteError } = await supabase
+        .from("Invite")
+        .select('*')
+        .eq('email', user.email)
+
+        console.log(inviteData, inviteError)
+
+        const { data: newUser, error: insertError } = await supabase
           .from("Users")
           .insert({
             uid: user.id,
             email: user.email,
             name: user.user_metadata.full_name || user.user_metadata.name || '',
-          })
+            room: inviteData.length != 0 ? inviteData[0]?.room : null ,
+            role: inviteData.length != 0 ? 'Member' : null,
+          }).select()
 
         if (insertError) {
           console.error('Insert error:', insertError)
@@ -50,7 +59,8 @@ export default function AuthCallback() {
       }
 
       // Redirect user after login
-      existingUser[0].room ? router.push( existingUser[0].room) : router.push('create_room')
+      console.log(newUser);
+      existingUser[0]?.room ? router.push(`${existingUser[0]?.room}`) : router.push('create_room')
     }
 
     handleAuth()
