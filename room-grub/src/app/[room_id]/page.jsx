@@ -50,6 +50,14 @@ export default function Page({ params }) {
               Payments
             </button>
           </li>
+          <li className="bg-white shadow rounded-lg p-4 text-center">
+            <button
+              onClick={() => navigateTo('/addgroccery')}
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              Add Groccery
+            </button>
+          </li>
         </ul>
       </div>
     </div>
