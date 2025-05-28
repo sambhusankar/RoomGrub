@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/client'
 
 export default function AuthCallback() {
   const router = useRouter()
+  let newUser = undefined;
 
   useEffect(() => {
     const handleAuth = async () => {
@@ -40,7 +41,7 @@ export default function AuthCallback() {
 
         console.log(inviteData, inviteError)
 
-        const { data: newUser, error: insertError } = await supabase
+        const { data: InsertedUser, error: insertError } = await supabase
           .from("Users")
           .insert({
             uid: user.id,
@@ -49,7 +50,7 @@ export default function AuthCallback() {
             room: inviteData.length != 0 ? inviteData[0]?.room : null ,
             role: inviteData.length != 0 ? 'Member' : null,
           }).select()
-
+        newUser = InsertedUser;
         if (insertError) {
           console.error('Insert error:', insertError)
           return router.push('/login?message=DB error')
@@ -59,9 +60,11 @@ export default function AuthCallback() {
       }
 
       // Redirect user after login
-      console.log(newUser);
-      existingUser[0]?.room ? router.push(`${existingUser[0]?.room}`) : router.push('create_room')
-    }
+      if(newUser){
+        newUser[0]?.room ? router.push(`${newUser[0]?.room}`) : router.push('create_room')
+      }else{
+        existingUser[0]?.room ? router.push(`${existingUser[0]?.room}`) : router.push('create_room')
+    }}
 
     handleAuth()
   }, [router])

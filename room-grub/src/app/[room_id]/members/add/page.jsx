@@ -17,6 +17,25 @@ export default function InvitePage() {
       return;
     }
     console.log(param.room_id)
+    const {data: existingUser, error: selectError } = await supabase
+    .from("Users")
+    .select("*")
+    .eq("email", email);
+    console.log(existingUser)
+    if(existingUser.length > 0){
+      if(existingUser[0].room){
+        setStatus("Your friend already in a room");
+      }else{
+        const {error: Error } = await supabase
+        .from("Users")
+        .update({
+          "room": param.room_id,
+          "role": "Member"
+        })
+        .eq("email", email)
+        setStatus("Your friend added in your room")
+      }
+    }else{
     const {error: insertError} = await supabase
     .from("Invite")
     .insert({
@@ -27,6 +46,7 @@ export default function InvitePage() {
     console.log('Sending invite to:', email);
     setStatus(`Invite sent to ${email}`);
     setEmail('');
+  }
   };
 
   return (
