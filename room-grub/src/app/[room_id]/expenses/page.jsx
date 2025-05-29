@@ -1,17 +1,29 @@
 'use client';
-import React, { useState } from 'react';
-
-
+import React, { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client'
 
 const ExpenseHistory = () => {
+    const supabase = createClient()
+    const param = useParams()
     const [filter, setFilter] = useState('');
-    const expenses = [
-        { id: 1, name: 'John Doe', date: '2023-10-01', category: 'Grocery', amount: '$50' },
-        { id: 2, name: 'Jane Smith', date: '2023-10-02', category: 'Electricity', amount: '$30' },
-        { id: 3, name: 'Alice Johnson', date: '2023-10-03', category: 'Grocery', amount: '$20' },
-        { id: 4, name: 'Bob Brown', date: '2023-10-04', category: 'Internet', amount: '$40' },
-    ];
-
+    const [expenses, setExpenses] = useState([]);
+    useEffect(() => {
+            // Simulate fetching Expenses from a database
+            const fetchExpenses = async () => {
+                try {
+                    const { data: Expenses, error: fetchError } = await supabase
+                    .from("Spendings")
+                    .select("*")
+                    .eq("room", param.room_id)
+                    setExpenses(Expenses);
+                } catch (error) {
+                    console.error('Error fetching Expenses:', error);
+                }
+            };
+    
+            fetchExpenses();
+        }, []);
     const filteredExpenses = expenses.filter((expense) =>
         expense.category.toLowerCase().includes(filter.toLowerCase())
     );

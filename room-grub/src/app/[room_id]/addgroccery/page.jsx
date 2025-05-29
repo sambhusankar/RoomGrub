@@ -2,18 +2,15 @@
 import React, { useState } from "react";
 import { TextField, Button, Paper } from "@mui/material";
 import { createClient } from "@/utils/supabase/client";
+import { useParams } from 'next/navigation'
 
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-export default function AddGrocery({ room_id }) {
+export default function AddGrocery() {
+    const params = useParams()
     const [grocery, setGrocery] = useState("");
     const [price, setPrice] = useState("");
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState("");
-
+    const supabase = createClient()
     const handleAdd = async () => {
         setMsg("");
         if (!grocery || !price) {
@@ -21,11 +18,19 @@ export default function AddGrocery({ room_id }) {
             return;
         }
         setLoading(true);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.user?.email) {
+            setMsg("Unable to get user session.");
+            setLoading(false);
+            return;
+        }
+        const userEmail = session.user.email;
         const { error } = await supabase
-            .from("groceries")
-            .insert([{ room_id, name: grocery, price: parseFloat(price) }]);
+            .from("Spendings")
+            .insert([{ room: params.room_id, material: grocery, money: parseFloat(price), user: userEmail }]);
         if (error) {
             setMsg("Error adding grocery.");
+            console.log(error)
         } else {
             setMsg("Grocery added!");
             setGrocery("");

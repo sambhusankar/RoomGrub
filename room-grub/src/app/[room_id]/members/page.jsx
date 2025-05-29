@@ -1,10 +1,13 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client'
 
 const MembersPage = () => {
+    const supabase = createClient()
+    const param = useParams()
     const router = useRouter()
-    const [members, setMembers] = useState(['ram', 'sumil', 'anil']);
+    const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -12,10 +15,11 @@ const MembersPage = () => {
         const fetchMembers = async () => {
             setLoading(true);
             try {
-                // Replace with your actual API call
-                const response = await fetch('/api/members');
-                const data = await response.json();
-                setMembers(data);
+                const { data: Members, error: fetchError } = await supabase
+                .from("Users")
+                .select("*")
+                .eq("room", param.room_id)
+                setMembers(Members);
             } catch (error) {
                 console.error('Error fetching members:', error);
             } finally {
@@ -48,7 +52,7 @@ const MembersPage = () => {
                             key={member.id}
                             className="border border-gray-300 rounded-lg p-5 w-full max-w-xs text-center text-black bg-white h-40 flex flex-col justify-center"
                         >
-                            <h3 className="text-lg font-semibold">{member.name}</h3>
+                            <h3 className="text-lg font-semibold text-black">{member.name}</h3>
                         </div>
                     ))}
                 </div>
