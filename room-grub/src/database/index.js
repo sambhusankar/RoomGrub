@@ -1,5 +1,6 @@
 import { Sequelize } from 'sequelize';
 import User from './models/User.model'
+import Room from './models/Room.model'
 import pg from 'pg'
 
 const sequelize = new Sequelize(process.env.SUPABASE_DB_URL, {
@@ -15,7 +16,8 @@ const sequelize = new Sequelize(process.env.SUPABASE_DB_URL, {
 });
 
 const Models = {
-    User: User(sequelize)
+    User: User(sequelize),
+    Room: Room(sequelize)
 }
 
 const DB = {

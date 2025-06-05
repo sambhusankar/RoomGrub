@@ -11,9 +11,12 @@
   "dependencies": {
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
+    "@mui/icons-material": "^7.1.0",
+    "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^6.1.8",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.16",
+    "async": "^3.2.6",
     "autoprefixer": "^10.4.20",
     "next": "^15.0.2",
     "next-auth": "^4.24.10",

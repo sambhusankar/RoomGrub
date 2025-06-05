@@ -1,6 +1,4 @@
-import { timeStamp } from 'console'
 import {DataTypes} from 'sequelize'
-const crypto = require('crypto')
 
 module.exports = function(sequelize){
     return sequelize.define('User', {
@@ -19,7 +17,7 @@ module.exports = function(sequelize){
         },
         uid: {
             type: DataTypes.UUID,
-            defaultValue: () => crypto.randomUUID()
+            allowNull: true
         },
         email: {
             type: DataTypes.TEXT,
@@ -28,10 +26,14 @@ module.exports = function(sequelize){
         name: {
             type: DataTypes.TEXT,
             allowNull: false
+        },
+        profile: {
+            type: DataTypes.TEXT,
+            allowNull: true
         }
     }, 
     {
-        shcema: "public",
+        schema: "public",
         tableName: "Users",
         timestamps:false
     }

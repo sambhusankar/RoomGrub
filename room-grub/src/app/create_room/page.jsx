@@ -1,79 +1,54 @@
-'use client'
-import React from 'react';
-import { Button } from '@mui/material';
-import { useRouter } from 'next/navigation';
-import { createClient } from "@/utils/supabase/client";
+'use server'
+import CreateRoom from './_components/CreateRoom'
+import { redirect } from 'next/navigation';
+import { LoginRequired } from '@/policies/LoginRequired';
+import DB from '@/database';
+import async from 'async';
 
-export default function Page() {
-  const router = useRouter();
-  const supabase = createClient();
+export default async function Page() {
+  const session = await LoginRequired();
+
+  const workflow = {
+    insertRoom: async () => {
+      // Create a new room and return the created room instance
+      const newRoom = await DB.Room.create({
+        members: 1,
+        admin: session.user.email
+      });
+      return newRoom;
+    },
+    updateUser: async (roomId) => {
+      // Update the user with the new room and role
+      await DB.User.update(
+        { room: roomId, role: 'Admin' },
+        { where: { email: session.user.email } }
+      );
+    }
+  };
+  const results = async.auto(workflow);
 
   const createRoom = async () => {
     console.log("Creating a room ....");
-
-    const { data: { session }, error } = await supabase.auth.getSession();
-
-    if (error || !session) {
-      console.error('Auth error:', error);
+    if (!session) {
+      console.error('Auth error: No session');
       return;
     }
 
-    const user = session.user;
+    // Use the workflow to insert the room and update the user in the database
+    const newRoom = results.insertRoom();
 
-    const { data: room, error: insertError1 } = await supabase
-      .from("Rooms")
-      .insert({
-        members: 1,
-        admin: user.email
-      })
-      .select();
-
-    if (insertError1 || !room || room.length === 0) {
-      console.error("Insert failed:", insertError1);
+    if (!newRoom || !newRoom.id) {
+      console.error("Room creation failed in DB.");
       return;
     }
 
-    console.log("Room inserted successfully:", room);
+    results.updateUser(newRoom.id);
+    console.log("Room inserted successfully:", newRoom);
 
-    const { error: insertError2 } = await supabase
-      .from("Users")
-      .update({
-        room: room[0].id,
-        role: 'Admin'
-      })
-      .eq('email', room[0].admin);
-
-    if (insertError2) {
-      console.error("User update failed:", insertError2);
-      return;
-    }
-
-    console.log("User updated with room ID");
-    router.push(room[0].id);
+    redirect(newRoom.id.toString());
   };
 
   return (
-    <div>
-      <h2 className="font-bold m-3">You are not joined any room</h2>
-      <div className="m-8 text-center">
-        <Button
-          sx={{
-            backgroundColor: 'blue',
-            color: 'white',
-            padding: '5px 5px',
-            fontWeight: 'bold',
-            margin: '5px',
-            '&:hover': {
-              backgroundColor: 'darkblue'
-            }
-          }}
-          onClick={createRoom}
-        >
-          Create & Manage Your Room
-        </Button>
-        <p>--------------------- OR ------------------------</p>
-        <p className="m-5 text-gray">Tell your friend to add you as a member</p>
-      </div>
-    </div>
+    <CreateRoom createRoom={createRoom} />
   );
 }

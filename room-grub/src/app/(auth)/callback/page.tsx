@@ -21,7 +21,7 @@ export default function AuthCallback() {
 
       const user = session.user
       console.log("==========================");
-      console.log(user);
+      console.log(user.user_metadata.avatar_url);
 
       // Check if user exists in custom `users` table
       const { data: existingUser, error: fetchError } = await supabase
@@ -49,6 +49,7 @@ export default function AuthCallback() {
             name: user.user_metadata.full_name || user.user_metadata.name || '',
             room: inviteData.length != 0 ? inviteData[0]?.room : null ,
             role: inviteData.length != 0 ? 'Member' : null,
+            profile: user.user_metadata.avatar_url
           }).select()
         newUser = InsertedUser;
         if (insertError) {
