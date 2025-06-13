@@ -3,15 +3,15 @@
 'use client'
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Sheet from '@mui/joy/Sheet';
 import List from '@mui/joy/List';
 import ListItem from '@mui/joy/ListItem';
 import Button from '@mui/joy/Button';
 import Typography from '@mui/joy/Typography';
 
-export default function Page({ params }) {
-  const { room_id } = params;
+export default function Page() {
+  const { room_id } = useParams();
   const router = useRouter();
 
   const navigateTo = (path) => {
@@ -21,7 +21,6 @@ export default function Page({ params }) {
   return (
     <Sheet
       sx={{
-        minHeight: '100vh',
         bgcolor: 'background.level1',
         display: 'flex',
         flexDirection: 'column',
@@ -29,23 +28,12 @@ export default function Page({ params }) {
         p: 4,
       }}
     >
-      <Typography
-        level="h4"
-        sx={{
-          position: 'absolute',
-          top: 24,
-          left: 24,
-          fontWeight: 'bold',
-        }}
-      >
-        Manage your room wisely {room_id}
-      </Typography>
       <Sheet
         variant="outlined"
         sx={{
           width: '100%',
           maxWidth: 400,
-          mt: 12,
+          mt: 7,
           borderRadius: 'md',
           boxShadow: 'md',
           p: 3,

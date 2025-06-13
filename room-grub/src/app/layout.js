@@ -24,6 +24,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{
+          backgroundColor: "#f0f0f0"
+        }}
       >
         <NavBarContainer>
           <SessionWrapper>

@@ -23,7 +23,6 @@ export async function signInWithGoogle() {
     return redirect('/login?message=Authentication failed');
   }
 
-  console.log("OAuth redirecting to:", data.url);
   
 
   

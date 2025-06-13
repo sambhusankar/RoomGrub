@@ -7,7 +7,7 @@ import { createClient } from '@/utils/supabase/client'
 export default function AuthCallback() {
   const router = useRouter()
   let newUser = undefined;
-
+  console.log('inside callback')
   useEffect(() => {
     const handleAuth = async () => {
       const supabase = createClient()
@@ -20,8 +20,6 @@ export default function AuthCallback() {
       }
 
       const user = session.user
-      console.log("==========================");
-      console.log(user.user_metadata.avatar_url);
 
       // Check if user exists in custom `users` table
       const { data: existingUser, error: fetchError } = await supabase
@@ -30,7 +28,7 @@ export default function AuthCallback() {
         .eq('uid', user.id)
 
     console.log("==================================")
-    console.log(existingUser, fetchError)
+
       if (existingUser.length == 0 && fetchError == null) {
         // Insert new user into `users` table
         console.log("No existing user ")
