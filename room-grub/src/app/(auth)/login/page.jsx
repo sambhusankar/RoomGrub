@@ -7,31 +7,48 @@ import LoginBtn from './components/login_btn'
 
 export default async function Login(){
     return (
-        <div className="min-w-screen flex justify-center items-center bg-gray-50">
+        <Box
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            bgcolor="linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%)"
+            sx={{ mt: 12 }} 
+        >
             <Box
                 sx={{
-                    width: { xs: '90vw', sm: '400px', md: '400px' },
-                    maxWidth: '95vw',
+                    width: { xs: 340, sm: 400 },
                     bgcolor: 'background.paper',
                     color: 'text.primary',
-                    p: { xs: 2, sm: 4 },
-                    borderRadius: 2,
-                    boxShadow: 3,
+                    p: 4,
+                    borderRadius: 4,
+                    boxShadow: 6,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
+                    gap: 4,
                 }}
             >
-                <Image
-                    src="/logo.png"
-                    width={300}
-                    height={150}
-                    className="w-full max-w-xs h-auto mb-6"
-                    alt="Logo"
-                    priority
-                />
+                <Box
+                    sx={{
+                        width: 220,
+                        height: 110,
+                        mb: 2,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Image
+                        src="/logo.png"
+                        width={220}
+                        height={110}
+                        style={{ width: '100%', height: 'auto' }}
+                        alt="Logo"
+                        priority
+                    />
+                </Box>
                 <LoginBtn />
             </Box>
-        </div>
+        </Box>
     );
 }
