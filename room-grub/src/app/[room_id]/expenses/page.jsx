@@ -75,14 +75,14 @@ const ExpenseHistory = () => {
                                 <Box>
                                     <Typography fontWeight="medium">{expense.user}</Typography>
                                     <Typography variant="body2" color="text.secondary">
-                                        {expense.date}
+                                        {expense.created_at.substring(0, 10)}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         {expense.material}
                                     </Typography>
                                 </Box>
                                 <Typography fontWeight="bold" color="primary.main" variant="h6">
-                                    {expense.money}
+                                    ₹{expense.money}
                                 </Typography>
                             </ListItem>
                             {idx < filteredExpenses.length - 1 && <Divider />}
