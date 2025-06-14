@@ -3,13 +3,10 @@ import Button from '@mui/material/Button'
 import { FcGoogle } from 'react-icons/fc';
 import { createClient } from '@/utils/supabase/client';
 export default function LoginBtn() {
-    console.log('inside login button', window.location.origin)
-    const site_url = process.env.NEXT_PUBLIC_SITE_URL;
-
+    const site_url = 'https://room-grub.vercel.app' //process.env.NEXT_PUBLIC_SITE_URL;
     const supabase = createClient()
     const signInWithGoogle = async () => {
-        console.log(window.location.origin);
-        await new Promise(r => setTimeout(r, 5000));
+        console.log(site_url);
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
