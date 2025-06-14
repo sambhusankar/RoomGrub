@@ -7,7 +7,7 @@ import LoginBtn from './components/login_btn'
 
 export default async function Login(){
     return (
-        <div className="min-h-screen min-w-screen flex justify-center items-center bg-gray-50">
+        <div className="min-w-screen flex justify-center items-center bg-gray-50">
             <Box
                 sx={{
                     width: { xs: '90vw', sm: '400px', md: '400px' },
