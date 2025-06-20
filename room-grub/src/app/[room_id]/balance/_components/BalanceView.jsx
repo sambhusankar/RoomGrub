@@ -18,6 +18,7 @@ const BalanceView = ({ balanceData }) => {
         transactions = [],
     } = balanceData || {};
 
+
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-IN');
     };
@@ -63,7 +64,7 @@ const BalanceView = ({ balanceData }) => {
                                         left: 0,
                                         top: 0,
                                         height: '100%',
-                                        width: `${totalDebit + totalCredit === 0 ? 50 : (totalDebit / (totalDebit + totalCredit)) * 100}%`,
+                                        width: `${totalDebit * -1 + totalCredit === 0 ? 50 : (totalDebit * -1 / (totalDebit * -1 + totalCredit)) * 100}%`,
                                         backgroundColor: '#f44336',
                                         transition: 'width 0.3s',
                                     }}
@@ -71,7 +72,7 @@ const BalanceView = ({ balanceData }) => {
                                 <Box
                                     sx={{
                                         position: 'absolute',
-                                        left: `${totalDebit + totalCredit === 0 ? 50 : (totalDebit / (totalDebit + totalCredit)) * 100}%`,
+                                        left: `${totalDebit * -1 + totalCredit === 0 ? 50 : (totalDebit * -1 / (totalDebit * -1 + totalCredit)) * 100}%`,
                                         top: 0,
                                         height: '100%',
                                         width: `${totalDebit + totalCredit === 0 ? 50 : (totalCredit / (totalDebit + totalCredit)) * 100}%`,
