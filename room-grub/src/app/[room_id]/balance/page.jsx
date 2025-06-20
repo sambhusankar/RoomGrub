@@ -23,7 +23,7 @@ export default async function BalancePage({ params }) {
     const totalDebit = transactions?.reduce((sum, t) => 
         t.status === 'debit' ? sum + parseFloat(t.amount) : sum, 0) || 0;
     
-    const currentBalance = totalCredit - totalDebit;
+    const currentBalance = totalCredit + totalDebit;
 
     const balanceData = {
         totalCredit,

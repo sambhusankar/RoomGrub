@@ -142,7 +142,7 @@ const BalanceView = ({ balanceData }) => {
                                         fontWeight: 600,
                                     }}
                                 >
-                                    {txn.status === 'credit' ? '+' : '-'}₹{txn.amount.toLocaleString('en-IN')}
+                                    {txn.status === 'credit' ? '₹+' : '₹'}{txn.amount.toLocaleString('en-IN')}
                                 </Typography>
                             </ListItem>
                         ))
