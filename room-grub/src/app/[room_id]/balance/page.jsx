@@ -1,57 +1,36 @@
-import React from 'react';
+'use server'
+import { createClient } from '@/utils/supabase/server';
+import { LoginRequired } from '@/policies/LoginRequired';
+import BalanceView from './_components/BalanceView';
 
-const BalancePage = () => {
-    const totalCollected = 5000; // Example data
-    const totalSpent = 3000; // Example data
-    const currentBalance = totalCollected - totalSpent;
+export default async function BalancePage({ params }) {
+    const session = await LoginRequired();
+    const supabase = await createClient();
+    const param = await params;
+    
+    const { data: transactions, error } = await supabase
+        .from("balance")
+        .select(`
+            *
+        `)
+        .eq("room", param.room_id)
+        .order("created_at", { ascending: false });
 
-    const recentTransactions = [
-        { id: 1, description: 'Groceries', amount: -500, date: '2023-10-01' },
-        { id: 2, description: 'Rent', amount: -2000, date: '2023-09-30' },
-        { id: 3, description: 'Salary', amount: 5000, date: '2023-09-28' },
-    ];
+    // Calculate totals
+    const totalCredit = transactions?.reduce((sum, t) => 
+        t.status === 'credit' ? sum + parseFloat(t.amount) : sum, 0) || 0;
+    
+    const totalDebit = transactions?.reduce((sum, t) => 
+        t.status === 'debit' ? sum + parseFloat(t.amount) : sum, 0) || 0;
+    
+    const currentBalance = totalCredit - totalDebit;
 
-    return (
-        <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
-            <h1 style={{ textAlign: 'center' }}>Balance Overview</h1>
-            <div style={{ display: 'flex', justifyContent: 'space-around', margin: '20px 0' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <h2>Total Collected</h2>
-                    <p style={{ fontSize: '1.5rem', color: 'green' }}>₹{totalCollected}</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                    <h2>Total Spent</h2>
-                    <p style={{ fontSize: '1.5rem', color: 'red' }}>₹{totalSpent}</p>
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                    <h2>Current Balance</h2>
-                    <p style={{ fontSize: '1.5rem', color: 'blue' }}>₹{currentBalance}</p>
-                </div>
-            </div>
-            <div>
-                <h2>Recent Transactions</h2>
-                <ul style={{ listStyleType: 'none', padding: 0 }}>
-                    {recentTransactions.map((transaction) => (
-                        <li
-                            key={transaction.id}
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                padding: '10px',
-                                borderBottom: '1px solid #ccc',
-                            }}
-                        >
-                            <span>{transaction.description}</span>
-                            <span>{transaction.date}</span>
-                            <span style={{ color: transaction.amount < 0 ? 'red' : 'green' }}>
-                                ₹{transaction.amount}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        </div>
-    );
-};
-
-export default BalancePage;
+    const balanceData = {
+        totalCredit,
+        totalDebit,
+        currentBalance,
+        transactions: transactions || []
+    };
+    console.log("Balance Data:", balanceData);
+    return <BalanceView balanceData={balanceData} roomId={param.room_id} />;
+}
