@@ -17,6 +17,8 @@ const PaymentForm = ({ roomId, users, onPaymentSuccess }) => {
             formData.append('user', selectedUser);
             formData.append('room', roomId);
             formData.append('status', 'credit');
+            formData.append('transaction_type', 'other');
+            formData.append('description', `Payment of ₹${amount} recorded`);
 
             const response = await fetch('/api/balance', {
                 method: 'POST',
@@ -52,8 +54,8 @@ const PaymentForm = ({ roomId, users, onPaymentSuccess }) => {
                     >
                         <option value="">Choose a user</option>
                         {users.map((user) => (
-                            <option key={user.id} value={user.id}>
-                                {user.name}
+                            <option key={user.id} value={user.email}>
+                                {user.email}
                             </option>
                         ))}
                     </select>

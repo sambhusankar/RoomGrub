@@ -14,7 +14,7 @@ async function addPayment(formData) {
     const status = formData.get('status');
 
     const { data, error } = await supabase
-        .from('Balance')
+        .from('balance')
         .insert([{
             room: parseInt(room),
             user: parseInt(user),
@@ -33,15 +33,16 @@ async function addPayment(formData) {
 export default async function PayPage({ params }) {
     const session = await LoginRequired();
     const supabase = await createClient();
+    const param = await params;
     
     const { data: users, error } = await supabase
         .from("Users")
         .select("*")
-        .eq("room", params.room_id);
+        .eq("room", param.room_id);
 
     return (
         <PaymentFormView 
-            roomId={params.room_id} 
+            roomId={param.room_id} 
             users={users || []} 
             addPayment={addPayment}
         />

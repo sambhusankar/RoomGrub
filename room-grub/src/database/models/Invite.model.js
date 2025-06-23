@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 
 export default function(sequelize) {
-    return sequelize.define('Balance', {
+    return sequelize.define('Invite', {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -15,30 +15,14 @@ export default function(sequelize) {
                 key: 'id'
             }
         },
-        user: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'Users',
-                key: 'id'
-            }
-        },
-        amount: {
-            type: DataTypes.DECIMAL(10, 2),
+        email: {
+            type: DataTypes.TEXT,
             allowNull: false
         },
         status: {
-            type: DataTypes.ENUM('credit', 'debit'),
-            allowNull: false
-        },
-        transaction_type: {
-            type: DataTypes.ENUM('purchase_settlement', 'monthly_contribution', 'other'),
+            type: DataTypes.ENUM('pending', 'accepted', 'rejected'),
             allowNull: false,
-            defaultValue: 'other'
-        },
-        description: {
-            type: DataTypes.TEXT,
-            allowNull: true
+            defaultValue: 'pending'
         },
         created_at: {
             type: DataTypes.DATE,
@@ -47,7 +31,7 @@ export default function(sequelize) {
         }
     }, {
         schema: "public",
-        tableName: "balance",
+        tableName: "Invite",
         timestamps: false
     });
 }
