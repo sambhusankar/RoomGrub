@@ -103,15 +103,14 @@ export default function MemberDetailPage() {
             if (!session) return;
 
             // Create a credit entry to settle the pending amount
+            console.log(params)
             const { error } = await supabase
                 .from('balance')
                 .insert([{
                     room: params.room_id,
                     user: params.member_id,
                     amount: summary.pendingAmount,
-                    status: 'credit',
-                    transaction_type: 'purchase_settlement',
-                    description: `Settlement for purchases totaling ${formatCurrency(summary.pendingAmount)}`
+                    status: 'credit'
                 }]);
 
             if (error) throw error;
@@ -138,9 +137,7 @@ export default function MemberDetailPage() {
                     room: params.room_id,
                     user: params.member_id,
                     amount: parseFloat(contributionAmount),
-                    status: 'debit',
-                    transaction_type: 'monthly_contribution',
-                    description: `Monthly contribution of ${formatCurrency(contributionAmount)}`
+                    status: 'debit'
                 }]);
 
             if (error) throw error;

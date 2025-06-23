@@ -19,11 +19,6 @@ export default function(sequelize) {
             type: DataTypes.TEXT,
             allowNull: false
         },
-        status: {
-            type: DataTypes.ENUM('pending', 'accepted', 'rejected'),
-            allowNull: false,
-            defaultValue: 'pending'
-        },
         created_at: {
             type: DataTypes.DATE,
             allowNull: false,

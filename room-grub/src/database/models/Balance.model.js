@@ -31,15 +31,6 @@ export default function(sequelize) {
             type: DataTypes.ENUM('credit', 'debit'),
             allowNull: false
         },
-        transaction_type: {
-            type: DataTypes.ENUM('purchase_settlement', 'monthly_contribution', 'other'),
-            allowNull: false,
-            defaultValue: 'other'
-        },
-        description: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
         created_at: {
             type: DataTypes.DATE,
             allowNull: false,

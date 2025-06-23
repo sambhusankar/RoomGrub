@@ -121,9 +121,7 @@ export default function AdminDashboard() {
                 room: params.room_id,
                 user: stat.member.id,
                 amount: stat.pendingAmount,
-                status: 'credit',
-                transaction_type: 'purchase_settlement',
-                description: `Bulk settlement for purchases totaling ${formatCurrency(stat.pendingAmount)}`
+                status: 'credit'
             }));
 
             const { error } = await supabase
