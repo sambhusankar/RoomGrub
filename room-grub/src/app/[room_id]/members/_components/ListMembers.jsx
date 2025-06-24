@@ -20,10 +20,26 @@ export default function ListMembers({ members, roomId }) {
             ) : (
                 <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mb: 3 }}>
                     {members.map((member) => (
-                        <Card key={member.id} sx={{ minWidth: 200, mb: 2 }}>
+                        <Card 
+                            key={member.id} 
+                            sx={{ 
+                                minWidth: 200, 
+                                mb: 2,
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    boxShadow: 'md',
+                                    transform: 'translateY(-2px)',
+                                    transition: 'all 0.2s'
+                                }
+                            }}
+                            onClick={() => router.push(`/${roomId}/members/${member.id}`)}
+                        >
                             <CardContent>
                                 <Typography level="title-md">{member.name}</Typography>
                                 <Typography level="body-sm">{member.email}</Typography>
+                                <Typography level="body-xs" sx={{ mt: 1, color: 'text.secondary' }}>
+                                    Click to view details
+                                </Typography>
                             </CardContent>
                         </Card>
                     ))}

@@ -95,6 +95,16 @@ export default function Page() {
               Add Groccery
             </Button>
           </ListItem>
+          <ListItem>
+            <Button
+              fullWidth
+              variant="soft"
+              color="success"
+              onClick={() => navigateTo('/admin')}
+            >
+              Admin Dashboard
+            </Button>
+          </ListItem>
         </List>
       </Sheet>
     </Sheet>
