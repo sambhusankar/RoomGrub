@@ -49,16 +49,16 @@ export default function AdminDashboard() {
                 const { data: payments } = await supabase
                     .from('balance')
                     .select('*')
-                    .eq('user', member.id)
+                    .eq('user', member.email)
                     .eq('room', params.room_id);
 
                 const totalPurchases = (purchases || []).reduce((sum, p) => sum + parseFloat(p.money), 0);
                 
                 const purchaseSettlements = (payments || []).filter(p => 
-                    p.status === 'credit' && (p.transaction_type === 'purchase_settlement' || !p.transaction_type)
+                    p.status === 'debit'
                 );
                 const monthlyContributions = (payments || []).filter(p => 
-                    p.status === 'debit' && (p.transaction_type === 'monthly_contribution' || !p.transaction_type)
+                    p.status === 'credit'
                 );
                 
                 const totalReceived = purchaseSettlements.reduce((sum, p) => sum + parseFloat(p.amount), 0);
@@ -119,9 +119,9 @@ export default function AdminDashboard() {
             // Create settlement entries for all pending members
             const settlements = pendingMembers.map(stat => ({
                 room: params.room_id,
-                user: stat.member.id,
+                user: stat.member.email,
                 amount: stat.pendingAmount,
-                status: 'credit'
+                status: 'debit'
             }));
 
             const { error } = await supabase
