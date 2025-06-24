@@ -57,7 +57,7 @@ export default function MemberDetailPage() {
             const { data: paymentData, error: paymentError } = await supabase
                 .from('balance')
                 .select('*')
-                .eq('user', memberData.id)
+                .eq('user', memberData.email)
                 .eq('room', params.room_id)
                 .order('created_at', { ascending: false });
 
@@ -77,8 +77,9 @@ export default function MemberDetailPage() {
     const calculateSummary = (purchaseData, paymentData) => {
         const totalPurchases = purchaseData.reduce((sum, purchase) => sum + parseFloat(purchase.money), 0);
         
-        const purchaseSettlements = paymentData.filter(p => p.status === 'credit' && (p.transaction_type === 'purchase_settlement' || !p.transaction_type));
-        const monthlyContributions = paymentData.filter(p => p.status === 'debit' && (p.transaction_type === 'monthly_contribution' || !p.transaction_type));
+        const purchaseSettlements = paymentData.filter(p => p.status === 'debit');
+        console.log(paymentData)
+        const monthlyContributions = paymentData.filter(p => p.status === 'credit');
         
         const totalReceived = purchaseSettlements.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
         const totalContributed = monthlyContributions.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
@@ -108,9 +109,9 @@ export default function MemberDetailPage() {
                 .from('balance')
                 .insert([{
                     room: params.room_id,
-                    user: params.member_id,
+                    user: member.email,
                     amount: summary.pendingAmount,
-                    status: 'credit'
+                    status: 'debit'
                 }]);
 
             if (error) throw error;
@@ -135,9 +136,9 @@ export default function MemberDetailPage() {
                 .from('balance')
                 .insert([{
                     room: params.room_id,
-                    user: params.member_id,
+                    user: member.email,
                     amount: parseFloat(contributionAmount),
-                    status: 'debit'
+                    status: 'credit'
                 }]);
 
             if (error) throw error;
