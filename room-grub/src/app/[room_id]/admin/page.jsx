@@ -3,8 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Card, CardContent, Stack, Chip, Button, Table, Alert } from '@mui/joy';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import useUserRole from '@/hooks/useUserRole'
 
 export default function AdminDashboard() {
+    const params = useParams();
+    const router = useRouter();
+    const supabase = createClient();
+    const { role, loadings } = useUserRole();
+    if(!loadings && role != 'Admin'){
+        router.push(`/${params.room_id}`)
+    };
     const [members, setMembers] = useState([]);
     const [memberStats, setMemberStats] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,9 +23,7 @@ export default function AdminDashboard() {
         pendingPayments: 0
     });
     
-    const params = useParams();
-    const router = useRouter();
-    const supabase = createClient();
+
 
     useEffect(() => {
         fetchDashboardData();

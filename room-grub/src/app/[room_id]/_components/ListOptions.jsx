@@ -9,10 +9,12 @@ import List from '@mui/joy/List';
 import ListItem from '@mui/joy/ListItem';
 import Button from '@mui/joy/Button';
 import Typography from '@mui/joy/Typography';
+import useUserRole from '@/hooks/useUserRole'
 
 export default function Page() {
   const { room_id } = useParams();
   const router = useRouter();
+  const {role, loadings} = useUserRole()
 
   const navigateTo = (path) => {
     router.push(`${room_id}/${path}`);
@@ -95,7 +97,8 @@ export default function Page() {
               Add Groccery
             </Button>
           </ListItem>
-          <ListItem>
+          { !loadings && role == 'Admin' &&
+          (<ListItem>
             <Button
               fullWidth
               variant="soft"
@@ -105,6 +108,7 @@ export default function Page() {
               Admin Dashboard
             </Button>
           </ListItem>
+          )}
         </List>
       </Sheet>
     </Sheet>
