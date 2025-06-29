@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Card, CardContent, Stack, Chip, Button, Divider, Input, Modal, ModalDialog, ModalClose, DialogTitle, DialogContent, DialogActions } from '@mui/joy';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import useUserRole from '@/hooks/useUserRole';
 
 export default function MemberDetailPage() {
     const [member, setMember] = useState(null);
@@ -18,7 +19,8 @@ export default function MemberDetailPage() {
         monthlyContribution: 0,
         lastPayment: null
     });
-    
+    const { role, loadings } = useUserRole();
+    console.log(role, loadings)
     const params = useParams();
     const router = useRouter();
     const supabase = createClient();
@@ -97,14 +99,13 @@ export default function MemberDetailPage() {
     };
 
     const handleSettlePayment = async () => {
-        if (summary.pendingAmount <= 0) return;
+        if (summary.pendingAmount <= 0 || (!loadings && role !== 'Admin')) return;
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) return;
 
             // Create a credit entry to settle the pending amount
-            console.log(params)
             const { error } = await supabase
                 .from('balance')
                 .insert([{
@@ -225,7 +226,7 @@ export default function MemberDetailPage() {
                     </Stack>
                     
                     <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                        {summary.pendingAmount > 0 && (
+                        {summary.pendingAmount > 0 && (!loadings && role == 'Admin') && (
                             <Button 
                                 variant="solid" 
                                 color="success" 
