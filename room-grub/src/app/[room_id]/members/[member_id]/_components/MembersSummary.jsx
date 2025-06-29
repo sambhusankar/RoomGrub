@@ -5,7 +5,8 @@ import useUserRole from '@/hooks/useUserRole';
 import { Card, CardContent, Typography, Stack, Box } from '@mui/joy';
 import { formatCurrency } from '@/utils/format';
 
-export default function MembersSummary({ summary }) {
+export default function MembersSummary({ summary, handleSettlePayment, setShowContributionForm }) {
+    if (!summary) return null;
     const { role, loadings } = useUserRole();
     
     return (

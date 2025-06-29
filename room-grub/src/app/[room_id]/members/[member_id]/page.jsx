@@ -1,82 +1,29 @@
-'use client'
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, Stack, Chip, Button, Divider, Input, Modal, ModalDialog, ModalClose, DialogTitle, DialogContent, DialogActions } from '@mui/joy';
+'use server'
+import { Box, Typography, Card, CardContent, Stack, Chip, Button } from '@mui/joy';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import useUserRole from '@/hooks/useUserRole';
+import MonthlyContributionModal from './_components/MonthlyContributionModal';
+import { LoginRequired } from '@/policies/LoginRequired'
+import { getMembers, getPurchases, getPayments } from './action';
+import { formatCurrency, formatDate } from '@/utils/formatters';
+import MembersSummary from './_components/MembersSummary';
 
-export default function MemberDetailPage() {
-    const [member, setMember] = useState(null);
-    const [purchases, setPurchases] = useState([]);
-    const [payments, setPayments] = useState([]);
+export default async function MemberDetailPage() {
+    const session = LoginRequired();
+    const member = await getMembers({ member_id: params.member_id, room_id: params.room_id });
+    const purchases = await getPurchases({ email: member.email, room_id: params.room_id });
+    const payments = await getPayments({ email: member.email, room_id: params.room_id });
     const [loading, setLoading] = useState(true);
     const [showContributionForm, setShowContributionForm] = useState(false);
     const [contributionAmount, setContributionAmount] = useState('');
-    const [summary, setSummary] = useState({
-        totalPurchases: 0,
-        totalPaid: 0,
-        pendingAmount: 0,
-        monthlyContribution: 0,
-        lastPayment: null
-    });
     const { role, loadings } = useUserRole();
     console.log(role, loadings)
     const params = useParams();
     const router = useRouter();
     const supabase = createClient();
 
-    useEffect(() => {
-        fetchMemberData();
-    }, [params.member_id, params.room_id]);
-
-    const fetchMemberData = async () => {
-        try {
-            setLoading(true);
-            
-            // Get member details
-            const { data: memberData, error: memberError } = await supabase
-                .from('Users')
-                .select('*')
-                .eq('id', params.member_id)
-                .eq('room', params.room_id)
-                .single();
-
-            if (memberError) throw memberError;
-            setMember(memberData);
-
-            // Get member's purchases (spendings)
-            const { data: purchaseData, error: purchaseError } = await supabase
-                .from('Spendings')
-                .select('*')
-                .eq('user', memberData.email)
-                .eq('room', params.room_id)
-                .order('created_at', { ascending: false });
-
-            if (purchaseError) throw purchaseError;
-            setPurchases(purchaseData || []);
-
-            // Get member's payments (balance records)
-            const { data: paymentData, error: paymentError } = await supabase
-                .from('balance')
-                .select('*')
-                .eq('user', memberData.email)
-                .eq('room', params.room_id)
-                .order('created_at', { ascending: false });
-
-            if (paymentError) throw paymentError;
-            setPayments(paymentData || []);
-
-            // Calculate summary
-            calculateSummary(purchaseData || [], paymentData || []);
-
-        } catch (error) {
-            console.error('Error fetching member data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const calculateSummary = (purchaseData, paymentData) => {
+    const summary = (purchaseData, paymentData) => {
         const totalPurchases = purchaseData.reduce((sum, purchase) => sum + parseFloat(purchase.money), 0);
         
         const purchaseSettlements = paymentData.filter(p => p.status === 'debit');
@@ -89,13 +36,13 @@ export default function MemberDetailPage() {
         const pendingAmount = totalPurchases - totalReceived;
         const lastPayment = paymentData.length > 0 ? paymentData[0] : null;
 
-        setSummary({
+        return {
             totalPurchases,
             totalReceived,
             totalContributed,
             pendingAmount,
             lastPayment
-        });
+        };
     };
 
     const handleSettlePayment = async () => {
@@ -123,43 +70,6 @@ export default function MemberDetailPage() {
             console.error('Error settling payment:', error);
             alert('Error settling payment');
         }
-    };
-
-    const handleMonthlyContribution = async () => {
-        if (!contributionAmount || parseFloat(contributionAmount) <= 0) return;
-
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) return;
-
-            // Record monthly contribution as debit
-            const { error } = await supabase
-                .from('balance')
-                .insert([{
-                    room: params.room_id,
-                    user: member.email,
-                    amount: parseFloat(contributionAmount),
-                    status: 'credit'
-                }]);
-
-            if (error) throw error;
-            
-            alert('Monthly contribution recorded successfully!');
-            setContributionAmount('');
-            setShowContributionForm(false);
-            fetchMemberData(); // Refresh data
-        } catch (error) {
-            console.error('Error recording contribution:', error);
-            alert('Error recording contribution');
-        }
-    };
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-IN');
-    };
-
-    const formatCurrency = (amount) => {
-        return `₹${parseFloat(amount).toFixed(2)}`;
     };
 
     if (loading) {
@@ -195,56 +105,7 @@ export default function MemberDetailPage() {
             </Box>
 
             {/* Member Summary */}
-            <Card sx={{ mb: 3 }}>
-                <CardContent>
-                    <Typography level="title-lg" sx={{ mb: 2 }}>Account Summary</Typography>
-                    <Stack direction="row" spacing={2} flexWrap="wrap">
-                        <Box>
-                            <Typography level="body-sm" sx={{ color: 'text.secondary' }}>Total Purchases</Typography>
-                            <Typography level="title-md" sx={{ color: 'success.500' }}>
-                                {formatCurrency(summary.totalPurchases)}
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography level="body-sm" sx={{ color: 'text.secondary' }}>Amount Received</Typography>
-                            <Typography level="title-md" sx={{ color: 'primary.500' }}>
-                                {formatCurrency(summary.totalReceived)}
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography level="body-sm" sx={{ color: 'text.secondary' }}>Monthly Contributions</Typography>
-                            <Typography level="title-md" sx={{ color: 'warning.500' }}>
-                                {formatCurrency(summary.totalContributed)}
-                            </Typography>
-                        </Box>
-                        <Box>
-                            <Typography level="body-sm" sx={{ color: 'text.secondary' }}>Pending Amount</Typography>
-                            <Typography level="title-md" sx={{ color: summary.pendingAmount > 0 ? 'danger.500' : 'success.500' }}>
-                                {formatCurrency(summary.pendingAmount)}
-                            </Typography>
-                        </Box>
-                    </Stack>
-                    
-                    <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                        {summary.pendingAmount > 0 && (!loadings && role == 'Admin') && (
-                            <Button 
-                                variant="solid" 
-                                color="success" 
-                                onClick={handleSettlePayment}
-                            >
-                                Settle Payment ({formatCurrency(summary.pendingAmount)})
-                            </Button>
-                        )}
-                        <Button 
-                            variant="outlined" 
-                            color="primary" 
-                            onClick={() => setShowContributionForm(true)}
-                        >
-                            Record Monthly Contribution
-                        </Button>
-                    </Stack>
-                </CardContent>
-            </Card>
+            <MembersSummary summary={summary(purchases, payments)} />
 
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
                 {/* Purchase History */}
@@ -332,42 +193,8 @@ export default function MemberDetailPage() {
             </Stack>
 
             {/* Monthly Contribution Modal */}
-            <Modal open={showContributionForm} onClose={() => setShowContributionForm(false)}>
-                <ModalDialog>
-                    <ModalClose />
-                    <DialogTitle>Record Monthly Contribution</DialogTitle>
-                    <DialogContent>
-                        <Typography level="body-sm" sx={{ mb: 2 }}>
-                            Record {member?.name}'s monthly contribution to the room.
-                        </Typography>
-                        <Input
-                            type="number"
-                            placeholder="Enter amount"
-                            value={contributionAmount}
-                            onChange={(e) => setContributionAmount(e.target.value)}
-                            startDecorator="₹"
-                            sx={{ mb: 2 }}
-                        />
-                    </DialogContent>
-                    <DialogActions>
-                        <Button 
-                            variant="solid" 
-                            color="primary" 
-                            onClick={handleMonthlyContribution}
-                            disabled={!contributionAmount || parseFloat(contributionAmount) <= 0}
-                        >
-                            Record Contribution
-                        </Button>
-                        <Button 
-                            variant="plain" 
-                            color="neutral" 
-                            onClick={() => setShowContributionForm(false)}
-                        >
-                            Cancel
-                        </Button>
-                    </DialogActions>
-                </ModalDialog>
-            </Modal>
+            <MonthlyContributionModal 
+                member={member} showForm={showContributionForm} />
         </Box>
     );
 }
