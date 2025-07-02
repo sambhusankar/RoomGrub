@@ -1,8 +1,9 @@
 'use server'
 import { createClient } from '@/utils/supabase/server';
-const supabase = createClient();
+
 
 export async function getMember({ member_id, room_id }) {
+    const supabase = createClient();
     const { data: memberData, error: memberError } = await supabase
         .from('Users')
         .select('*')
@@ -15,6 +16,7 @@ export async function getMember({ member_id, room_id }) {
 }
 
 export async function getPurchases({ email, room_id }) {
+    const supabase = createClient();
     const { data: purchaseData, error: purchaseError } = await supabase
         .from('Spendings')
         .select('*')
@@ -27,6 +29,7 @@ export async function getPurchases({ email, room_id }) {
 }
 
 export async function getPayments({ email, room_id }) {
+    const supabase = createClient();
     const { data: paymentData, error: paymentError } = await supabase
         .from('balance')
         .select('*')
