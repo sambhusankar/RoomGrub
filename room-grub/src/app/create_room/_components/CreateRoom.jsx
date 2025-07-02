@@ -1,9 +1,9 @@
 'use client';
 import React from 'react';
 import { Button } from '@mui/material';
-import { redirect } from 'next/navigation';
+import { createRoom } from '../action'
 
-export default function CreateRoom({createRoom}) {
+export default function CreateRoom() {
   const handleCreateRoom = async () => {
     await createRoom();
   };
