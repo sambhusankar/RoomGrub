@@ -12,7 +12,7 @@ export const auth = async () => {
         console.log("No session found")
         return null
     }
-    console.log("Session in auth:", session)
+    
     return session
 }
 
@@ -23,6 +23,5 @@ export const signOut = async () => {
         console.error("Error signing out:", error)
         return false
     }
-    console.log("User signed out successfully")
     return true
 }

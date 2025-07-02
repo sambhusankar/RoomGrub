@@ -7,12 +7,10 @@ import { redirect } from 'next/navigation'
 
 export default async function NavBarContainer({children}){
     const session = await auth()
-    console.log("Session in NavBarContainer:", session)
     async function signOutFn(){
         'use server'
         const result = await signOut()
         if (result) {
-            console.log("User signed out");
             redirect('/login');
         }
     }
