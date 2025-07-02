@@ -30,10 +30,10 @@ export default function AddGrocery() {
             .from("Spendings")
             .insert([{ room: params.room_id, material: grocery, money: parseFloat(price), user: userEmail }]);
         if (error) {
-            setMsg("Error adding grocery.");
+            setMsg("❌ Error adding grocery.");
             console.log(error)
         } else {
-            setMsg("Grocery added!");
+            setMsg("✅ Grocery added!");
             setGrocery("");
             setPrice("");
         }
@@ -70,8 +70,15 @@ export default function AddGrocery() {
                         {loading ? "Adding..." : "Add Grocery"}
                     </Button>
                     {msg && (
-                        <div className="text-center text-sm text-red-500 mt-2">{msg}</div>
-                    )}
+    <div
+        className={`text-center text-sm mt-2 ${
+            msg === "✅ Grocery added!" ? "text-green-600" : "text-red-500"
+        }`}
+    >
+        {msg}
+    </div>
+)
+}
                 </div>
             </Paper>
 
