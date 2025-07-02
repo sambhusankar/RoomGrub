@@ -26,10 +26,93 @@ const ExpenseHistory = () => {
 
         fetchExpenses();
     }, [param.room_id]);
-    console.log('Expenses', expenses)
-    const filteredExpenses = expenses?.filter((expense) =>
-        expense?.material?.toLowerCase().includes(filter.toLowerCase())
-    ) || [];
+
+    // State for new filters
+    const [dateRange, setDateRange] = useState({ from: '', to: '' });
+    const [userFilter, setUserFilter] = useState('');
+
+    // Get unique users for dropdown
+    const uniqueUsers = Array.from(new Set(expenses.map(e => e.user))).filter(Boolean);
+
+    // Apply all filters
+    const filteredExpenses = expenses?.filter((expense) => {
+        const matchesCategory = expense?.material?.toLowerCase().includes(filter.toLowerCase());
+        const matchesUser = userFilter ? expense?.user === userFilter : true;
+        const expenseDate = expense?.created_at?.substring(0, 10);
+        const matchesFrom = dateRange.from ? expenseDate >= dateRange.from : true;
+        const matchesTo = dateRange.to ? expenseDate <= dateRange.to : true;
+        return matchesCategory && matchesUser && matchesFrom && matchesTo;
+    }) || [];
+
+    // FilterPanel component for all filters, foldable from top
+    const [filtersOpen, setFiltersOpen] = useState(true);
+
+    const FilterPanel = () => (
+        <Paper elevation={1} sx={{ mb: 3, p: 2, borderRadius: 2 }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    mb: filtersOpen ? 2 : 0,
+                }}
+                onClick={() => setFiltersOpen(open => !open)}
+            >
+                <Typography variant="subtitle1" fontWeight="bold">
+                    Filters
+                </Typography>
+                <Typography variant="body2" color="primary">
+                    {filtersOpen ? 'Hide ▲' : 'Show ▼'}
+                </Typography>
+            </Box>
+            {filtersOpen && (
+                <Box>
+                    <TextField
+                        fullWidth
+                        label="Filter by category"
+                        variant="outlined"
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        select
+                        fullWidth
+                        label="Filter by user"
+                        value={userFilter}
+                        onChange={(e) => setUserFilter(e.target.value)}
+                        SelectProps={{ native: true }}
+                        sx={{ mb: 2 }}
+                    >
+                        <option value=" ">All Users</option>
+                        {uniqueUsers.map(user => (
+                            <option key={user} value={user}>{user}</option>
+                        ))}
+                    </TextField>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <TextField
+                            label="From date"
+                            type="date"
+                            value={dateRange.from}
+                            onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                        <TextField
+                            label="To date"
+                            type="date"
+                            value={dateRange.to}
+                            onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
+                            InputLabelProps={{ shrink: true }}
+                            fullWidth
+                        />
+                    </Box>
+                </Box>
+            )}
+        </Paper>
+    );
+
     return (
         <Box
             sx={{
@@ -44,14 +127,7 @@ const ExpenseHistory = () => {
             <Typography variant="h5" fontWeight="bold" mb={3}>
                 Expense History
             </Typography>
-            <TextField
-                fullWidth
-                label="Filter by category"
-                variant="outlined"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                sx={{ mb: 3 }}
-            />
+            <FilterPanel />
             <Paper elevation={0} sx={{ maxHeight: 400, overflow: 'auto' }}>
                 <List>
                     {filteredExpenses.length === 0 && (
@@ -91,6 +167,6 @@ const ExpenseHistory = () => {
                 </List>
             </Paper>
         </Box>
-)};
+    )};
 
 export default ExpenseHistory;
