@@ -54,7 +54,7 @@ export default function AddGrocery() {
                     <TextField
                         label="Price"
                         value={price}
-                        onChange={e => setPrice(e.target.value.replace(/[^0-9.]/g, ""))}
+                        onChange={e => setPrice(e.target.value.replace(/[^-0-9.]/g, ""))}
                         variant="outlined"
                         type="number"
                         inputProps={{ step: "0.01", min: "0" }}
