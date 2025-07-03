@@ -69,7 +69,7 @@ export default function AdminDashboard() {
                 
                 const totalReceived = purchaseSettlements.reduce((sum, p) => sum + parseFloat(p.amount), 0);
                 const totalContributed = monthlyContributions.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-                const pendingAmount = totalPurchases - totalReceived;
+                const pendingAmount = totalPurchases + totalReceived;
 
                 // Get last payment date
                 const lastPayment = (payments || []).length > 0 ? 
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
             const settlements = pendingMembers.map(stat => ({
                 room: params.room_id,
                 user: stat.member.email,
-                amount: stat.pendingAmount,
+                amount: stat.pendingAmount * -1,
                 status: 'debit'
             }));
 

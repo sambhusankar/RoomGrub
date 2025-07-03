@@ -86,7 +86,7 @@ export default function MemberDetailPage() {
         const totalReceived = purchaseSettlements.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
         const totalContributed = monthlyContributions.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
         
-        const pendingAmount = totalPurchases - totalReceived;
+        const pendingAmount = totalPurchases + totalReceived;
         const lastPayment = paymentData.length > 0 ? paymentData[0] : null;
 
         setSummary({
@@ -111,7 +111,7 @@ export default function MemberDetailPage() {
                 .insert([{
                     room: params.room_id,
                     user: member.email,
-                    amount: summary.pendingAmount,
+                    amount: summary.pendingAmount * -1,
                     status: 'debit'
                 }]);
 
