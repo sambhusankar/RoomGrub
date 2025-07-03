@@ -47,71 +47,74 @@ const ExpenseHistory = () => {
     // FilterPanel component for all filters, foldable from top
     const [filtersOpen, setFiltersOpen] = useState(true);
 
-    const FilterPanel = () => (
-        <Paper elevation={1} sx={{ mb: 3, p: 2, borderRadius: 2 }}>
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    mb: filtersOpen ? 2 : 0,
-                }}
-                onClick={() => setFiltersOpen(open => !open)}
-            >
-                <Typography variant="subtitle1" fontWeight="bold">
-                    Filters
-                </Typography>
-                <Typography variant="body2" color="primary">
-                    {filtersOpen ? 'Hide ▲' : 'Show ▼'}
-                </Typography>
-            </Box>
-            {filtersOpen && (
-                <Box>
-                    <TextField
-                        fullWidth
-                        label="Filter by category"
-                        variant="outlined"
-                        value={filter}
-                        onChange={(e) => setFilter(e.target.value)}
-                        sx={{ mb: 2 }}
-                    />
-                    <TextField
-                        select
-                        fullWidth
-                        label="Filter by user"
-                        value={userFilter}
-                        onChange={(e) => setUserFilter(e.target.value)}
-                        SelectProps={{ native: true }}
-                        sx={{ mb: 2 }}
-                    >
-                        <option value=" ">All Users</option>
-                        {uniqueUsers.map(user => (
-                            <option key={user} value={user}>{user}</option>
-                        ))}
-                    </TextField>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                        <TextField
-                            label="From date"
-                            type="date"
-                            value={dateRange.from}
-                            onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
-                            InputLabelProps={{ shrink: true }}
-                            fullWidth
-                        />
-                        <TextField
-                            label="To date"
-                            type="date"
-                            value={dateRange.to}
-                            onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
-                            InputLabelProps={{ shrink: true }}
-                            fullWidth
-                        />
-                    </Box>
+    const FilterPanel = React.useMemo(() => {
+        return (
+            <Paper elevation={1} sx={{ mb: 3, p: 2, borderRadius: 2 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        mb: filtersOpen ? 2 : 0,
+                    }}
+                    onClick={() => setFiltersOpen(open => !open)}
+                >
+                    <Typography variant="subtitle1" fontWeight="bold">
+                        Filters
+                    </Typography>
+                    <Typography variant="body2" color="primary">
+                        {filtersOpen ? 'Hide ▲' : 'Show ▼'}
+                    </Typography>
                 </Box>
-            )}
-        </Paper>
-    );
+                {filtersOpen && (
+                    <Box>
+                        <TextField
+                            fullWidth
+                            label="Filter by category"
+                            variant="outlined"
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                            sx={{ mb: 2 }}
+                        />
+                        <TextField
+                            select
+                            fullWidth
+                            label="Filter by user"
+                            value={userFilter}
+                            onChange={(e) => setUserFilter(e.target.value)}
+                            SelectProps={{ native: true }}
+                            sx={{ mb: 2 }}
+                        >
+                            <option value="">All Users</option>
+                            {uniqueUsers.map(user => (
+                                <option key={user} value={user}>{user}</option>
+                            ))}
+                        </TextField>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <TextField
+                                label="From date"
+                                type="date"
+                                value={dateRange.from}
+                                onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
+                                InputLabelProps={{ shrink: true }}
+                                fullWidth
+                            />
+                            <TextField
+                                label="To date"
+                                type="date"
+                                value={dateRange.to}
+                                onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
+                                InputLabelProps={{ shrink: true }}
+                                fullWidth
+                            />
+                        </Box>
+                    </Box>
+                )}
+            </Paper>
+        );
+    // dependencies: only re-create if these change
+    }, [filtersOpen, filter, setFilter, userFilter, setUserFilter, uniqueUsers, dateRange, setDateRange]);
 
     return (
         <Box
@@ -124,10 +127,10 @@ const ExpenseHistory = () => {
                 borderRadius: 2,
             }}
         >
-            <Typography variant="h5" fontWeight="bold" mb={3}>
+            <Typography variant="h5" fontWeight="bold" mb={3} color="black">
                 Expense History
             </Typography>
-            <FilterPanel />
+            {FilterPanel}
             <Paper elevation={0} sx={{ maxHeight: 400, overflow: 'auto' }}>
                 <List>
                     {filteredExpenses.length === 0 && (
