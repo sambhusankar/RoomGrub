@@ -182,49 +182,48 @@ export default function MemberDetailPage() {
     return (
         <Box sx={{ p: 4, bgcolor: 'background.body', minHeight: '100vh' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Button 
-                    variant="outlined" 
-                    onClick={() => router.back()}
-                    sx={{ mr: 2 }}
-                >
-                    ← Back
-                </Button>
                 <Typography level="h3" sx={{ fontWeight: 'bold' }}>
                     {member.name}'s Account
                 </Typography>
             </Box>
 
-            {/* Member Summary */}
+            {/* Member Summary - 4x4 Grid like Admin */}
             <Card sx={{ mb: 3 }}>
                 <CardContent>
-                    <Typography level="title-lg" sx={{ mb: 2 }}>Account Summary</Typography>
-                    <Stack direction="row" spacing={2} flexWrap="wrap">
-                        <Box>
+                    <Typography level="title-lg" sx={{ mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>Account Overview</Typography>
+                    <Box
+                        sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)' },
+                            gap: 2,
+                            width: '100%',
+                        }}
+                    >
+                        <Box sx={{ minWidth: 0, p: 2, bgcolor: 'background.level1', borderRadius: 2, boxShadow: 'sm' }}>
                             <Typography level="body-sm" sx={{ color: 'text.secondary' }}>Total Purchases</Typography>
-                            <Typography level="title-md" sx={{ color: 'success.500' }}>
+                            <Typography level="title-lg" sx={{ color: 'success.500', fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
                                 {formatCurrency(summary.totalPurchases)}
                             </Typography>
                         </Box>
-                        <Box>
+                        <Box sx={{ minWidth: 0, p: 2, bgcolor: 'background.level1', borderRadius: 2, boxShadow: 'sm' }}>
                             <Typography level="body-sm" sx={{ color: 'text.secondary' }}>Amount Received</Typography>
-                            <Typography level="title-md" sx={{ color: 'primary.500' }}>
+                            <Typography level="title-lg" sx={{ color: 'primary.500', fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
                                 {formatCurrency(summary.totalReceived)}
                             </Typography>
                         </Box>
-                        <Box>
+                        <Box sx={{ minWidth: 0, p: 2, bgcolor: 'background.level1', borderRadius: 2, boxShadow: 'sm' }}>
                             <Typography level="body-sm" sx={{ color: 'text.secondary' }}>Monthly Contributions</Typography>
-                            <Typography level="title-md" sx={{ color: 'warning.500' }}>
+                            <Typography level="title-lg" sx={{ color: 'warning.500', fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
                                 {formatCurrency(summary.totalContributed)}
                             </Typography>
                         </Box>
-                        <Box>
+                        <Box sx={{ minWidth: 0, p: 2, bgcolor: 'background.level1', borderRadius: 2, boxShadow: 'sm' }}>
                             <Typography level="body-sm" sx={{ color: 'text.secondary' }}>Pending Amount</Typography>
-                            <Typography level="title-md" sx={{ color: summary.pendingAmount > 0 ? 'danger.500' : 'success.500' }}>
+                            <Typography level="title-lg" sx={{ color: summary.pendingAmount > 0 ? 'danger.500' : 'success.500', fontSize: { xs: '1.1rem', sm: '1.5rem' } }}>
                                 {formatCurrency(summary.pendingAmount)}
                             </Typography>
                         </Box>
-                    </Stack>
-                    
+                    </Box>
                     <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
                         {summary.pendingAmount > 0 && (!loadings && role == 'Admin') && (
                             <Button 
