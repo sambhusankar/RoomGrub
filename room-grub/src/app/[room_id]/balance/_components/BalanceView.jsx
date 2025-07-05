@@ -24,10 +24,10 @@ const BalanceView = ({ balanceData }) => {
     };
 
     return (
-        <Box>
+        <Box >
             <Grid container spacing={2} alignItems="center">
                 <Grid xs={12} md={6}>
-                    <Card variant="soft" sx={{ p: 3, minWidth: 300 }}>
+                    <Card variant="soft" sx={{ p: 3, width: '100vw' }}>
                         <Typography level="body-sm" color="neutral" sx={{ mb: 1 }}>
                             Your Balance
                         </Typography>
