@@ -10,6 +10,7 @@ import ListItem from '@mui/joy/ListItem';
 import Button from '@mui/joy/Button';
 import Typography from '@mui/joy/Typography';
 import useUserRole from '@/hooks/useUserRole'
+import { Group, AccountBalanceWallet, ReceiptLong, Payment, ShoppingCart, Dashboard } from '@mui/icons-material';
 
 export default function Page() {
   const { room_id } = useParams();
@@ -20,10 +21,18 @@ export default function Page() {
     router.push(`${room_id}/${path}`);
   };
 
+  // Import icons at the top of your file:
+  // import GroupIcon from '@mui/icons-material/Group';
+  // import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+  // import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+  // import PaymentIcon from '@mui/icons-material/Payment';
+  // import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+  // import DashboardIcon from '@mui/icons-material/Dashboard';
+
   return (
     <Sheet
       sx={{
-        bgcolor: 'background.level1',
+        bgcolor: 'transparent',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -52,6 +61,7 @@ export default function Page() {
               fullWidth
               variant="soft"
               color="primary"
+              startDecorator={<Group />}
               onClick={() => navigateTo('/members')}
             >
               Members
@@ -62,6 +72,7 @@ export default function Page() {
               fullWidth
               variant="soft"
               color="primary"
+              startDecorator={<AccountBalanceWallet />}
               onClick={() => navigateTo('/balance')}
             >
               Balance
@@ -72,6 +83,7 @@ export default function Page() {
               fullWidth
               variant="soft"
               color="primary"
+              startDecorator={<ReceiptLong />}
               onClick={() => navigateTo('/expenses')}
             >
               Expenses
@@ -82,6 +94,7 @@ export default function Page() {
               fullWidth
               variant="soft"
               color="primary"
+              startDecorator={<Payment />}
               onClick={() => navigateTo('/payments')}
             >
               Payments
@@ -92,6 +105,7 @@ export default function Page() {
               fullWidth
               variant="soft"
               color="primary"
+              startDecorator={<ShoppingCart />}
               onClick={() => navigateTo('/addgroccery')}
             >
               Add Groccery
@@ -103,6 +117,7 @@ export default function Page() {
               fullWidth
               variant="soft"
               color="success"
+              startDecorator={<Dashboard />}
               onClick={() => navigateTo('/admin')}
             >
               Admin Dashboard
