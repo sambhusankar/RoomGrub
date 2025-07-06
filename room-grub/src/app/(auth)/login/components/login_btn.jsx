@@ -19,9 +19,13 @@ export default function LoginBtn() {
             sx={{
                 color: 'black',
                 background: 'white',
-                padding: 0.5,
-                borderRadius: 2,
-                fontSize: '18px'
+                px: 4,
+                py: 0.8,
+                borderRadius: 3.5,
+                fontSize: '18px',
+                boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+                fontWeight: 900,
+                textTransform: 'none'
             }}
             onClick={signInWithGoogle}
         >

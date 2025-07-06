@@ -18,7 +18,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ backgroundColor: "#f0f0f0" }}
+        style={{
+          background: "linear-gradient(135deg, #f0f0f0 0%, #e0e7ff 100%)",
+          height: "100vh"
+        }}
       >
         <NavBarContainer>{children}</NavBarContainer>
       </body>

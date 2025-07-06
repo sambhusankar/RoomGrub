@@ -17,10 +17,11 @@ export default function NavBar({ page_name = 'ali', user, signOut }) {
 				p: '6px',
 				display: 'flex',
 				justifyContent: "space-between",
-				alignItems: "center"
+				alignItems: "center",
+				backgroundColor: 'transparent',
 			}}
 		>
-			<Typography level="h3">ROOM GRUB</Typography>
+			<Typography level="h3">RoomGrub</Typography>
 			{user && <Dropdown >
 				<MenuButton
 					slots={{ root: IconButton }}
