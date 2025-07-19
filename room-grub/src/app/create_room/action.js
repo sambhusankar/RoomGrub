@@ -1,51 +1,70 @@
-'use server'
-import DB from '@/database';
-import async from 'async';
+'use server';
+
+import { createClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 import { LoginRequired } from '@/policies/LoginRequired';
-const workflow = {
-    insertRoom: async (session) => {
-      // Create a new room and return the created room instance
-      const newRoom = await DB.Room.create({
-        members: 1,
-        admin: session.user.email
-      });
-      return newRoom;
-    },
-    updateUser: async (roomId, session) => {
-      // Update the user with the new room and role
-      await DB.User.update(
-        { room: roomId, role: 'Admin' },
-        { where: { email: session.user.email } }
-      );
-    }
-  };
+import async from 'async';
 
 export const createRoom = async () => {
-    console.log("Creating a room ....");
-    const session = await LoginRequired();
-    console.log(session);
-    if (!session) {
-      console.error('Auth error: No session');
+  const session = await LoginRequired();
+  const supabase = await createClient();
+
+  console.log("Creating a room ....");
+  console.log(session);
+
+  if (!session) {
+    console.error('Auth error: No session');
+    return;
+  }
+
+  const workflow = {
+    createRoom: async () => {
+      const { data: newRoom, error: roomError } = await supabase
+        .from('Rooms')
+        .insert({
+          members: 1,
+          admin: session.user.email,
+        })
+        .select()
+        .single();
+
+      if (roomError) {
+        console.error("Room creation failed:", roomError);
+        throw roomError; // ❗Stop workflow if room creation fails
+      }
+
+      console.log("New Room created:", newRoom);
+      return newRoom; // ✅ Return the created room
+    },
+
+    updateUser: ['createRoom', async (results) => {
+      const newRoom = results.createRoom;
+
+      const { data: updatedUser, error: userError } = await supabase
+        .from('Users')
+        .update({
+          room: newRoom.id,
+          role: 'Admin',
+        })
+        .eq('email', session.user.email)
+        .single();
+
+      if (userError) {
+        console.error("User update failed:", userError);
+        throw userError;
+      }
+
+      console.log("User updated successfully:", updatedUser);
+      return updatedUser;
+    }],
+  };
+
+    const results = await async.auto(workflow);
+    const newRoom = results.createRoom;
+
+    if (!newRoom) {
+      console.error("Room creation returned null/undefined. Aborting redirect.");
       return;
     }
-    //const results = await async.auto(workflow);
-    // Use the workflow to insert the room and update the user in the database
-    const newRoom = await DB.Room.create({
-        members: 1,
-        admin: session.user.email
-      });
-
-    if (!newRoom || !newRoom.id) {
-      console.error("Room creation failed in DB.");
-      return;
-    }
-    const roomId = newRoom.id;
-    await DB.User.update(
-        { room: roomId, role: 'Admin' },
-        { where: { email: session.user.email } }
-      );
-    console.log("Room inserted successfully:", newRoom);
-
-    redirect(`/${roomId.toString()}`);
+    redirect(`/${newRoom.id}`);
 };
