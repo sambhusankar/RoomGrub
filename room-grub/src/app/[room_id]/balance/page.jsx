@@ -1,10 +1,12 @@
 'use server'
 import { createClient } from '@/utils/supabase/server';
 import { LoginRequired } from '@/policies/LoginRequired';
+import { validRoom } from '@/policies/validRoom';
 import BalanceView from './_components/BalanceView';
 
 export default async function BalancePage({ params }) {
     const session = await LoginRequired();
+    await validRoom({ params });
     const supabase = await createClient();
     const param = await params;
     

@@ -1,12 +1,13 @@
-
+'use server'
 import { LoginRequired } from "@/policies/LoginRequired";
+import { validRoom } from "@/policies/validRoom";
 import AddGrocery from './_components/AddGroccery'
 
-export default function page() {
-    const session = LoginRequired();
-    
-    
-    return (
-        <AddGrocery />
-    );
+export default async function page({ params }) {
+  const session = await LoginRequired();
+  await validRoom({ params });
+
+  return (
+      <AddGrocery />
+  );
 }
