@@ -10,14 +10,37 @@ export default function PaymentHistory({ payments }){
 
     // Override PaymentHistoryCard to use MUI Joy
     const PaymentHistoryCard = ({ user, amount, date, sx }) => (
-        <Card variant="outlined" sx={{ mb: 2, ...sx }}>
-            <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
-                <Typography level="title-md" sx={{ color: 'black', fontWeight: 'bold' }}>{user}</Typography>
-                <Typography level="body-sm" sx={{ color: 'black' }}>{date}</Typography>
-                <Typography level="title-md" sx={{ color: 'black', fontWeight: 'bold' }}>₹{amount}</Typography>
-            </CardContent>
-        </Card>
-    );
+    <Card
+        variant="outlined"
+        sx={{
+            mx: 1.5, // margin-left & margin-right
+            mb: 2,
+            borderRadius: 'md',
+            ...sx,
+        }}
+    >
+        <CardContent
+            sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                px: 2,
+                py: 1.5, // reduced height
+            }}
+        >
+            <Typography level="title-sm" sx={{ color: 'black', fontWeight: 500 }}>
+                {user}
+            </Typography>
+            <Typography level="body-sm" sx={{ color: 'black', whiteSpace: 'nowrap' }}>
+                {date}
+            </Typography>
+            <Typography level="title-sm" sx={{ color: 'black', fontWeight: 500 }}>
+                ₹{amount}
+            </Typography>
+        </CardContent>
+    </Card>
+);
+
 
     // Filter state
     const [filtersOpen, setFiltersOpen] = React.useState(true);
@@ -40,86 +63,99 @@ export default function PaymentHistory({ payments }){
 
     // FilterPanel component
     const FilterPanel = () => (
-        <Card
-            variant="soft"
+    <Card
+        variant="soft"
+        sx={{
+            mb: 3,
+            borderRadius: 2,
+            boxShadow: 'none',
+            bgcolor: 'transparent',
+            p: 1,
+            overflowX: 'auto',
+            scrollbarWidth: 'none', // Firefox
+            '&::-webkit-scrollbar': {
+                display: 'none', // Chrome, Safari
+            },
+        }}
+    >
+        <Box
             sx={{
-                mb: 3,
-                borderRadius: 2,
-                boxShadow: 'sm',
-                bgcolor: 'background.level1',
-                p: 2,
+                display: 'flex',
+                gap: 2,
+                flexWrap: 'nowrap',
+                minWidth: 'max-content',
             }}
         >
-            <Box
+            <Select
+                value={userFilter}
+                onChange={(_, value) => setUserFilter(value || '')}
+                placeholder="All Users"
+                size="sm"
                 sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    mb: filtersOpen ? 2 : 0,
+                    minWidth: 170,
+                    border: '1px solid',
+                    borderColor: 'neutral.outlinedBorder',
+                    borderRadius: 'md',
                 }}
-                onClick={() => setFiltersOpen(open => !open)}
             >
-                <Typography level="title-md" sx={{ fontWeight: 'bold', letterSpacing: 1 }}>
-                    Filters
-                </Typography>
-                <Typography level="body-sm" color="primary">
-                    {filtersOpen ? 'Hide ▲' : 'Show ▼'}
-                </Typography>
-            </Box>
-            {filtersOpen && (
-                <Box>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                        <Select
-                            value={userFilter}
-                            onChange={(_, value) => setUserFilter(value || '')}
-                            placeholder="All Users"
-                            size="sm"
-                            sx={{ minWidth: 170, flex: 1 }}
-                        >
-                            <Option value="">All Users</Option>
-                            {uniqueUsers.map(user => (
-                                <Option key={user} value={user}>{user}</Option>
-                            ))}
-                        </Select>
-                        <Select
-                            value={statusFilter}
-                            onChange={(_, value) => setStatusFilter(value || '')}
-                            placeholder="All"
-                            size="sm"
-                            sx={{ minWidth: 90, flex: 1 }}
-                        >
-                            <Option value="">All</Option>
-                            <Option value="credit">Credit</Option>
-                            <Option value="debit">Debit</Option>
-                        </Select>
-                        <Input
-                            type="date"
-                            value={dateRange.from}
-                            onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
-                            size="sm"
-                            sx={{ minWidth: 120, flex: 1 }}
-                            placeholder="From"
-                        />
-                        <Input
-                            type="date"
-                            value={dateRange.to}
-                            onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
-                            size="sm"
-                            sx={{ minWidth: 120, flex: 1 }}
-                            placeholder="To"
-                        />
-                    </Box>
-                </Box>
-            )}
-        </Card>
-    );
+                <Option value="">All Users</Option>
+                {uniqueUsers.map(user => (
+                    <Option key={user} value={user}>{user}</Option>
+                ))}
+            </Select>
+
+            <Select
+                value={statusFilter}
+                onChange={(_, value) => setStatusFilter(value || '')}
+                placeholder="All"
+                size="sm"
+                sx={{
+                    minWidth: 90,
+                    border: '1px solid',
+                    borderColor: 'neutral.outlinedBorder',
+                    borderRadius: 'md',
+                }}
+            >
+                <Option value="">All</Option>
+                <Option value="credit">Credit</Option>
+                <Option value="debit">Debit</Option>
+            </Select>
+
+            <Input
+                type="date"
+                value={dateRange.from}
+                onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
+                size="sm"
+                sx={{
+                    minWidth: 140,
+                    border: '1px solid',
+                    borderColor: 'neutral.outlinedBorder',
+                    borderRadius: 'md',
+                }}
+                placeholder="From"
+            />
+
+            <Input
+                type="date"
+                value={dateRange.to}
+                onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
+                size="sm"
+                sx={{
+                    minWidth: 140,
+                    border: '1px solid',
+                    borderColor: 'neutral.outlinedBorder',
+                    borderRadius: 'md',
+                }}
+                placeholder="To"
+            />
+        </Box>
+    </Card>
+);
+
+
 
     return (
         <Box sx={{ color: 'black', py: 4, bgcolor: 'background.body', minHeight: '100vh' }}>
-            <Typography level="h2" sx={{ textAlign: 'center', mb: 3, fontWeight: 'bold', letterSpacing: 1 }}>
-                Payment History
-            </Typography>
             <Box sx={{ maxWidth: 600, mx: 'auto', color: 'black' }}>
                 <FilterPanel />
                 {filteredPayments.length === 0 ? (
