@@ -18,6 +18,7 @@
     "@supabase/supabase-js": "^2.47.16",
     "async": "^3.2.6",
     "autoprefixer": "^10.4.20",
+    "date-fns": "^4.1.0",
     "next": "^15.0.2",
     "next-auth": "^4.24.10",
     "pg": "^8.13.3",

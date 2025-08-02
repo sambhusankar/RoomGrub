@@ -4,7 +4,7 @@ import { LoginRequired } from '@/policies/LoginRequired';
 
 
 export default async function Page() {
-  const session = await LoginRequired();
+  //const session = await LoginRequired();
   return (
     <CreateRoom />
   );
