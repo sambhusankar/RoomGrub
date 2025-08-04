@@ -1,21 +1,28 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Select, MenuItem, Typography, Sheet } from '@mui/joy';
+import { Box, Button, Typography, Sheet } from '@mui/joy';
 import { format, subMonths } from 'date-fns'; 
 
 export default function Month() {
+  // Generate months array
+  const months = Array.from({ length: 12 }).map((_, index) => {
+    const date = subMonths(new Date(), index);
+    const monthYear = format(date, 'MMMM yyyy');
+    return monthYear;
+  });
 
-  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'MMMM yyyy'));
+  // Initialize with the first month
+  const [selectedMonth, setSelectedMonth] = useState(months[0]);
 
   const handleUpdate = () => {
     console.log(`Month-Year selected: ${selectedMonth}`);
   };
 
-  const months = Array.from({ length: 12 }).map((_, index) => {
-    const date = subMonths(new Date(), index); // Get the previous months
-    const monthYear = format(date, 'MMMM yyyy'); // Full month name and year (e.g., "August 2025")
-    return monthYear;
-  });
+  const handleSelectChange = (event) => {
+    const value = event.target.value;
+    console.log('Native select value:', value);
+    setSelectedMonth(value);
+  };
 
   useEffect(() => {
     console.log('Component mounted');
@@ -24,7 +31,7 @@ export default function Month() {
 
   useEffect(() => {
     console.log(`Selected month updated: ${selectedMonth}`);
-  }, [selectedMonth]); // This hook will run when selectedMonth changes
+  }, [selectedMonth]);
 
   return (
     <Box
@@ -54,29 +61,39 @@ export default function Month() {
         <Typography level="body1" sx={{ marginBottom: 1 }}>
           Select Month-Year:
         </Typography>
-        <Select
-          value={selectedMonth}  
-          onChange={(e) => { 
-            setSelectedMonth(e?.target?.value);
-          }} 
-          sx={{
-            color: 'black',
+        
+        {/* Using native HTML select instead of MUI Joy Select */}
+        <select
+          value={selectedMonth}
+          onChange={handleSelectChange}
+          style={{
             width: '100%',
-            marginBottom: 2,
+            padding: '8px 12px',
+            marginBottom: '16px',
             fontSize: '1rem',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            backgroundColor: 'white',
+            color: 'black'
           }}
         >
           {months.map((monthYear) => (
-            <MenuItem key={monthYear} value={monthYear}>
-              {monthYear} 
-            </MenuItem>
+            <option key={monthYear} value={monthYear}>
+              {monthYear}
+            </option>
           ))}
-        </Select>
+        </select>
 
         <Button
           onClick={handleUpdate}
-          variant="contained"
-          sx={{ width: '100%', backgroundColor: "blue" }}
+          variant="solid"
+          sx={{ 
+            width: '100%', 
+            backgroundColor: "blue",
+            '&:hover': {
+              backgroundColor: "darkblue"
+            }
+          }}
         >
           Update
         </Button>
