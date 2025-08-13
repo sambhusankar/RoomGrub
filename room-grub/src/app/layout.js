@@ -7,8 +7,8 @@ const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font
 
 export const metadata = {
   title: "Room Grub",
-  description: "ERP software for bachalor rooms",
-  icons:{
+  description: "Split bills not friendship",
+  icons: {
     icon: '/logo.png'
   }
 };
@@ -16,6 +16,12 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        {/* PWA manifest and theme color */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#000000" />
+        <link rel="icon" href="/favicon.ico" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{
@@ -26,5 +32,5 @@ export default function RootLayout({ children }) {
         <NavBarContainer>{children}</NavBarContainer>
       </body>
     </html>
-  )
+  );
 }
