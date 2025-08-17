@@ -1,15 +1,18 @@
-// next.config.js
-import nextPWA from 'next-pwa';
+import { SwapCalls } from '@mui/icons-material';
+import withPWA from 'next-pwa';
 
-const withPWA = nextPWA({
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-});
-
-/** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  distDir: 'build',
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
 };
 
-export default withPWA(nextConfig);
+export default withPWA({
+    dest: 'public',
+    register: true,
+    disable: process.env.NODE_ENV === 'development',
+    skipWaiting: true,
+})(nextConfig); 

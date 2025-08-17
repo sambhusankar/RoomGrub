@@ -7,6 +7,15 @@ export const validRoom = async ({ params }) => {
   const session = await auth()
   const roomId = await params.room_id
 
+  const PUBLIC_FILES = [
+  'manifest.webmanifest',
+  'favicon.ico',
+  'robots.txt',
+  'sitemap.xml',
+]
+  if (PUBLIC_FILES.includes(roomId)) {
+    return null // Allow access to public files
+  }
   if (session) {
     const supabase = await createClient()
     const { data: room, error } = await supabase

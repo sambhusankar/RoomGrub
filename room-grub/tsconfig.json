@@ -6,10 +6,14 @@
       "dom.iterable",
       "esnext"
     ],
-      "baseUrl": ".",
-  "paths": {
-      "@/*": ["src/*"],
-      "@database": ["src/database"]
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@database": [
+        "src/database"
+      ]
     },
     "allowJs": true,
     "skipLibCheck": true,
@@ -29,10 +33,11 @@
     ]
   },
   "include": [
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    "build/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
