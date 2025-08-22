@@ -1,8 +1,16 @@
 'use client';
-import React from 'react';
-import { Box, Typography, Card, CardContent, Stack, Chip, Button, Divider, Input, Modal, ModalDialog, ModalClose, DialogTitle, DialogContent, DialogActions } from '@mui/joy';
-import { formatCurrency, formatDate } from '@/utils/format';
+
+import { Typography, Card, CardContent, Stack, Box } from '@mui/joy';
+
 export default function PurchaseHistory({ purchases }) {
+    const formatDate = (dateString) => {
+        return new Date(dateString).toLocaleDateString('en-IN');
+    };
+
+    const formatCurrency = (amount) => {
+        return `₹${parseFloat(amount).toFixed(2)}`;
+    };
+
     return (
         <Box sx={{ flex: 1 }}>
             <Typography level="title-lg" sx={{ mb: 2 }}>Purchase History</Typography>
@@ -34,5 +42,5 @@ export default function PurchaseHistory({ purchases }) {
                 </Stack>
             )}
         </Box>
-    )
+    );
 }
