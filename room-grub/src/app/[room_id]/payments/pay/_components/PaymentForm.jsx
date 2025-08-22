@@ -1,7 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 
-const PaymentForm = ({ roomId, users, onPaymentSuccess }) => {
+const PaymentForm = ({ roomId, users, onPaymentSuccess, currentUser }) => {
     const [amount, setAmount] = useState('');
     const [selectedUser, setSelectedUser] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +26,22 @@ const PaymentForm = ({ roomId, users, onPaymentSuccess }) => {
             });
 
             if (response.ok) {
+                // Send push notification after successful payment
+                try {
+                    await fetch('/api/notifications/payment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            roomId,
+                            payerId: currentUser.id,
+                            amount,
+                            receiverEmail: selectedUser
+                        })
+                    });
+                } catch (notificationError) {
+                    console.error('Failed to send notification:', notificationError);
+                }
+
                 setAmount('');
                 setSelectedUser('');
                 onPaymentSuccess?.();

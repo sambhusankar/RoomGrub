@@ -33,6 +33,30 @@ export default function AddGrocery() {
             setMsg("❌ Error adding grocery.");
             console.log(error)
         } else {
+            // Send push notification after successful grocery addition
+            try {
+                const { data: userData } = await supabase
+                    .from('users')
+                    .select('id, name')
+                    .eq('email', userEmail)
+                    .single();
+
+                if (userData) {
+                    await fetch('/api/notifications/grocery', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            roomId: params.room_id,
+                            userId: userData.id,
+                            itemName: grocery,
+                            amount: parseFloat(price)
+                        })
+                    });
+                }
+            } catch (notificationError) {
+                console.error('Failed to send notification:', notificationError);
+            }
+
             setMsg("✅ Grocery added!");
             setGrocery("");
             setPrice("");
