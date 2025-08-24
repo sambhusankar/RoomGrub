@@ -8,12 +8,12 @@ export default function PaymentHistory({ payments }){
         return new Date(dateString).toLocaleDateString('en-IN');
     };
 
-    // Override PaymentHistoryCard to use MUI Joy
-    const PaymentHistoryCard = ({ user, amount, date, sx }) => (
+    // PaymentHistoryCard component with profile picture
+    const PaymentHistoryCard = ({ user, amount, date, userProfile, sx }) => (
     <Card
         variant="outlined"
         sx={{
-            mx: 1.5, // margin-left & margin-right
+            mx: 1.5,
             mb: 2,
             borderRadius: 'md',
             ...sx,
@@ -25,12 +25,31 @@ export default function PaymentHistory({ payments }){
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 px: 2,
-                py: 1.5, // reduced height
+                py: 1.5,
             }}
         >
-            <Typography level="title-sm" sx={{ color: 'black', fontWeight: 500 }}>
-                {user}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                    component="img"
+                    src={userProfile || '/default-profile.png'}
+                    alt={user}
+                    sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        bgcolor: 'background.level2',
+                        border: '1px solid #eee',
+                    }}
+                    onError={e => {
+                        e.target.onerror = null;
+                        e.target.src = '/default-profile.png';
+                    }}
+                />
+                <Typography level="title-sm" sx={{ color: 'black', fontWeight: 500 }}>
+                    {user}
+                </Typography>
+            </Box>
             <Typography level="body-sm" sx={{ color: 'black', whiteSpace: 'nowrap' }}>
                 {date}
             </Typography>
@@ -49,11 +68,11 @@ export default function PaymentHistory({ payments }){
     const [statusFilter, setStatusFilter] = React.useState('');
 
     // Get unique users for dropdown
-    const uniqueUsers = Array.from(new Set(payments.map(p => p.user))).filter(Boolean);
+    const uniqueUsers = Array.from(new Set(payments.map(p => p.Users?.name || p.user))).filter(Boolean);
 
     // Filtered payments
     const filteredPayments = payments.filter(payment => {
-        const matchesUser = userFilter ? payment.user === userFilter : true;
+        const matchesUser = userFilter ? (payment.Users?.name || payment.user) === userFilter : true;
         const paymentDate = payment.created_at?.substring(0, 10);
         const matchesFrom = dateRange.from ? paymentDate >= dateRange.from : true;
         const matchesTo = dateRange.to ? paymentDate <= dateRange.to : true;
@@ -173,9 +192,10 @@ export default function PaymentHistory({ payments }){
                         return (
                             <PaymentHistoryCard
                                 key={payment.id}
-                                user={payment.user || 'Unknown User'}
+                                user={payment.Users?.name || payment.user || 'Unknown User'}
                                 amount={parseFloat(payment.amount).toFixed(2)}
                                 date={formatDate(payment.created_at)}
+                                userProfile={payment.Users?.profile}
                                 sx={{ bgcolor: bgColor }}
                             />
                         );
