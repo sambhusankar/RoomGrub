@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, TextField, Paper } from '@mui/material';
+import { Box, Card, Select, Input, Option } from '@mui/joy';
 
 export default function FilterPanel({ 
     filter, 
@@ -13,92 +13,88 @@ export default function FilterPanel({
     uniqueUsers 
 }) {
     return (
-        <Paper
-            elevation={0}
-            sx={{
-                mb: 3,
-                p: 1,
-                borderRadius: 2,
-                bgcolor: 'transparent',
-                overflowX: 'auto',
-                scrollbarWidth: 'none', // Firefox
-                '&::-webkit-scrollbar': {
-                    display: 'none', // Chrome/Safari
-                },
-            }}
-        >
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexWrap: 'nowrap',
-                    gap: 2,
-                    minWidth: 'max-content',
-                }}
-            >
-                <TextField
-                    label="Category"
-                    variant="outlined"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                    size="small"
+        <Card
+                    variant="soft"
                     sx={{
-                        minWidth: 180,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                    }}
-                />
-
-                <TextField
-                    select
-                    label="User"
-                    value={userFilter}
-                    onChange={(e) => setUserFilter(e.target.value)}
-                    SelectProps={{ native: true }}
-                    size="small"
-                    sx={{
-                        minWidth: 160,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 1,
+                        mb: 3,
+                        borderRadius: 2,
+                        boxShadow: 'none',
+                        bgcolor: 'transparent',
+                        p: 1,
+                        overflowX: 'auto',
+                        scrollbarWidth: 'none',
+                        '&::-webkit-scrollbar': {
+                            display: 'none',
+                        },
                     }}
                 >
-                    <option value="">Users</option>
-                    {uniqueUsers.map(user => (
-                        <option key={user} value={user}>{user}</option>
-                    ))}
-                </TextField>
-
-                <TextField
-                    label="From"
-                    type="date"
-                    value={dateRange.from}
-                    onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
-                    InputLabelProps={{ shrink: true }}
-                    size="small"
-                    sx={{
-                        minWidth: 140,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                    }}
-                />
-
-                <TextField
-                    label="To"
-                    type="date"
-                    value={dateRange.to}
-                    onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
-                    InputLabelProps={{ shrink: true }}
-                    size="small"
-                    sx={{
-                        minWidth: 140,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                    }}
-                />
-            </Box>
-        </Paper>
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            gap: 2,
+                            flexWrap: 'nowrap',
+                            minWidth: 'max-content',
+                        }}
+                    >
+                        <Select
+                            value={userFilter}
+                            onChange={(_, value) => setUserFilter(value || '')}
+                            placeholder="All Users"
+                            size="sm"
+                            sx={{
+                                minWidth: 170,
+                                border: '1px solid',
+                                borderColor: 'neutral.outlinedBorder',
+                                borderRadius: 'md',
+                            }}
+                        >
+                            <Option value="">All Users</Option>
+                            {uniqueUsers.map(user => (
+                                <Option key={user} value={user}>{user}</Option>
+                            ))}
+                        </Select>
+        
+                        <Input
+                            value={filter}
+                            onChange={e => setFilter(e.target.value)}
+                            placeholder="Search items..."
+                            size="sm"
+                            sx={{
+                                minWidth: 140,
+                                border: '1px solid',
+                                borderColor: 'neutral.outlinedBorder',
+                                borderRadius: 'md',
+                            }}
+                        />
+        
+                        <Input
+                            type="date"
+                            value={dateRange.from}
+                            onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
+                            size="sm"
+                            sx={{
+                                minWidth: 140,
+                                border: '1px solid',
+                                borderColor: 'neutral.outlinedBorder',
+                                borderRadius: 'md',
+                            }}
+                            placeholder="From"
+                        />
+        
+                        <Input
+                            type="date"
+                            value={dateRange.to}
+                            onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
+                            size="sm"
+                            sx={{
+                                minWidth: 140,
+                                border: '1px solid',
+                                borderColor: 'neutral.outlinedBorder',
+                                borderRadius: 'md',
+                            }}
+                            placeholder="To"
+                        />
+                    </Box>
+                </Card>
     );
 }
