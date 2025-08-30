@@ -17,6 +17,7 @@ import {
   Payment,
   ShoppingCart,
   Dashboard,
+  Analytics,
 } from '@mui/icons-material';
 
 const navItems = [
@@ -49,6 +50,12 @@ const navItems = [
     subtext: 'Add items to grocery list',
     icon: ShoppingCart,
     path: '/addgroccery',
+  },
+  {
+    label: 'Analytics & Splits',
+    subtext: 'View reports and settle expenses',
+    icon: Analytics,
+    path: '/analytics',
   },
 ];
 
