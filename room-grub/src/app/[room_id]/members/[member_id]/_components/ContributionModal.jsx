@@ -45,8 +45,8 @@ export default function ContributionModal({
                 }]);
 
             if (error) throw error;
-            
-            alert('Monthly contribution recorded successfully!');
+
+            alert('Contribution recorded successfully!');
             setContributionAmount('');
             setShowContributionForm(false);
             onDataRefresh(); // Refresh data
@@ -67,10 +67,10 @@ export default function ContributionModal({
         <Modal open={showContributionForm} onClose={handleClose}>
             <ModalDialog>
                 <ModalClose />
-                <DialogTitle>Record Monthly Contribution</DialogTitle>
+                <DialogTitle>Record Contribution</DialogTitle>
                 <DialogContent>
                     <Typography level="body-sm" sx={{ mb: 2 }}>
-                        Record {member?.name}'s monthly contribution to the room.
+                        Record {member?.name}'s contribution to the room.
                     </Typography>
                     <Input
                         type="number"
@@ -89,7 +89,7 @@ export default function ContributionModal({
                         disabled={!contributionAmount || parseFloat(contributionAmount) <= 0}
                         loading={isSubmitting}
                     >
-                        Record Contribution
+                        Contribute
                     </Button>
                     <Button 
                         variant="plain" 

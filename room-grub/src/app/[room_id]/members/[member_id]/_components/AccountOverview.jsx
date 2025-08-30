@@ -74,7 +74,7 @@ export default function AccountOverview({
                         color="primary" 
                         onClick={onShowContributionForm}
                     >
-                        Record Monthly Contribution
+                        Contribute
                     </Button>
                 </Stack>
             </CardContent>
