@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { TextField, Button, Paper } from "@mui/material";
 import { createClient } from "@/utils/supabase/client";
 import { useParams } from 'next/navigation'
+import NotificationService from '@/services/NotificationService'
 
 export default function AddGrocery() {
     const [grocery, setGrocery] = useState("");
@@ -26,6 +27,14 @@ export default function AddGrocery() {
             return;
         }
         const userEmail = session.user.email;
+        
+        // Get user data for notifications
+        const { data: userData } = await supabase
+            .from("Users")
+            .select("id, name")
+            .eq("email", userEmail)
+            .single();
+
         const { error } = await supabase
             .from("Spendings")
             .insert([{ room: params.room_id, material: grocery, money: parseFloat(price), user: userEmail }]);
@@ -36,6 +45,22 @@ export default function AddGrocery() {
             setMsg("✅ Grocery added!");
             setGrocery("");
             setPrice("");
+            
+            // Send notification to room members
+            try {
+                if (userData) {
+                    await NotificationService.notifyGroceryAdded(
+                        parseInt(params.room_id),
+                        userData.id,
+                        userData.name || userEmail,
+                        1 // item count
+                    );
+                    console.log('Grocery notification sent successfully');
+                }
+            } catch (notificationError) {
+                console.error('Failed to send grocery notification:', notificationError);
+                // Don't show error to user as the main action succeeded
+            }
         }
         setLoading(false);
     };

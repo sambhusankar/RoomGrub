@@ -1,10 +1,13 @@
 'use client'
 import React, { useState } from 'react';
+import NotificationService from '@/services/NotificationService';
+import { createClient } from '@/utils/supabase/client';
 
 const PaymentForm = ({ roomId, users, onPaymentSuccess }) => {
     const [amount, setAmount] = useState('');
     const [selectedUser, setSelectedUser] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const supabase = createClient();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -30,6 +33,29 @@ const PaymentForm = ({ roomId, users, onPaymentSuccess }) => {
                 setSelectedUser('');
                 onPaymentSuccess?.();
                 alert('Payment recorded successfully!');
+                
+                // Send notification to room members
+                try {
+                    // Get user data for the selected user
+                    const { data: userData } = await supabase
+                        .from("Users")
+                        .select("id, name")
+                        .eq("email", selectedUser)
+                        .single();
+
+                    if (userData) {
+                        await NotificationService.notifyPaymentSettled(
+                            parseInt(roomId),
+                            userData.id,
+                            userData.name || selectedUser,
+                            amount
+                        );
+                        console.log('Payment notification sent successfully');
+                    }
+                } catch (notificationError) {
+                    console.error('Failed to send payment notification:', notificationError);
+                    // Don't show error to user as the main action succeeded
+                }
             } else {
                 alert('Error recording payment');
             }

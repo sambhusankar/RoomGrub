@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { TextField, Button } from '@mui/material';
 import { createClient } from '@/utils/supabase/client'
 import { useParams } from 'next/navigation'
+import NotificationService from '@/services/NotificationService'
 
 export default function InvitePage() {
   const param = useParams();
@@ -34,6 +35,19 @@ export default function InvitePage() {
         })
         .eq("email", email)
         setStatus("Your friend added in your room")
+        
+        // Send notification to room members about new member joining
+        try {
+          await NotificationService.notifyMemberJoined(
+            parseInt(param.room_id),
+            existingUser[0].id,
+            existingUser[0].name || email
+          );
+          console.log('Member join notification sent successfully');
+        } catch (notificationError) {
+          console.error('Failed to send member join notification:', notificationError);
+          // Don't show error to user as the main action succeeded
+        }
       }
     }else{
     const {error: insertError} = await supabase

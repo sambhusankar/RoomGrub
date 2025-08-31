@@ -14,6 +14,7 @@ import {
 } from '@mui/joy';
 import { createClient } from '@/utils/supabase/client';
 import { useParams } from 'next/navigation';
+import NotificationService from '@/services/NotificationService';
 
 export default function ContributionModal({ 
     showContributionForm, 
@@ -50,6 +51,29 @@ export default function ContributionModal({
             setContributionAmount('');
             setShowContributionForm(false);
             onDataRefresh(); // Refresh data
+
+            // Send notification to room members
+            try {
+                // Get user data for the member
+                const { data: userData } = await supabase
+                    .from("Users")
+                    .select("id, name")
+                    .eq("email", member.email)
+                    .single();
+
+                if (userData) {
+                    await NotificationService.notifyContributionMade(
+                        parseInt(params.room_id),
+                        userData.id,
+                        userData.name || member.name || member.email,
+                        parseFloat(contributionAmount)
+                    );
+                    console.log('Contribution notification sent successfully');
+                }
+            } catch (notificationError) {
+                console.error('Failed to send contribution notification:', notificationError);
+                // Don't show error to user as the main action succeeded
+            }
         } catch (error) {
             console.error('Error recording contribution:', error);
             alert('Error recording contribution');
