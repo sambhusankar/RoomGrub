@@ -44,10 +44,6 @@ npm start
 
 Contributions are welcome! If you have ideas for new features or improvements, feel free to open an issue or submit a pull request.
 
-## License
-
-This project is licensed under the MIT License.
-
 ---
 
 RoomGrub takes the hassle out of sharing expenses—so you can focus on living, not calculating!
