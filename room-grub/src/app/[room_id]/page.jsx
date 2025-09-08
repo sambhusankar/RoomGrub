@@ -5,6 +5,7 @@ import ListOptions from './_components/ListOptions';
 import { LoginRequired } from '@/policies/LoginRequired';
 import { validRoom } from '@/policies/validRoom';
 import WelCome from './_components/WelCome';
+import NotificationPrompt from '@/components/NotificationPrompt';
 
 export default async function Page({ params }) {
   const session = await LoginRequired();
@@ -13,6 +14,7 @@ export default async function Page({ params }) {
   return (
     <>
       <WelCome />
+      <NotificationPrompt />
       <ListOptions params={params} />
     </>
   );

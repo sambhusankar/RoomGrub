@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, Button, Typography, Switch, FormControlLabel, Alert } from '@mui/joy';
+import { Card, CardContent, Button, Typography, Switch, Alert, Box } from '@mui/joy';
 import { Notifications, NotificationsOff } from '@mui/icons-material';
 import usePushNotifications from '@/hooks/usePushNotifications';
 
@@ -89,17 +89,17 @@ export default function NotificationSettings() {
                     </Alert>
                 )}
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <FormControlLabel
-                        control={
-                            <Switch
-                                checked={isSubscribed}
-                                onChange={handleToggleNotifications}
-                                disabled={localLoading || loading || permission === 'denied'}
-                            />
-                        }
-                        label={isSubscribed ? 'Notifications enabled' : 'Enable notifications'}
-                    />
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Switch
+                            checked={isSubscribed}
+                            onChange={handleToggleNotifications}
+                            disabled={localLoading || loading || permission === 'denied'}
+                        />
+                        <Typography level="body-md">
+                            {isSubscribed ? 'Notifications enabled' : 'Enable notifications'}
+                        </Typography>
+                    </Box>
                     
                     {!isSubscribed && permission !== 'denied' && (
                         <Button
@@ -108,11 +108,12 @@ export default function NotificationSettings() {
                             onClick={handleToggleNotifications}
                             loading={localLoading || loading}
                             startDecorator={<Notifications />}
+                            size="sm"
                         >
                             Enable
                         </Button>
                     )}
-                </div>
+                </Box>
 
                 <Typography level="body-xs" sx={{ mt: 1, opacity: 0.7 }}>
                     You can disable notifications at any time from this page or your browser settings.
