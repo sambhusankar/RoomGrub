@@ -1,3 +1,4 @@
+'use server';
 import webpush from 'web-push';
 import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
@@ -12,6 +13,7 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
 }
 
 export async function POST(request) {
+    console.log('Received notification request');
     try {
         const { roomId, triggeredBy, activityType, title, message, data } = await request.json();
         
@@ -22,7 +24,7 @@ export async function POST(request) {
             );
         }
 
-        const supabase = createClient();
+        const supabase = await createClient();
 
         // Create notification in database
         const { data: notification, error: notificationError } = await supabase
