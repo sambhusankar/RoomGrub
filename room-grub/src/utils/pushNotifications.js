@@ -24,7 +24,26 @@ class PushNotificationManager {
 
     // Check if push notifications are supported
     isSupported() {
-        return 'serviceWorker' in navigator && 'PushManager' in window;
+        const hasServiceWorker = 'serviceWorker' in navigator;
+        const hasPushManager = 'PushManager' in window;
+        const hasNotification = 'Notification' in window;
+        const hasNavigatorSW = !!navigator.serviceWorker;
+        const hasWindowPM = !!window.PushManager;
+        
+        const isSupported = hasServiceWorker && hasPushManager && hasNotification && hasNavigatorSW && hasWindowPM;
+        
+        if (!isSupported) {
+            console.log('Push notification support check:', {
+                hasServiceWorker,
+                hasPushManager,
+                hasNotification,
+                hasNavigatorSW,
+                hasWindowPM,
+                isSupported
+            });
+        }
+        
+        return isSupported;
     }
 
     // Get notification permission
@@ -44,11 +63,11 @@ class PushNotificationManager {
         }
 
         try {
-            this.registration = await navigator.serviceWorker.register('/sw.js');
-            console.log('Service Worker registered successfully');
+            this.registration = await navigator.serviceWorker.register('/push-sw.js');
+            console.log('Push Service Worker registered successfully');
             return this.registration;
         } catch (error) {
-            console.error('Service Worker registration failed:', error);
+            console.error('Push Service Worker registration failed:', error);
             throw error;
         }
     }
@@ -122,7 +141,7 @@ class PushNotificationManager {
     async unsubscribe(userId, roomId) {
         try {
             if (!this.registration) {
-                this.registration = await navigator.serviceWorker.getRegistration();
+                this.registration = await navigator.serviceWorker.getRegistration('/push-sw.js');
             }
 
             if (this.registration) {
@@ -180,7 +199,7 @@ class PushNotificationManager {
     async getSubscriptionStatus() {
         try {
             if (!this.registration) {
-                this.registration = await navigator.serviceWorker.getRegistration();
+                this.registration = await navigator.serviceWorker.getRegistration('/push-sw.js');
             }
 
             if (!this.registration) {

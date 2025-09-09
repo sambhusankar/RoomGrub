@@ -34,29 +34,20 @@ export default function Month() {
   }, [selectedMonth]);
 
   return (
-    <Box
+    <Sheet
+      variant="outlined"
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        padding: 2,
-        flexDirection: 'column',
+        padding: 3,
+        width: '100%',
+        borderRadius: '12px',
+        bgcolor: 'background.surface',
+        border: '1px solid',
+        borderColor: 'neutral.outlinedBorder',
       }}
     >
-      <Sheet
-        variant="outlined"
-        sx={{
-          padding: 2,
-          width: '100%',
-          maxWidth: 500,
-          borderRadius: '8px',
-          boxShadow: 2,
-        }}
-      >
-        <Typography level="h4" align="center" sx={{ marginBottom: 2 }}>
-          Settings Page
-        </Typography>
+      <Typography level="title-md" sx={{ marginBottom: 2, fontWeight: 600 }}>
+        Month-Year Settings
+      </Typography>
         
         <Typography level="body1" sx={{ marginBottom: 1 }}>
           Select Month-Year:
@@ -97,7 +88,6 @@ export default function Month() {
         >
           Update
         </Button>
-      </Sheet>
-    </Box>
+    </Sheet>
   );
 }
