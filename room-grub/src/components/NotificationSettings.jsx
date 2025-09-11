@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Button, Typography, Switch, Alert, Box } from '@mui/joy';
 import { Notifications, NotificationsOff } from '@mui/icons-material';
 import usePushNotifications from '@/hooks/usePushNotifications';
+import PushNotificationManager from '@/utils/pushNotifications';
 
 export default function NotificationSettings() {
     const {
@@ -18,6 +19,14 @@ export default function NotificationSettings() {
     } = usePushNotifications();
 
     const [localLoading, setLocalLoading] = useState(false);
+
+    // Expose diagnose function globally for debugging
+    useEffect(() => {
+        window.debugPushNotifications = () => PushNotificationManager.diagnose();
+        return () => {
+            delete window.debugPushNotifications;
+        };
+    }, []);
 
     const handleToggleNotifications = async () => {
         setLocalLoading(true);
