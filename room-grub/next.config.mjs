@@ -29,5 +29,8 @@ export default withPWA({
         }
         return false
       }
-    ]
+    ],
+    // Custom worker configuration for push notifications
+    customWorkerSrc: 'worker',
+    customWorkerDest: 'public'
 })(nextConfig); 

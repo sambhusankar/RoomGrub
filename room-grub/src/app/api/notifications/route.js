@@ -125,7 +125,13 @@ export async function POST(request) {
         return NextResponse.json({
             success: true,
             notification,
-            pushNotificationsSent: subscriptions ? subscriptions.length : 0
+            pushNotificationsSent: subscriptions ? subscriptions.length : 0,
+            debug: {
+                subscriptionsFound: subscriptions?.length || 0,
+                vapidConfigured: !!(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY),
+                roomId,
+                triggeredBy
+            }
         });
 
     } catch (error) {
