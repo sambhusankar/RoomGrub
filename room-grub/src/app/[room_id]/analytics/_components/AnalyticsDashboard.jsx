@@ -184,11 +184,12 @@ export default function AnalyticsDashboard({ expenses, payments, members, roomId
 
             {/* Overview Content - Tabs temporarily hidden */}
             {mounted && (
-                <AnalyticsOverview 
+                <AnalyticsOverview
                     expenses={filteredData.expenses}
                     payments={filteredData.payments}
                     members={members}
                     filters={filters}
+                    roomId={roomId}
                 />
             )}
 

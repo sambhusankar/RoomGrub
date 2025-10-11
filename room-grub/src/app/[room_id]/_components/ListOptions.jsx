@@ -90,7 +90,7 @@ export default function Page() {
             gap: 2,
           }}
         >
-          {navItems.filter(item => item.label !== 'Analytics & Splits').map(({ label, subtext, icon: Icon, path }) => (
+          {navItems.map(({ label, subtext, icon: Icon, path }) => (
             <ListItem
               key={label}
               sx={{

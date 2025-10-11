@@ -1,29 +1,38 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import { 
-    Box, 
-    Typography, 
-    Card, 
-    Grid, 
+import React, { useMemo, useState } from 'react';
+import {
+    Box,
+    Typography,
+    Card,
+    Grid,
     Avatar,
     LinearProgress,
     Chip,
-    Alert
+    Alert,
+    Button
 } from '@mui/joy';
-import { 
-    Receipt, 
-    AccountBalance, 
-    TrendingUp, 
+import {
+    Receipt,
+    AccountBalance,
+    TrendingUp,
     TrendingDown,
     Warning,
     CheckCircle,
     Person,
-    Calculate
+    Calculate,
+    Payment
 } from '@mui/icons-material';
+import SettlementDialog from './SettlementDialog';
+import useUserRole from '@/hooks/useUserRole';
+import { useRouter } from 'next/navigation';
 
-export default function AnalyticsOverview({ expenses, payments, members, filters }) {
-    
+export default function AnalyticsOverview({ expenses, payments, members, filters, roomId }) {
+    const { role } = useUserRole();
+    const router = useRouter();
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [settlementDialogOpen, setSettlementDialogOpen] = useState(false);
+
     // Calculate overview metrics
     const overviewData = useMemo(() => {
         // Basic calculations
@@ -72,12 +81,13 @@ export default function AnalyticsOverview({ expenses, payments, members, filters
         // Calculate splits and pending balances
         const numberOfMembers = members.length;
         const equalShare = totalExpenses / numberOfMembers;
-        
+
         const memberBalances = Object.values(memberStats).map(stat => {
-            // Your formula: Final Balance = Equal Share - Expenses - Contributions + Settlements
+            // Your formula: Final Balance = Equal Share - Expenses - Contributions - Settlements
+            // Note: settlements are stored as negative values (debit), so we subtract them
             // Negative result = Member should receive money
             // Positive result = Member should pay money
-            const finalBalance = equalShare - stat.expenses - stat.contributions + stat.settlements;
+            const finalBalance = equalShare - stat.expenses - stat.contributions - stat.settlements;
             
             return {
                 ...stat,
@@ -145,6 +155,16 @@ export default function AnalyticsOverview({ expenses, payments, members, filters
                 {(member.name || member.email).charAt(0).toUpperCase()}
             </Avatar>
         );
+    };
+
+    const handleSettleClick = (memberData) => {
+        setSelectedMember(memberData);
+        setSettlementDialogOpen(true);
+    };
+
+    const handleSettlementComplete = () => {
+        // Refresh the page to show updated data
+        router.refresh();
     };
 
     return (
@@ -330,33 +350,49 @@ export default function AnalyticsOverview({ expenses, payments, members, filters
                                                     {member.member.name || member.member.email}
                                                 </Typography>
                                                 <Typography level="body-xs" color="neutral">
-                                                    Spent: {formatAmount(member.expenses)} | 
-                                                    Contributed: {formatAmount(member.contributions)} | 
+                                                    Spent: {formatAmount(member.expenses)} |
+                                                    Contributed: {formatAmount(member.contributions)} |
                                                     Received: {formatAmount(Math.abs(member.settlements))}
                                                 </Typography>
                                             </Box>
                                         </Box>
-                                        
-                                        <Box sx={{ ml: 'auto', textAlign: 'right' }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                {member.status === 'credit' ? (
-                                                    <TrendingUp sx={{ color: 'success.600', fontSize: 16 }} />
-                                                ) : (
-                                                    <TrendingDown sx={{ color: 'warning.600', fontSize: 16 }} />
-                                                )}
-                                                <Typography 
-                                                    level="title-sm" 
-                                                    sx={{ 
-                                                        fontWeight: 'bold',
-                                                        color: member.status === 'credit' ? 'success.600' : 'warning.600'
-                                                    }}
-                                                >
-                                                    {formatAmount(Math.abs(member.finalBalance))}
+
+                                        <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
+                                            <Box sx={{ textAlign: 'right' }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    {member.status === 'credit' ? (
+                                                        <TrendingUp sx={{ color: 'success.600', fontSize: 16 }} />
+                                                    ) : (
+                                                        <TrendingDown sx={{ color: 'warning.600', fontSize: 16 }} />
+                                                    )}
+                                                    <Typography
+                                                        level="title-sm"
+                                                        sx={{
+                                                            fontWeight: 'bold',
+                                                            color: member.status === 'credit' ? 'success.600' : 'warning.600'
+                                                        }}
+                                                    >
+                                                        {formatAmount(Math.abs(member.finalBalance))}
+                                                    </Typography>
+                                                </Box>
+                                                <Typography level="body-xs" color="neutral">
+                                                    {member.status === 'credit' ? 'to receive' : 'to pay'}
                                                 </Typography>
                                             </Box>
-                                            <Typography level="body-xs" color="neutral">
-                                                {member.status === 'credit' ? 'to receive' : 'to pay'}
-                                            </Typography>
+
+                                            {/* Admin-only Settle Button */}
+                                            {role === 'Admin' && (
+                                                <Button
+                                                    size="sm"
+                                                    color={member.status === 'credit' ? 'success' : 'warning'}
+                                                    variant="solid"
+                                                    startDecorator={<Payment />}
+                                                    onClick={() => handleSettleClick(member)}
+                                                    sx={{ minWidth: 100 }}
+                                                >
+                                                    Settle
+                                                </Button>
+                                            )}
                                         </Box>
                                     </Box>
                                 ))}
@@ -416,6 +452,15 @@ export default function AnalyticsOverview({ expenses, payments, members, filters
                     </Grid>
                 </Grid>
             </Card>
+
+            {/* Settlement Dialog */}
+            <SettlementDialog
+                open={settlementDialogOpen}
+                onClose={() => setSettlementDialogOpen(false)}
+                member={selectedMember}
+                roomId={roomId}
+                onSettlementComplete={handleSettlementComplete}
+            />
         </Box>
     );
 }

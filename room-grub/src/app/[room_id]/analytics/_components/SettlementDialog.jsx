@@ -12,13 +12,14 @@ import {
     Alert,
     CircularProgress
 } from '@mui/joy';
-import { 
-    CheckCircle, 
-    Warning, 
-    TrendingUp, 
+import {
+    CheckCircle,
+    Warning,
+    TrendingUp,
     TrendingDown,
     AccountBalance
 } from '@mui/icons-material';
+import { settlePayment } from '../actions';
 
 export default function SettlementDialog({ 
     open, 
@@ -56,44 +57,22 @@ export default function SettlementDialog({
         setError('');
 
         try {
-            const settlementAmount = Math.abs(member.finalBalance);
-            
-            // Determine the correct status and amount for balance table
-            let status, amount, description;
-            
-            if (member.status === 'credit') {
-                // Member should receive money - record as debit with negative value
-                status = 'debit';
-                amount = -settlementAmount; // Negative for money going out to member
-                description = `Settlement payment to ${member.member.name || member.member.email}`;
-            } else {
-                // Member should pay money - record as credit with positive value
-                status = 'credit';
-                amount = settlementAmount; // Positive for money coming in from member
-                description = `Settlement received from ${member.member.name || member.member.email}`;
-            }
+            // Call server action to record settlement
+            const result = await settlePayment(
+                roomId,
+                member.member.email,
+                member.finalBalance,
+                member.status
+            );
 
-            const formData = new FormData();
-            formData.append('amount', amount.toString());
-            formData.append('user', member.member.email);
-            formData.append('room', roomId);
-            formData.append('status', status);
-            formData.append('transaction_type', 'settlement');
-            formData.append('description', description);
-
-            const response = await fetch('/api/balance', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to record settlement');
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to record settlement');
             }
 
             // Settlement successful
             onSettlementComplete?.(member);
             onClose();
-            
+
         } catch (err) {
             setError(err.message || 'Failed to process settlement');
         } finally {
