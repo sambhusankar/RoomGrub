@@ -10,6 +10,8 @@ const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 
 if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
     webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+} else {
+    console.error('VAPID keys are missing! Push notifications will not be sent.');
 }
 
 export async function POST(request) {
@@ -48,17 +50,11 @@ export async function POST(request) {
             );
         }
 
-        // Get push subscriptions for room members (excluding the user who triggered the action)
-        let subscriptionQuery = supabase
+        // Get push subscriptions for all room members (including the user who triggered the action)
+        const { data: subscriptions, error: subscriptionError } = await supabase
             .from('push_subscriptions')
             .select('*')
             .eq('room_id', roomId);
-
-        if (triggeredBy) {
-            subscriptionQuery = subscriptionQuery.neq('user_id', triggeredBy);
-        }
-
-        const { data: subscriptions, error: subscriptionError } = await subscriptionQuery;
 
         if (subscriptionError) {
             console.error('Error getting push subscriptions:', subscriptionError);
@@ -91,11 +87,20 @@ export async function POST(request) {
             // Send notifications to all subscriptions
             const pushPromises = subscriptions.map(async (subscription) => {
                 try {
+                    // Validate key formats
+                    const p256dhKey = subscription.p256dh_key;
+                    const authKey = subscription.auth_key;
+
+                    // Check if keys are malformed (too long suggests double-encoding)
+                    if (p256dhKey?.length > 200 || authKey?.length > 50) {
+                        throw new Error(`Malformed subscription keys for user ${subscription.user_id}. Please re-enable notifications.`);
+                    }
+
                     const pushSubscription = {
                         endpoint: subscription.endpoint,
                         keys: {
-                            p256dh: subscription.p256dh_key,
-                            auth: subscription.auth_key
+                            p256dh: p256dhKey,
+                            auth: authKey
                         }
                     };
 
@@ -120,6 +125,10 @@ export async function POST(request) {
             });
 
             await Promise.allSettled(pushPromises);
+        } else if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+            console.warn('Skipping push notifications: VAPID keys not configured');
+        } else if (!subscriptions || subscriptions.length === 0) {
+            console.warn('Skipping push notifications: No subscriptions found for room', roomId);
         }
 
         return NextResponse.json({

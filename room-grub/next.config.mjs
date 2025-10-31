@@ -30,7 +30,17 @@ export default withPWA({
         return false
       }
     ],
-    // Custom worker configuration for push notifications
-    customWorkerSrc: 'worker',
-    customWorkerDest: 'public'
+    // Use custom service worker source with InjectManifest
+    // This prevents auto-formatting from removing push notification handlers
+    workboxOptions: {
+        swSrc: 'src/sw.js',
+        swDest: 'public/sw.js',
+        mode: 'production',
+        exclude: [
+            /\.map$/,
+            /manifest$/,
+            /\.json$/,
+            /^manifest.*\.js$/,
+        ]
+    }
 })(nextConfig); 
