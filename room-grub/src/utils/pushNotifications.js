@@ -1013,6 +1013,20 @@ class PushNotificationManager {
         }
     }
 
+    // Helper function to convert ArrayBuffer to base64url string
+    arrayBufferToBase64Url(buffer) {
+        // Convert ArrayBuffer to Uint8Array
+        const bytes = new Uint8Array(buffer);
+        // Convert to base64
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = btoa(binary);
+        // Convert base64 to base64url
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
     // Save subscription to database
     async saveSubscription(userId, roomId, subscription) {
         try {
@@ -1021,13 +1035,31 @@ class PushNotificationManager {
                 throw new Error('User not authenticated');
             }
 
+            // Convert keys to base64url format if they're ArrayBuffers
+            let p256dhKey = subscription.keys.p256dh;
+            let authKey = subscription.keys.auth;
+
+            // Check if keys are ArrayBuffer/Uint8Array and convert them
+            if (p256dhKey instanceof ArrayBuffer || p256dhKey instanceof Uint8Array) {
+                p256dhKey = this.arrayBufferToBase64Url(p256dhKey);
+            }
+
+            if (authKey instanceof ArrayBuffer || authKey instanceof Uint8Array) {
+                authKey = this.arrayBufferToBase64Url(authKey);
+            }
+
             const subscriptionData = {
                 user_id: userId,
                 room_id: roomId,
                 endpoint: subscription.endpoint,
-                p256dh_key: subscription.keys.p256dh,
-                auth_key: subscription.keys.auth
+                p256dh_key: p256dhKey,
+                auth_key: authKey
             };
+
+            console.log('Saving subscription with key lengths:', {
+                p256dh_length: p256dhKey.length,
+                auth_length: authKey.length
+            });
 
             const { error } = await this.supabase
                 .from('push_subscriptions')
@@ -1037,7 +1069,7 @@ class PushNotificationManager {
                 });
 
             if (error) throw error;
-            
+
             console.log('Subscription saved to database');
         } catch (error) {
             console.error('Error saving subscription:', error);
