@@ -35,13 +35,18 @@ export default function AnalyticsOverview({ expenses, payments, members, filters
 
     // Calculate overview metrics
     const overviewData = useMemo(() => {
+        // Determine which members to include based on filter
+        const activeMembers = filters.selectedMembers.length > 0
+            ? members.filter(m => filters.selectedMembers.includes(m.email))
+            : members;
+
         // Basic calculations
         const totalExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.money || 0), 0);
         const totalTransactions = expenses.length;
-        
+
         // Calculate member expenses and balance table transactions
         const memberStats = {};
-        members.forEach(member => {
+        activeMembers.forEach(member => {
             memberStats[member.email] = {
                 member,
                 expenses: 0, // How much they purchased/spent
@@ -79,7 +84,7 @@ export default function AnalyticsOverview({ expenses, payments, members, filters
         });
 
         // Calculate splits and pending balances
-        const numberOfMembers = members.length;
+        const numberOfMembers = activeMembers.length;
         const equalShare = totalExpenses / numberOfMembers;
 
         const memberBalances = Object.values(memberStats).map(stat => {
