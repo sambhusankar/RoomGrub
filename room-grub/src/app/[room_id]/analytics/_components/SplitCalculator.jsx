@@ -27,12 +27,17 @@ export default function SplitCalculator({ expenses, payments, members, filters }
 
     // Calculate the smart split for the current period
     const splitCalculation = useMemo(() => {
+        // Determine which members to include based on filter
+        const activeMembers = filters.selectedMembers.length > 0
+            ? members.filter(m => filters.selectedMembers.includes(m.email))
+            : members;
+
         // Calculate total expenses for each member
         const memberExpenses = {};
         const memberPayments = {};
-        
-        // Initialize member data
-        members.forEach(member => {
+
+        // Initialize member data only for active members
+        activeMembers.forEach(member => {
             memberExpenses[member.email] = 0;
             memberPayments[member.email] = 0;
         });
@@ -58,12 +63,12 @@ export default function SplitCalculator({ expenses, payments, members, filters }
         // Calculate totals
         const totalExpenses = Object.values(memberExpenses).reduce((sum, amount) => sum + amount, 0);
         const totalPayments = Object.values(memberPayments).reduce((sum, amount) => sum + amount, 0);
-        const numberOfMembers = members.length;
+        const numberOfMembers = activeMembers.length;
         const equalShare = totalExpenses / numberOfMembers;
 
         // Calculate balances and settlements
         const memberBalances = [];
-        members.forEach(member => {
+        activeMembers.forEach(member => {
             const spent = memberExpenses[member.email];
             const paid = memberPayments[member.email];
             const shouldPay = equalShare;
@@ -191,7 +196,7 @@ export default function SplitCalculator({ expenses, payments, members, filters }
                                 <Typography level="body-sm">Members</Typography>
                             </Box>
                             <Typography level="h4" sx={{ fontWeight: 'bold' }}>
-                                {splitCalculation.numberOfMembers}
+                                {filters.selectedMembers.length > 0 ? filters.selectedMembers.length : members.length}
                             </Typography>
                         </Box>
                     </Card>
