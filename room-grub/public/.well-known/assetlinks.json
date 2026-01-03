@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "in.broccly.roomgrub.twa",
+        "sha256_cert_fingerprints": ["8A:7C:44:87:BC:22:E7:C3:53:F3:81:65:DC:4E:18:F0:70:64:15:B9:84:C6:E2:C1:06:E3:5D:20:28:3A:B5:7F"]
+      }
+    }]
