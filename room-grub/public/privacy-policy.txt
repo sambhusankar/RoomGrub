@@ -1,0 +1,27 @@
+Privacy Policy for RoomGrub
+
+Last updated: 03.01/2026
+
+RoomGrub respects your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our application.
+
+1. Information We Collect
+We do not collect personally identifiable information unless you voluntarily provide it. The app may collect basic usage data such as device type, browser type, and anonymous analytics to improve performance.
+
+2. Cookies and Tracking
+RoomGrub may use cookies or similar technologies to enhance user experience. These do not contain personally identifiable information.
+
+3. Third-Party Services
+The app may use third-party services such as Google Analytics or hosting providers that may collect information used to identify you.
+
+4. Data Security
+We take reasonable measures to protect your information. However, no method of transmission over the Internet is 100% secure.
+
+5. Children’s Privacy
+RoomGrub does not knowingly collect personal information from children under the age of 13.
+
+6. Changes to This Policy
+We may update this Privacy Policy from time to time. Any changes will be posted on this page.
+
+7. Contact Us
+If you have questions about this Privacy Policy, contact us at:
+Email: sambhusankarswain@gmail.com
