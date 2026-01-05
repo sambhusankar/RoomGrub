@@ -1,8 +1,15 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "in.broccly.roomgrub.twa",
-        "sha256_cert_fingerprints": ["8A:7C:44:87:BC:22:E7:C3:53:F3:81:65:DC:4E:18:F0:70:64:15:B9:84:C6:E2:C1:06:E3:5D:20:28:3A:B5:7F"]
-      }
-    }]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "in.broccly.roomgrub.twa",
+      "sha256_cert_fingerprints": [
+        "8A:7C:44:87:BC:22:E7:C3:53:F3:81:65:DC:4E:18:F0:70:64:15:B9:84:C6:E2:C1:06:E3:5D:20:28:3A:B5:7F",
+        "17:0E:18:8A:07:2A:C9:41:C6:5C:E4:37:0B:A0:88:8D:28:AF:0A:AA:0E:37:28:CD:7D:D0:BF:6A:A5:C4:AA:B9"
+      ]
+    }
+  }
+]
