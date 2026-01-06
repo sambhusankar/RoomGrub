@@ -12,6 +12,13 @@ export default async function SplitsPage({ params }) {
 
   const supabase = await createClient();
 
+  // Fetch current user's role for authorization
+  const { data: currentUser } = await supabase
+    .from('Users')
+    .select('role')
+    .eq('email', session.user.email)
+    .single();
+
   // Fetch all expenses (Spendings) for the room
   const { data: expenses, error: expensesError } = await supabase
     .from('Spendings')
@@ -49,6 +56,7 @@ export default async function SplitsPage({ params }) {
       payments={payments || []}
       members={members || []}
       roomId={params.room_id}
+      userRole={currentUser?.role}
     />
   );
 }

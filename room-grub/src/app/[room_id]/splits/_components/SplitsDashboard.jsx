@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import SplitCalculator from './SplitCalculator';
 import FilterPanel from './FilterPanel';
 
-export default function SplitsDashboard({ expenses, payments, members, roomId }) {
+export default function SplitsDashboard({ expenses, payments, members, roomId, userRole }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -126,6 +126,7 @@ export default function SplitsDashboard({ expenses, payments, members, roomId })
                 members={members}
                 filters={filters}
                 roomId={roomId}
+                userRole={userRole}
             />
         </Box>
     );

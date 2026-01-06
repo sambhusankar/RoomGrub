@@ -54,26 +54,88 @@ export async function settleAllPending(roomId, memberBalances) {
     try {
         const supabase = await createClient();
 
-        // Filter members with pending balances (finalBalance !== 0)
+        // SECURITY CHECK 1: Verify user is authenticated
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return { success: false, error: 'Unauthorized: User not authenticated' };
+        }
+
+        // SECURITY CHECK 2: Verify user is admin
+        const { data: currentUser } = await supabase
+            .from('Users')
+            .select('role, room')
+            .eq('email', user.email)
+            .single();
+
+        if (currentUser?.role !== 'Admin') {
+            return { success: false, error: 'Unauthorized: Only admins can settle payments' };
+        }
+
+        // SECURITY CHECK 3: Verify user belongs to this room
+        if (currentUser?.room !== parseInt(roomId)) {
+            return { success: false, error: 'Unauthorized: User not a member of this room' };
+        }
+
+        // VALIDATION 1: Filter members with pending balances
         const pendingMembers = memberBalances.filter(mb => Math.abs(mb.balance) > 0.01);
 
         if (pendingMembers.length === 0) {
-            return { success: false, error: 'No pending settlements' };
+            return { success: false, error: 'No pending settlements to process' };
         }
 
-        // Create settlement entries for all pending members
-        // Following admin dashboard pattern: always debit with negative of pending amount
-        const settlements = pendingMembers.map(mb => ({
-            room: roomId,
-            user: mb.member.email,
-            amount: mb.pendingAmount * -1,  // Negative of pending amount
-            status: 'debit'                 // Always debit
-        }));
+        // VALIDATION 3: Re-calculate and verify pending amounts on server
+        // This prevents client-side manipulation of amounts
+        const verifiedSettlements = [];
 
-        // Insert all settlements in one transaction
+        for (const mb of pendingMembers) {
+            // Fetch actual expenses for this member
+            const { data: memberExpenses } = await supabase
+                .from('Spendings')
+                .select('money')
+                .eq('user', mb.member.email)
+                .eq('room', roomId);
+
+            // Fetch actual settlements for this member (debit transactions)
+            const { data: memberPayments } = await supabase
+                .from('balance')
+                .select('amount, status')
+                .eq('user', mb.member.email)
+                .eq('room', roomId)
+                .eq('status', 'debit');
+
+            // Calculate actual pending amount
+            const totalExpenses = (memberExpenses || []).reduce((sum, e) => sum + parseFloat(e.money || 0), 0);
+            const totalSettlements = (memberPayments || []).reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+            const actualPending = totalExpenses + totalSettlements; // settlements are negative
+
+            // Verify pending amount matches (allow 0.01 difference for rounding)
+            if (Math.abs(actualPending - mb.pendingAmount) > 0.01) {
+                return {
+                    success: false,
+                    error: `Pending amount mismatch for ${mb.member.name || mb.member.email}. Please refresh and try again.`
+                };
+            }
+
+            // Only include if actually has pending amount
+            if (actualPending > 0.01) {
+                verifiedSettlements.push({
+                    room: roomId,
+                    user: mb.member.email,
+                    amount: actualPending * -1,  // Negative of pending amount
+                    status: 'debit'              // Always debit
+                });
+            }
+        }
+
+        // FINAL CHECK: Ensure we have settlements to process
+        if (verifiedSettlements.length === 0) {
+            return { success: false, error: 'No valid pending amounts to settle' };
+        }
+
+        // Insert all verified settlements
         const { error } = await supabase
             .from('balance')
-            .insert(settlements);
+            .insert(verifiedSettlements);
 
         if (error) {
             console.error('Error settling all:', error);
@@ -83,7 +145,7 @@ export async function settleAllPending(roomId, memberBalances) {
         // Revalidate the splits page to show updated data
         revalidatePath(`/${roomId}/splits`);
 
-        return { success: true, settledCount: settlements.length };
+        return { success: true, settledCount: verifiedSettlements.length };
 
     } catch (error) {
         console.error('Settle all error:', error);

@@ -20,7 +20,7 @@ import {
 import { settleAllPending } from '../actions';
 import { useRouter } from 'next/navigation';
 
-export default function SplitCalculator({ expenses, payments, members, filters, roomId }) {
+export default function SplitCalculator({ expenses, payments, members, filters, roomId, userRole }) {
     const router = useRouter();
     const [isSettling, setIsSettling] = useState(false);
     const [error, setError] = useState('');
@@ -307,8 +307,8 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                 </Box>
             )}
 
-            {/* Settle All Button - Full Width at Bottom */}
-            {splitCalculation.pendingSettlements.length > 0 && (
+            {/* Settle All Button - Full Width at Bottom - Admin Only */}
+            {splitCalculation.pendingSettlements.length > 0 && userRole === 'Admin' && (
                 <Button
                     fullWidth
                     color="success"
