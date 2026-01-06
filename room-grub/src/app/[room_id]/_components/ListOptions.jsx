@@ -52,10 +52,10 @@ const navItems = [
     path: '/addgroccery',
   },
   {
-    label: 'Analytics & Splits',
-    subtext: 'View reports and settle expenses',
+    label: 'Splits',
+    subtext: 'Split expenses and settle balances',
     icon: Analytics,
-    path: '/analytics',
+    path: '/splits',
   },
 ];
 

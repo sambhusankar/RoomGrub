@@ -4,14 +4,14 @@ import React from 'react';
 import { LoginRequired } from '@/policies/LoginRequired';
 import { validRoom } from '@/policies/validRoom';
 import { createClient } from '@/utils/supabase/server';
-import AnalyticsDashboard from './_components/AnalyticsDashboard';
+import SplitsDashboard from './_components/SplitsDashboard';
 
-export default async function AnalyticsPage({ params }) {
+export default async function SplitsPage({ params }) {
   const session = await LoginRequired();
   await validRoom({ params });
-  
+
   const supabase = await createClient();
-  
+
   // Fetch all expenses (Spendings) for the room
   const { data: expenses, error: expensesError } = await supabase
     .from('Spendings')
@@ -39,12 +39,12 @@ export default async function AnalyticsPage({ params }) {
     .eq('room', params.room_id);
 
   if (expensesError || paymentsError || membersError) {
-    console.error('Error fetching analytics data:', { expensesError, paymentsError, membersError });
-    return <div>Error loading analytics data</div>;
+    console.error('Error fetching splits data:', { expensesError, paymentsError, membersError });
+    return <div>Error loading splits data</div>;
   }
 
   return (
-    <AnalyticsDashboard 
+    <SplitsDashboard
       expenses={expenses || []}
       payments={payments || []}
       members={members || []}
