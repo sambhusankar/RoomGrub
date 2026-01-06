@@ -46,12 +46,6 @@ const navItems = [
     path: '/payments',
   },
   {
-    label: 'Add Grocery',
-    subtext: 'Add items to grocery list',
-    icon: ShoppingCart,
-    path: '/addgroccery',
-  },
-  {
     label: 'Splits',
     subtext: 'Split expenses and settle balances',
     icon: Analytics,
@@ -69,115 +63,134 @@ export default function Page() {
   };
 
   return (
-    <Sheet
-      sx={{
-        bgcolor: 'transparent',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        p: 4,
-      }}
-    >
+    <>
       <Sheet
         sx={{
-          width: '100%',
-          maxWidth: 500,
           bgcolor: 'transparent',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          p: 4,
         }}
       >
-        <List
+        <Sheet
           sx={{
-            gap: 2,
+            width: '100%',
+            maxWidth: 500,
+            bgcolor: 'transparent',
           }}
         >
-          {navItems.map(({ label, subtext, icon: Icon, path }) => (
-            <ListItem
-              key={label}
-              sx={{
-                alignItems: 'stretch',
-                padding: 0,
-              }}
-            >
-              <Button
-                fullWidth
-                variant="soft"
-                color="primary"
-                onClick={() => navigateTo(path)}
+          <List
+            sx={{
+              gap: 2,
+            }}
+          >
+            {navItems.map(({ label, subtext, icon: Icon, path }) => (
+              <ListItem
+                key={label}
                 sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  padding: 2,
-                  minHeight: 70,
-                  textAlign: 'left',
-                  gap: 2,
-                  bgcolor: 'background.level1', // ✅ light background
-                  boxShadow: 'sm',              // ✅ subtle shadow
-                  borderRadius: 'md',
+                  alignItems: 'stretch',
+                  padding: 0,
                 }}
               >
-                <Box
+                <Button
+                  fullWidth
+                  variant="soft"
+                  color="primary"
+                  onClick={() => navigateTo(path)}
                   sx={{
-                    background: 'linear-gradient(135deg, #7b61ff, #619eff)',
-                    borderRadius: '12px',
-                    padding: 1,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
+                    justifyContent: 'flex-start',
+                    padding: 2,
+                    minHeight: 70,
+                    textAlign: 'left',
+                    gap: 2,
+                    bgcolor: 'background.level1', // ✅ light background
+                    boxShadow: 'sm',              // ✅ subtle shadow
+                    borderRadius: 'md',
                   }}
                 >
-                  <Icon sx={{ color: 'white' }} />
-                </Box>
-                <Box>
-                  <Typography level="title-md">{label}</Typography>
-                  <Typography level="body-sm" color="neutral">
-                    {subtext}
-                  </Typography>
-                </Box>
-              </Button>
-            </ListItem>
-          ))}
+                  <Box
+                    sx={{
+                      background: 'linear-gradient(135deg, #7b61ff, #619eff)',
+                      borderRadius: '12px',
+                      padding: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon sx={{ color: 'white' }} />
+                  </Box>
+                  <Box>
+                    <Typography level="title-md">{label}</Typography>
+                  </Box>
+                </Button>
+              </ListItem>
+            ))}
 
-          {!loadings && role === 'Admin' && (
-            <ListItem sx={{ alignItems: 'stretch', padding: 0 }}>
-              <Button
-                fullWidth
-                variant="soft"
-                color="success"
-                onClick={() => navigateTo('/admin')}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  padding: 2,
-                  minHeight: 70,
-                  textAlign: 'left',
-                  gap: 2,
-                }}
-              >
-                <Box
+            {!loadings && role === 'Admin' && (
+              <ListItem sx={{ alignItems: 'stretch', padding: 0 }}>
+                <Button
+                  fullWidth
+                  variant="soft"
+                  color="success"
+                  onClick={() => navigateTo('/admin')}
                   sx={{
-                    background: 'linear-gradient(135deg, #00c851, #007e33)',
-                    borderRadius: '12px',
-                    padding: 1,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
+                    justifyContent: 'flex-start',
+                    padding: 2,
+                    minHeight: 70,
+                    textAlign: 'left',
+                    gap: 2,
                   }}
                 >
-                  <Dashboard sx={{ color: 'white' }} />
-                </Box>
-                <Box>
-                  <Typography level="title-md">Admin Dashboard</Typography>
-                  <Typography level="body-sm" color="neutral">
-                    Manage the room settings
-                  </Typography>
-                </Box>
-              </Button>
-            </ListItem>
-          )}
-        </List>
+                  <Box
+                    sx={{
+                      background: 'linear-gradient(135deg, #00c851, #007e33)',
+                      borderRadius: '12px',
+                      padding: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Dashboard sx={{ color: 'white' }} />
+                  </Box>
+                  <Box>
+                    <Typography level="title-md">Admin Dashboard</Typography>
+                  </Box>
+                </Button>
+              </ListItem>
+            )}
+          </List>
+        </Sheet>
       </Sheet>
-    </Sheet>
+
+      {/* Fixed Floating Action Button for Add Grocery */}
+      <Button
+        onClick={() => navigateTo('/addgroccery')}
+        variant="solid"
+        color="success"
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          minWidth: 56,
+          minHeight: 56,
+          borderRadius: '50%',
+          zIndex: 1000,
+          boxShadow: 'lg',
+          transition: 'transform 0.2s ease-in-out',
+          '&:hover': {
+            transform: 'scale(1.1)',
+          },
+        }}
+      >
+        <ShoppingCart />
+      </Button>
+    </>
   );
 }
