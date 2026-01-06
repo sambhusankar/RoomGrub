@@ -24,7 +24,18 @@ export default function NavBar({ page_name = 'ali', user, signOut }) {
 				backgroundColor: 'transparent',
 			}}
 		>
-			<Typography level="h3">RoomGrub</Typography>
+			<Typography
+				level="h3"
+				onClick={() => router.push(`/${room_id}`)}
+				sx={{
+					cursor: 'pointer',
+					'&:hover': {
+						opacity: 0.8,
+					},
+				}}
+			>
+				RoomGrub
+			</Typography>
 			{user && <Dropdown >
 				<MenuButton
 					slots={{ root: IconButton }}
