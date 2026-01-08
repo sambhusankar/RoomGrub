@@ -1,14 +1,46 @@
 'use client';
 
-import { Card, CardContent, Typography, Box, Stack, Chip, Table } from '@mui/joy';
+import { Card, CardContent, Typography, Box, Stack, Chip, Table, Select, Option, Button } from '@mui/joy';
 import { useRouter, useParams } from 'next/navigation';
+import { useState } from 'react';
+import { updateMemberRole } from '../../members/actions';
 
 export default function MembersList({ memberStats }) {
     const router = useRouter();
     const params = useParams();
+    const [updating, setUpdating] = useState({});
 
     const formatCurrency = (amount) => {
         return `₹${parseFloat(amount).toFixed(2)}`;
+    };
+
+    const handleRoleChange = async (memberEmail, currentRole) => {
+        const newRole = currentRole === 'Admin' ? 'Member' : 'Admin';
+        const confirmMessage = currentRole === 'Admin'
+            ? `Are you sure you want to demote ${memberEmail} to Member?`
+            : `Are you sure you want to promote ${memberEmail} to Admin?`;
+
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        setUpdating({ ...updating, [memberEmail]: true });
+
+        try {
+            const result = await updateMemberRole(params.room_id, memberEmail, newRole);
+
+            if (result.success) {
+                alert(result.message);
+                // Refresh the page to show updated data
+                router.refresh();
+            } else {
+                alert(`Error: ${result.error}`);
+            }
+        } catch (error) {
+            alert(`Failed to update role: ${error.message}`);
+        } finally {
+            setUpdating({ ...updating, [memberEmail]: false });
+        }
     };
 
     return (
@@ -43,19 +75,43 @@ export default function MembersList({ memberStats }) {
                                     }}
                                     onClick={() => router.push(`/${params.room_id}/members/${stat.member.id}`)}
                                 >
-                                    <Box>
-                                        <Typography level="title-sm" sx={{ fontSize: '1rem' }}>
-                                            {stat.member.name}
-                                        </Typography>
+                                    <Box sx={{ flex: 1 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                            <Typography level="title-sm" sx={{ fontSize: '1rem' }}>
+                                                {stat.member.name}
+                                            </Typography>
+                                            <Chip
+                                                size="sm"
+                                                color={stat.member.role === 'Admin' ? 'primary' : 'neutral'}
+                                                variant="soft"
+                                            >
+                                                {stat.member.role}
+                                            </Chip>
+                                        </Box>
                                         <Typography level="body-xs" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
                                             {stat.member.email}
                                         </Typography>
+                                        <Box sx={{ mt: 1 }}>
+                                            <Button
+                                                size="sm"
+                                                variant="outlined"
+                                                color={stat.member.role === 'Admin' ? 'danger' : 'success'}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRoleChange(stat.member.email, stat.member.role);
+                                                }}
+                                                loading={updating[stat.member.email]}
+                                                disabled={updating[stat.member.email]}
+                                            >
+                                                {stat.member.role === 'Admin' ? 'Demote to Member' : 'Promote to Admin'}
+                                            </Button>
+                                        </Box>
                                     </Box>
                                     <Box sx={{ textAlign: 'right' }}>
-                                        <Typography sx={{ 
-                                            color: stat.pendingAmount > 0 ? 'danger.500' : 'success.500', 
-                                            fontWeight: 'bold', 
-                                            fontSize: '1.1rem' 
+                                        <Typography sx={{
+                                            color: stat.pendingAmount > 0 ? 'danger.500' : 'success.500',
+                                            fontWeight: 'bold',
+                                            fontSize: '1.1rem'
                                         }}>
                                             {formatCurrency(stat.pendingAmount)}
                                         </Typography>
@@ -78,6 +134,7 @@ export default function MembersList({ memberStats }) {
                             <thead>
                                 <tr>
                                     <th>Member</th>
+                                    <th>Role</th>
                                     <th>Total Purchases</th>
                                     <th>Amount Received</th>
                                     <th>Monthly Contributions</th>
@@ -103,6 +160,15 @@ export default function MembersList({ memberStats }) {
                                                     {stat.member.email}
                                                 </Typography>
                                             </Box>
+                                        </td>
+                                        <td>
+                                            <Chip
+                                                size="sm"
+                                                color={stat.member.role === 'Admin' ? 'primary' : 'neutral'}
+                                                variant="soft"
+                                            >
+                                                {stat.member.role}
+                                            </Chip>
                                         </td>
                                         <td>
                                             <Typography sx={{ color: 'success.500', fontSize: { xs: '0.95rem', sm: '1rem' } }}>
@@ -141,7 +207,19 @@ export default function MembersList({ memberStats }) {
                                             </Chip>
                                         </td>
                                         <td>
-                                            {/* No View Details button, row is clickable */}
+                                            <Button
+                                                size="sm"
+                                                variant="outlined"
+                                                color={stat.member.role === 'Admin' ? 'danger' : 'success'}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRoleChange(stat.member.email, stat.member.role);
+                                                }}
+                                                loading={updating[stat.member.email]}
+                                                disabled={updating[stat.member.email]}
+                                            >
+                                                {stat.member.role === 'Admin' ? 'Demote' : 'Promote'}
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}
