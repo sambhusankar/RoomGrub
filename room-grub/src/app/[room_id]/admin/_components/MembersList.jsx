@@ -52,10 +52,10 @@ export default function MembersList({ memberStats }) {
                                         </Typography>
                                     </Box>
                                     <Box sx={{ textAlign: 'right' }}>
-                                        <Typography sx={{ 
-                                            color: stat.pendingAmount > 0 ? 'danger.500' : 'success.500', 
-                                            fontWeight: 'bold', 
-                                            fontSize: '1.1rem' 
+                                        <Typography sx={{
+                                            color: stat.pendingAmount > 0 ? 'danger.500' : 'success.500',
+                                            fontWeight: 'bold',
+                                            fontSize: '1.1rem'
                                         }}>
                                             {formatCurrency(stat.pendingAmount)}
                                         </Typography>
