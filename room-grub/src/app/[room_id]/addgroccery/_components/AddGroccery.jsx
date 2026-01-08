@@ -1,9 +1,12 @@
 'use client'
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TextField, Button, Paper } from "@mui/material";
+import { Box, Modal, ModalDialog, ModalClose, Avatar, Stack, Select, Option } from "@mui/joy";
 import { createClient } from "@/utils/supabase/client";
 import { useParams } from 'next/navigation'
 import NotificationService from '@/services/NotificationService'
+import useUserRole from '@/hooks/useUserRole';
+import { addGroceryForFriend } from '../actions';
 
 export default function AddGrocery() {
     const [grocery, setGrocery] = useState("");
@@ -13,8 +16,37 @@ export default function AddGrocery() {
     const [msg, setMsg] = useState("");
     const params = useParams()
     const dateInputRef = React.useRef(null);
+    const { role, loadings } = useUserRole();
 
-    const supabase = createClient()
+    // Add for friend state
+    const [showFriendModal, setShowFriendModal] = useState(false);
+    const [roomMembers, setRoomMembers] = useState([]);
+    const [selectedFriend, setSelectedFriend] = useState(null);
+    const [friendGrocery, setFriendGrocery] = useState("");
+    const [friendPrice, setFriendPrice] = useState("");
+    const [friendDate, setFriendDate] = useState("");
+    const [friendLoading, setFriendLoading] = useState(false);
+    const [friendMsg, setFriendMsg] = useState("");
+
+    const supabase = createClient();
+
+    // Fetch room members for admin
+    useEffect(() => {
+        if (!loadings && role === 'Admin') {
+            fetchRoomMembers();
+        }
+    }, [loadings, role]);
+
+    const fetchRoomMembers = async () => {
+        const { data: members, error } = await supabase
+            .from('Users')
+            .select('*')
+            .eq('room', params.room_id);
+
+        if (!error && members) {
+            setRoomMembers(members);
+        }
+    };
     const handleAdd = async () => {
         setMsg("");
         if (!grocery || !price) {
@@ -84,6 +116,48 @@ export default function AddGrocery() {
         if (dateInputRef.current) {
             dateInputRef.current.showPicker();
         }
+    };
+
+    const handleAddForFriend = async () => {
+        setFriendMsg("");
+
+        if (!selectedFriend) {
+            setFriendMsg("Please select a friend.");
+            return;
+        }
+
+        if (!friendGrocery || !friendPrice) {
+            setFriendMsg("Please fill all fields.");
+            return;
+        }
+
+        setFriendLoading(true);
+
+        const result = await addGroceryForFriend(
+            params.room_id,
+            selectedFriend.email,
+            friendGrocery,
+            friendPrice,
+            friendDate
+        );
+
+        if (result.success) {
+            setFriendMsg("✅ " + result.message);
+            setSelectedFriend(null);
+            setFriendGrocery("");
+            setFriendPrice("");
+            setFriendDate("");
+
+            // Close modal after 2 seconds
+            setTimeout(() => {
+                setShowFriendModal(false);
+                setFriendMsg("");
+            }, 2000);
+        } else {
+            setFriendMsg("❌ " + result.error);
+        }
+
+        setFriendLoading(false);
     };
 
     return(
@@ -182,8 +256,8 @@ export default function AddGrocery() {
                     {msg && (
                         <div
                             className={`text-center text-lg font-medium p-4 rounded-xl ${
-                                msg === "✅ Grocery added!" 
-                                    ? "text-green-700 bg-green-50 border border-green-200" 
+                                msg === "✅ Grocery added!"
+                                    ? "text-green-700 bg-green-50 border border-green-200"
                                     : "text-red-700 bg-red-50 border border-red-200"
                             }`}
                         >
@@ -191,7 +265,140 @@ export default function AddGrocery() {
                         </div>
                     )}
                 </div>
+
+                {/* Add for friend button - only visible to admins */}
+                {!loadings && role === 'Admin' && (
+                    <div className="mt-6 text-left">
+                        <p
+                            onClick={() => setShowFriendModal(true)}
+                            className="text-blue-600 underline cursor-pointer hover:text-blue-800 transition-colors"
+                            style={{ display: 'inline-block' }}
+                        >
+                            Add for your friend
+                        </p>
+                    </div>
+                )}
             </Paper>
+
+            {/* Add for Friend Modal */}
+            <Modal open={showFriendModal} onClose={() => setShowFriendModal(false)}>
+                <ModalDialog sx={{ minWidth: { xs: '90%', sm: 500 }, maxWidth: 600 }}>
+                    <ModalClose />
+                    <h3 className="text-2xl font-bold mb-4 text-gray-800">
+                        Add Grocery for Friend
+                    </h3>
+                    <div className="flex flex-col gap-4">
+                        {/* Friend Selection */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Select Friend
+                            </label>
+                            <Select
+                                placeholder="Choose a friend..."
+                                value={selectedFriend?.id}
+                                onChange={(e, newValue) => {
+                                    const friend = roomMembers.find(m => m.id === newValue);
+                                    setSelectedFriend(friend || null);
+                                }}
+                            >
+                                {roomMembers.map((member) => (
+                                    <Option key={member.id} value={member.id}>
+                                        <Stack direction="row" spacing={2} alignItems="center">
+                                            <Avatar
+                                                src={member.profile || '/default-profile.png'}
+                                                alt={member.name}
+                                                size="sm"
+                                            />
+                                            <Box>
+                                                <div className="font-medium">{member.name}</div>
+                                                <div className="text-xs text-gray-500">{member.email}</div>
+                                            </Box>
+                                        </Stack>
+                                    </Option>
+                                ))}
+                            </Select>
+                        </div>
+
+                        {/* Grocery Item */}
+                        <TextField
+                            label="Grocery Item"
+                            value={friendGrocery}
+                            onChange={e => setFriendGrocery(e.target.value)}
+                            variant="outlined"
+                            fullWidth
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                },
+                            }}
+                        />
+
+                        {/* Price */}
+                        <TextField
+                            label="Price ($)"
+                            value={friendPrice}
+                            onChange={e => setFriendPrice(e.target.value.replace(/[^-0-9.]/g, ""))}
+                            variant="outlined"
+                            type="number"
+                            inputProps={{ step: "0.01", min: "0" }}
+                            fullWidth
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                },
+                            }}
+                        />
+
+                        {/* Date */}
+                        <TextField
+                            label="Date (optional)"
+                            value={friendDate}
+                            onChange={e => setFriendDate(e.target.value)}
+                            variant="outlined"
+                            type="date"
+                            fullWidth
+                            helperText="Leave empty to use current date"
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '12px',
+                                },
+                            }}
+                        />
+
+                        {/* Add Button */}
+                        <Button
+                            variant="contained"
+                            onClick={handleAddForFriend}
+                            disabled={friendLoading}
+                            className="!py-3 !mt-2 !rounded-xl !text-base !font-semibold"
+                            sx={{
+                                background: friendLoading ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                '&:hover': {
+                                    background: friendLoading ? '#9ca3af' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                                },
+                            }}
+                        >
+                            {friendLoading ? "Adding..." : "Add Grocery"}
+                        </Button>
+
+                        {/* Message */}
+                        {friendMsg && (
+                            <div
+                                className={`text-center text-sm font-medium p-3 rounded-xl ${
+                                    friendMsg.startsWith("✅")
+                                        ? "text-green-700 bg-green-50 border border-green-200"
+                                        : "text-red-700 bg-red-50 border border-red-200"
+                                }`}
+                            >
+                                {friendMsg}
+                            </div>
+                        )}
+                    </div>
+                </ModalDialog>
+            </Modal>
         </div>
     )
 }
