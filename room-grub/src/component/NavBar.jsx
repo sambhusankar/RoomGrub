@@ -46,7 +46,7 @@ export default function NavBar({ page_name = 'ali', user, signOut }) {
 				<Menu placement="bottom-start" size="sm">
 					<MenuItem disabled>{user?.user_metadata?.name}</MenuItem>
 					<MenuItem onClick={handleSignOut} ><LogoutIcon />Logout</MenuItem>
-					<MenuItem onClick={() => router.push(`${room_id}/settings`)}><SettingsIcon />Settings</MenuItem>
+					<MenuItem onClick={() => router.push(`/${room_id}/settings`)}><SettingsIcon />Settings</MenuItem>
 				</Menu>
 			</Dropdown>}
 		</Sheet>
