@@ -24,9 +24,14 @@ export default function InvitePage() {
     .eq("email", email);
     console.log(existingUser)
     if(existingUser.length > 0){
-      if(existingUser[0].room){
-        setStatus("Your friend already in a room");
-      }else{
+      const user = existingUser[0];
+
+      // Case 1: User has a room (active member somewhere)
+      if(user.room){
+        setStatus("Your friend is already in another room");
+      }
+      // Case 2: User has no room (was removed or never joined)
+      else{
         const {error: Error } = await supabase
         .from("Users")
         .update({
@@ -34,14 +39,14 @@ export default function InvitePage() {
           "role": "Member"
         })
         .eq("email", email)
-        setStatus("Your friend added in your room")
-        
-        // Send notification to room members about new member joining
+        setStatus("Your friend added to your room")
+
+        // Send notification to room members about member joining
         try {
           await NotificationService.notifyMemberJoined(
             parseInt(param.room_id),
-            existingUser[0].id,
-            existingUser[0].name || email
+            user.id,
+            user.name || email
           );
           console.log('Member join notification sent successfully');
         } catch (notificationError) {

@@ -1,10 +1,11 @@
 'use client'
 import React, { useState } from 'react';
-import { Box, Typography, Button, Card, CardContent, Stack, Chip, IconButton, Modal, ModalDialog, ModalClose } from '@mui/joy';
+import { Box, Typography, Button, Card, CardContent, Stack, Chip, IconButton, Modal, ModalDialog, ModalClose, Divider } from '@mui/joy';
 import { useRouter } from 'next/navigation';
 import useUserRole from '@/hooks/useUserRole';
-import { updateMemberRole } from '../actions';
+import { updateMemberRole, removeMember } from '../actions';
 import EditIcon from '@mui/icons-material/Edit';
+import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 
 export default function ListMembers({ members, roomId }) {
     const router = useRouter();
@@ -56,6 +57,38 @@ export default function ListMembers({ members, roomId }) {
             }
         } catch (error) {
             alert(`Failed to update role: ${error.message}`);
+        } finally {
+            setUpdating({ ...updating, [memberEmail]: false });
+        }
+    };
+
+    const handleRemoveMember = async () => {
+        if (!editModal.member) return;
+
+        const memberEmail = editModal.member.email;
+        const memberName = editModal.member.name;
+
+        const confirmMessage = `Are you sure you want to remove ${memberName} from this room?\n\nThey will lose access to the room, but their expense history will be preserved. You can re-invite them later if needed.`;
+
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        setUpdating({ ...updating, [memberEmail]: true });
+
+        try {
+            const result = await removeMember(roomId, memberEmail);
+
+            if (result.success) {
+                alert(result.message);
+                handleCloseEditModal();
+                // Refresh the page to show updated data
+                router.refresh();
+            } else {
+                alert(`Error: ${result.error}`);
+            }
+        } catch (error) {
+            alert(`Failed to remove member: ${error.message}`);
         } finally {
             setUpdating({ ...updating, [memberEmail]: false });
         }
@@ -222,12 +255,25 @@ export default function ListMembers({ members, roomId }) {
                                 </Button>
                                 <Button
                                     variant="solid"
-                                    color="danger"
+                                    color="warning"
                                     onClick={() => handleRoleChange('Member')}
                                     disabled={editModal.member.role === 'Member' || updating[editModal.member.email]}
                                     loading={updating[editModal.member.email]}
                                 >
                                     Demote to Member
+                                </Button>
+
+                                <Divider sx={{ my: 1 }} />
+
+                                <Button
+                                    variant="solid"
+                                    color="danger"
+                                    onClick={handleRemoveMember}
+                                    disabled={updating[editModal.member.email]}
+                                    loading={updating[editModal.member.email]}
+                                    startDecorator={!updating[editModal.member.email] && <PersonRemoveIcon />}
+                                >
+                                    Remove from Room
                                 </Button>
                             </Stack>
                         </Box>
