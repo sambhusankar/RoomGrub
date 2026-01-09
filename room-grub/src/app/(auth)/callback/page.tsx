@@ -55,6 +55,43 @@ export default function AuthCallback() {
           return router.push('/login?message=DB error')
         }else{
             console.log("User inserrted successfully")
+
+            // If user joined via invite, increment room members count and delete invite
+            if (inviteData.length != 0) {
+              const roomId = inviteData[0].room;
+
+              // Increment room members count
+              const { data: roomData, error: roomFetchError } = await supabase
+                .from('Rooms')
+                .select('members')
+                .eq('id', roomId)
+                .single()
+
+              if (!roomFetchError && roomData) {
+                const { error: roomUpdateError } = await supabase
+                  .from('Rooms')
+                  .update({
+                    members: roomData.members + 1
+                  })
+                  .eq('id', roomId)
+
+                if (roomUpdateError) {
+                  console.error('Error updating room members count:', roomUpdateError)
+                }
+              }
+
+              // Delete the invite entry
+              const { error: deleteError } = await supabase
+                .from("Invite")
+                .delete()
+                .eq('email', user.email)
+
+              if (deleteError) {
+                console.error('Error deleting invite:', deleteError)
+              } else {
+                console.log("Invite entry deleted successfully")
+              }
+            }
         }
       }
 
