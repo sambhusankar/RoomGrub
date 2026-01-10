@@ -5,6 +5,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { useRouter, useParams } from 'next/navigation';
+import Sidebar from './Sidebar';
 
 export default function NavBar({ page_name = 'ali', user, signOut }) {
 	const {room_id} = useParams()
@@ -24,18 +25,21 @@ export default function NavBar({ page_name = 'ali', user, signOut }) {
 				backgroundColor: 'transparent',
 			}}
 		>
-			<Typography
-				level="h3"
-				onClick={() => router.push(`/${room_id}`)}
-				sx={{
-					cursor: 'pointer',
-					'&:hover': {
-						opacity: 0.8,
-					},
-				}}
-			>
-				RoomGrub
-			</Typography>
+			<Box sx={{ display: 'flex', alignItems: 'center' }}>
+				{user && <Sidebar user={user} signOut={signOut} />}
+				<Typography
+					level="h3"
+					onClick={() => router.push(`/${room_id}`)}
+					sx={{
+						cursor: 'pointer',
+						'&:hover': {
+							opacity: 0.8,
+						},
+					}}
+				>
+					RoomGrub
+				</Typography>
+			</Box>
 			{user && <Dropdown >
 				<MenuButton
 					slots={{ root: IconButton }}
