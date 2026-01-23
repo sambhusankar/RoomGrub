@@ -1,28 +1,24 @@
 'server-only'
 
-import { auth } from '@/auth'
+import { auth, getUserRoom } from '@/auth'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/utils/supabase/server'
+
 export const validRoom = async ({ params }) => {
-  const session = await auth()
-  const roomId = await params.room_id
+  const session = await auth() // Uses cached auth
+  const roomId = (await params).room_id
 
   const PUBLIC_FILES = [
-  'manifest.webmanifest',
-  'favicon.ico',
-  'robots.txt',
-  'sitemap.xml',
-]
+    'manifest.webmanifest',
+    'favicon.ico',
+    'robots.txt',
+    'sitemap.xml',
+  ]
   if (PUBLIC_FILES.includes(roomId)) {
     return null // Allow access to public files
   }
   if (session) {
-    const supabase = await createClient()
-    const { data: room, error } = await supabase
-      .from('Users')
-      .select('room')
-      .eq('email', session.user.email)
-      .single()
+    // Use cached getUserRoom instead of separate query
+    const { data: room, error } = await getUserRoom(session.user.email)
 
     if (error || !room) {
       console.log('Error fetching room:', error)
@@ -32,6 +28,9 @@ export const validRoom = async ({ params }) => {
     if (room.room != roomId) {
       redirect('/login')
     }
+
+    // Return user data so it can be reused by caller
+    return { room: room.room, role: room.role }
   }
 
   return null
