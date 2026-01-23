@@ -1,7 +1,9 @@
 'server-only'
+import { cache } from 'react'
 import { createClient } from '@/utils/supabase/server'
 
-export const auth = async () => {
+// React's cache() ensures this only runs once per request
+export const auth = cache(async () => {
     const supabase = await createClient()
     const { data: { session }, error } = await supabase.auth.getSession()
     if (error) {
@@ -9,12 +11,22 @@ export const auth = async () => {
         return null
     }
     if (!session) {
-        console.log("No session found")
         return null
     }
-    
+
     return session
-}
+})
+
+// Cache user room data to avoid duplicate DB queries
+export const getUserRoom = cache(async (email) => {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('Users')
+        .select('room, role')
+        .eq('email', email)
+        .single()
+    return { data, error }
+})
 
 export const signOut = async () => {
     const supabase = await createClient()

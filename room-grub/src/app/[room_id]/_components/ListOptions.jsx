@@ -8,7 +8,6 @@ import ListItem from '@mui/joy/ListItem';
 import Button from '@mui/joy/Button';
 import Typography from '@mui/joy/Typography';
 import Box from '@mui/joy/Box';
-import useUserRole from '@/hooks/useUserRole';
 
 import {
   Group,
@@ -53,10 +52,9 @@ const navItems = [
   },
 ];
 
-export default function Page() {
+export default function ListOptions({ userRole }) {
   const { room_id } = useParams();
   const router = useRouter();
-  const { role, loadings } = useUserRole();
 
   const navigateTo = (path) => {
     router.push(`${room_id}${path}`);
@@ -130,7 +128,7 @@ export default function Page() {
               </ListItem>
             ))}
 
-            {!loadings && role === 'Admin' && (
+            {userRole === 'Admin' && (
               <ListItem sx={{ alignItems: 'stretch', padding: 0 }}>
                 <Button
                   fullWidth
