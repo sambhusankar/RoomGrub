@@ -1,4 +1,3 @@
-import { SwapCalls } from '@mui/icons-material';
 import withPWA from '@ducanh2912/next-pwa';
 
 const nextConfig = {
@@ -6,6 +5,33 @@ const nextConfig = {
   distDir: '.next',
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // Allow Google profile images
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+    ],
+  },
+  // Tree-shake MUI and date-fns imports
+  modularizeImports: {
+    '@mui/joy': {
+      transform: '@mui/joy/{{member}}',
+    },
+    '@mui/material': {
+      transform: '@mui/material/{{member}}',
+    },
+    '@mui/icons-material': {
+      transform: '@mui/icons-material/{{member}}',
+    },
+    'date-fns': {
+      transform: 'date-fns/{{member}}',
+    },
+  },
+  experimental: {
+    optimizePackageImports: ['@mui/joy', '@mui/material', '@mui/icons-material', 'date-fns'],
   },
 };
 
