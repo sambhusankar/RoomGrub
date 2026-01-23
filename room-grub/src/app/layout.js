@@ -1,5 +1,4 @@
 import "./globals.css";
-import NavBarContainer from '@/component/NavBarContainer';
 import localFont from 'next/font/local';
 
 const geistSans = localFont({ src: "./fonts/GeistVF.woff", variable: "--font-geist-sans", weight: "100 900" });
@@ -29,10 +28,10 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{
           background: "linear-gradient(135deg, #f0f0f0 0%, #e0e7ff 100%)",
-          height: "100vh"
+          minHeight: "100vh"
         }}
       >
-        <NavBarContainer>{children}</NavBarContainer>
+        {children}
       </body>
     </html>
   );
