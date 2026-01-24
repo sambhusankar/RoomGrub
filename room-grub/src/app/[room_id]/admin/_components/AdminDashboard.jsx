@@ -29,7 +29,7 @@ export default function AdminDashboard() {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            
+
             // Get all members in the room
             const { data: membersData, error: membersError } = await supabase
                 .from('Users')
@@ -39,38 +39,63 @@ export default function AdminDashboard() {
             if (membersError) throw membersError;
             setMembers(membersData);
 
-            // Calculate stats for each member
-            const stats = await Promise.all(membersData.map(async (member) => {
-                // Get member's purchases
-                const { data: purchases } = await supabase
+            // PERFORMANCE FIX: Fetch ALL purchases and payments for the room in 2 queries
+            // instead of 2 queries per member (N+1 problem)
+            const [purchasesResult, paymentsResult] = await Promise.all([
+                supabase
                     .from('Spendings')
                     .select('*')
-                    .eq('user', member.email)
-                    .eq('room', params.room_id);
-
-                // Get member's payments
-                const { data: payments } = await supabase
+                    .eq('room', params.room_id),
+                supabase
                     .from('balance')
                     .select('*')
-                    .eq('user', member.email)
-                    .eq('room', params.room_id);
+                    .eq('room', params.room_id)
+            ]);
 
-                const totalPurchases = (purchases || []).reduce((sum, p) => sum + parseFloat(p.money), 0);
-                
-                const purchaseSettlements = (payments || []).filter(p => 
+            const allPurchases = purchasesResult.data || [];
+            const allPayments = paymentsResult.data || [];
+
+            // Group data by user email using Maps for O(1) lookups
+            const purchasesByUser = new Map();
+            const paymentsByUser = new Map();
+
+            allPurchases.forEach(purchase => {
+                const email = purchase.user;
+                if (!purchasesByUser.has(email)) {
+                    purchasesByUser.set(email, []);
+                }
+                purchasesByUser.get(email).push(purchase);
+            });
+
+            allPayments.forEach(payment => {
+                const email = payment.user;
+                if (!paymentsByUser.has(email)) {
+                    paymentsByUser.set(email, []);
+                }
+                paymentsByUser.get(email).push(payment);
+            });
+
+            // Calculate stats for each member using pre-fetched data
+            const stats = membersData.map((member) => {
+                const purchases = purchasesByUser.get(member.email) || [];
+                const payments = paymentsByUser.get(member.email) || [];
+
+                const totalPurchases = purchases.reduce((sum, p) => sum + parseFloat(p.money), 0);
+
+                const purchaseSettlements = payments.filter(p =>
                     p.status === 'debit'
                 );
-                const monthlyContributions = (payments || []).filter(p => 
+                const monthlyContributions = payments.filter(p =>
                     p.status === 'credit'
                 );
-                
+
                 const totalReceived = purchaseSettlements.reduce((sum, p) => sum + parseFloat(p.amount), 0);
                 const totalContributed = monthlyContributions.reduce((sum, p) => sum + parseFloat(p.amount), 0);
                 const pendingAmount = totalPurchases + totalReceived;
 
                 // Get last payment date
-                const lastPayment = (payments || []).length > 0 ? 
-                    new Date(Math.max(...(payments || []).map(p => new Date(p.created_at)))).toLocaleDateString('en-IN') : 
+                const lastPayment = payments.length > 0 ?
+                    new Date(Math.max(...payments.map(p => new Date(p.created_at)))).toLocaleDateString('en-IN') :
                     'Never';
 
                 return {
@@ -82,7 +107,7 @@ export default function AdminDashboard() {
                     lastPayment,
                     status: pendingAmount > 0 ? 'pending' : 'settled'
                 };
-            }));
+            });
 
             setMemberStats(stats);
 
