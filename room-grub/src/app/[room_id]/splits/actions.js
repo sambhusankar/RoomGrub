@@ -87,25 +87,54 @@ export async function settleAllPending(roomId, memberBalances) {
         // This prevents client-side manipulation of amounts
         const verifiedSettlements = [];
 
-        for (const mb of pendingMembers) {
-            // Fetch actual expenses for this member
-            const { data: memberExpenses } = await supabase
-                .from('Spendings')
-                .select('money')
-                .eq('user', mb.member.email)
-                .eq('room', roomId);
+        // PERFORMANCE FIX: Batch fetch all expenses and payments in 2 queries
+        // instead of 2 queries per member (N+1 problem)
+        const memberEmails = pendingMembers.map(mb => mb.member.email);
 
-            // Fetch actual settlements for this member (debit transactions)
-            const { data: memberPayments } = await supabase
+        const [expensesResult, paymentsResult] = await Promise.all([
+            supabase
+                .from('Spendings')
+                .select('money, user')
+                .in('user', memberEmails)
+                .eq('room', roomId),
+            supabase
                 .from('balance')
-                .select('amount, status')
-                .eq('user', mb.member.email)
+                .select('amount, status, user')
+                .in('user', memberEmails)
                 .eq('room', roomId)
-                .eq('status', 'debit');
+                .eq('status', 'debit')
+        ]);
+
+        const allExpenses = expensesResult.data || [];
+        const allPayments = paymentsResult.data || [];
+
+        // Group by user email using Maps for O(1) lookups
+        const expensesByUser = new Map();
+        const paymentsByUser = new Map();
+
+        allExpenses.forEach(expense => {
+            const email = expense.user;
+            if (!expensesByUser.has(email)) {
+                expensesByUser.set(email, []);
+            }
+            expensesByUser.get(email).push(expense);
+        });
+
+        allPayments.forEach(payment => {
+            const email = payment.user;
+            if (!paymentsByUser.has(email)) {
+                paymentsByUser.set(email, []);
+            }
+            paymentsByUser.get(email).push(payment);
+        });
+
+        for (const mb of pendingMembers) {
+            const memberExpenses = expensesByUser.get(mb.member.email) || [];
+            const memberPayments = paymentsByUser.get(mb.member.email) || [];
 
             // Calculate actual pending amount
-            const totalExpenses = (memberExpenses || []).reduce((sum, e) => sum + parseFloat(e.money || 0), 0);
-            const totalSettlements = (memberPayments || []).reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+            const totalExpenses = memberExpenses.reduce((sum, e) => sum + parseFloat(e.money || 0), 0);
+            const totalSettlements = memberPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
             const actualPending = totalExpenses + totalSettlements; // settlements are negative
 
             // Verify pending amount matches (allow 0.01 difference for rounding)
