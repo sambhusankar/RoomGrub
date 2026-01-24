@@ -30,11 +30,14 @@ export default async function PaymentsPage({ params }) {
     if (usersError) {
         console.error('Error fetching users:', usersError);
     }
-    
-    // Merge the data
+
+    // PERFORMANCE FIX: Use Map for O(1) lookups instead of O(n) .find()
+    const userMap = new Map(usersData?.map(user => [user.email, user]) || []);
+
+    // Merge the data with O(1) lookup per payment
     const paymentsWithUsers = paymentsData?.map(payment => ({
         ...payment,
-        Users: usersData?.find(user => user.email === payment.user)
+        Users: userMap.get(payment.user)
     }));
     
     const payments = paymentsWithUsers || [];
