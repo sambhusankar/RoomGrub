@@ -29,10 +29,13 @@ export default async function ExpensesPage({ params }) {
 
             if (usersError) throw usersError;
 
-            // Merge the data
+            // PERFORMANCE FIX: Use Map for O(1) lookups instead of O(n) .find()
+            const userMap = new Map(usersData?.map(user => [user.email, user]) || []);
+
+            // Merge the data with O(1) lookup per expense
             const expensesWithUsers = expensesData?.map(expense => ({
                 ...expense,
-                Users: usersData?.find(user => user.email === expense.user)
+                Users: userMap.get(expense.user)
             }));
 
             return expensesWithUsers || [];
