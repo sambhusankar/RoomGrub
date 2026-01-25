@@ -35,11 +35,12 @@ export default function ExpenseHistory({ expenses }) {
         const groups = {};
         expenses.forEach(expense => {
             const date = new Date(expense.created_at);
-            const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
             const monthName = date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-            
+
             if (!groups[monthKey]) {
                 groups[monthKey] = {
+                    monthKey, // Store key for O(1) sorting
                     monthName,
                     expenses: [],
                     total: 0
@@ -48,12 +49,10 @@ export default function ExpenseHistory({ expenses }) {
             groups[monthKey].expenses.push(expense);
             groups[monthKey].total += parseFloat(expense.money);
         });
-        
-        return Object.values(groups).sort((a, b) => {
-            const [yearA, monthA] = Object.keys(groups).find(key => groups[key] === a).split('-');
-            const [yearB, monthB] = Object.keys(groups).find(key => groups[key] === b).split('-');
-            return new Date(yearB, monthB) - new Date(yearA, monthA);
-        });
+
+        // PERFORMANCE FIX: Sort by stored monthKey directly (O(n log n))
+        // instead of reverse lookup with .find() (was O(n² log n))
+        return Object.values(groups).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
     };
 
     const groupedExpenses = groupExpensesByMonth(filteredExpenses);
