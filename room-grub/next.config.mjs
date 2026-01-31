@@ -67,6 +67,8 @@ export default withPWA({
             /manifest$/,
             /\.json$/,
             /^manifest.*\.js$/,
-        ]
+        ],
+        // Increase size limit for large MUI chunks
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
     }
 })(nextConfig); 
