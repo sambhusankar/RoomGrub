@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
+const ROLE_CACHE_KEY = 'user_role';
+
 export default function useUserRole() {
-  const [role, setRole] = useState(null);
+  const [role, setRole] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(ROLE_CACHE_KEY);
+    }
+    return null;
+  });
   const [loadings, setLoading] = useState(true);
   const supabase = createClient()
 
@@ -14,22 +21,21 @@ export default function useUserRole() {
       } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        setRole(null);
         setLoading(false);
         return;
       }
 
       const { data, error } = await supabase
-        .from('Users') // your table name
+        .from('Users')
         .select('role')
         .eq('email', user.email)
         .single();
 
       if (error) {
         console.error('Error fetching role:', error.message);
-        setRole(null);
       } else {
         setRole(data.role);
+        localStorage.setItem(ROLE_CACHE_KEY, data.role);
       }
 
       setLoading(false);

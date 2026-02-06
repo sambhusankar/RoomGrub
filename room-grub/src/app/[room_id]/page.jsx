@@ -2,6 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { useOfflineAuth } from '@/hooks/useOfflineAuth';
+import useUserRole from '@/hooks/useUserRole';
 import ListOptions from './_components/ListOptions';
 import WelCome from './_components/WelCome';
 import LazyNotificationPrompt from './_components/LazyNotificationPrompt';
@@ -11,6 +12,7 @@ import CircularProgress from '@mui/joy/CircularProgress';
 export default function Page() {
   const params = useParams();
   const { session, loading, isAuthenticated } = useOfflineAuth();
+  const { role } = useUserRole();
 
   // Show loading state while checking auth
   if (loading) {
@@ -37,7 +39,7 @@ export default function Page() {
     <>
       <WelCome session={session} />
       <LazyNotificationPrompt />
-      <ListOptions params={params} />
+      <ListOptions params={params} userRole={role} />
     </>
   );
 }
