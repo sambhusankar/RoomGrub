@@ -5,10 +5,9 @@ import { Box, Modal, ModalDialog, ModalClose, Avatar, Stack, Select, Option } fr
 import { createClient } from "@/utils/supabase/client";
 import { useParams } from 'next/navigation'
 import NotificationService from '@/services/NotificationService'
-import useUserRole from '@/hooks/useUserRole';
 import { addGroceryForFriend } from '../actions';
 
-export default function AddGrocery() {
+export default function AddGrocery({ userRole }) {
     const [grocery, setGrocery] = useState("");
     const [price, setPrice] = useState("");
     const [date, setDate] = useState("");
@@ -16,7 +15,6 @@ export default function AddGrocery() {
     const [msg, setMsg] = useState("");
     const params = useParams()
     const dateInputRef = React.useRef(null);
-    const { role, loadings } = useUserRole();
 
     // Add for friend state
     const [showFriendModal, setShowFriendModal] = useState(false);
@@ -32,10 +30,10 @@ export default function AddGrocery() {
 
     // Fetch room members for admin
     useEffect(() => {
-        if (!loadings && role === 'Admin') {
+        if (userRole === 'Admin') {
             fetchRoomMembers();
         }
-    }, [loadings, role]);
+    }, [userRole]);
 
     const fetchRoomMembers = async () => {
         const { data: members, error } = await supabase
@@ -267,7 +265,7 @@ export default function AddGrocery() {
                 </div>
 
                 {/* Add for friend button - only visible to admins */}
-                {!loadings && role === 'Admin' && (
+                {userRole === 'Admin' && (
                     <div className="mt-6 text-left">
                         <p
                             onClick={() => setShowFriendModal(true)}

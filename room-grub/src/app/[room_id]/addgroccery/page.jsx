@@ -1,13 +1,33 @@
-'use server'
-import { LoginRequired } from "@/policies/LoginRequired";
-import { validRoom } from "@/policies/validRoom";
-import AddGrocery from './_components/AddGroccery'
+'use client';
 
-export default async function page({ params }) {
-  const session = await LoginRequired();
-  await validRoom({ params });
+import { useOfflineAuth } from '@/hooks/useOfflineAuth';
+import useUserRole from '@/hooks/useUserRole';
+import AddGrocery from './_components/AddGroccery';
+import Box from '@mui/joy/Box';
+import CircularProgress from '@mui/joy/CircularProgress';
 
-  return (
-      <AddGrocery />
-  );
+export default function Page() {
+  const { loading, isAuthenticated } = useOfflineAuth();
+  const { role } = useUserRole();
+
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '50vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return <AddGrocery userRole={role} />;
 }

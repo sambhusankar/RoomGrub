@@ -274,6 +274,29 @@ if (workbox) {
         new workbox.strategies.NetworkOnly()
     );
 
+    // =========================================
+    // ADD GROCERY PAGE - CacheFirst (static form, offline after first visit)
+    // =========================================
+    workbox.routing.registerRoute(
+        ({ url }) => {
+            const segments = url.pathname.split('/').filter(Boolean);
+            return segments.length === 2 && segments[1] === 'addgroccery';
+        },
+        new workbox.strategies.CacheFirst({
+            cacheName: 'addgroccery-page',
+            plugins: [
+                new workbox.cacheableResponse.CacheableResponsePlugin({
+                    statuses: [0, 200],
+                }),
+                new workbox.expiration.ExpirationPlugin({
+                    maxEntries: 10,
+                    maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                }),
+            ],
+        }),
+        'GET'
+    );
+
     // Dynamic room sub-pages (expenses, payments, balance, etc.)
     // These require fresh DB data and should not be cached
     workbox.routing.registerRoute(
