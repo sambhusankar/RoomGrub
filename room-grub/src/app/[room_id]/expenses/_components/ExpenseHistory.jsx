@@ -1,34 +1,32 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { Card, CardContent, Typography } from '@mui/joy';
-import { Box, Select, Option, Input } from '@mui/joy';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Typography } from '@mui/joy';
+import { Box, CircularProgress } from '@mui/joy';
 import FilterPanel from './FilterPanel';
 import ExpenseCard from './ExpenseCard';
+import { fetchPaginatedExpenses } from '../actions';
 
-export default function ExpenseHistory({ expenses }) {
-    const param = useParams();
+export default function ExpenseHistory({ initialExpenses, initialCursor, initialHasMore, roomId, userMap }) {
+    const [expenses, setExpenses] = useState(initialExpenses);
+    const [cursor, setCursor] = useState(initialCursor);
+    const [hasMore, setHasMore] = useState(initialHasMore);
+    const [loading, setLoading] = useState(false);
+
     const [filter, setFilter] = useState('');
     const [dateRange, setDateRange] = useState({ from: '', to: '' });
     const [userFilter, setUserFilter] = useState('');
 
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('en-IN');
+    const observerTarget = useRef(null);
+
+    const formatAmount = (amount) => {
+        return new Intl.NumberFormat('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(amount);
     };
-
-    // Get unique users for dropdown
-    const uniqueUsers = Array.from(new Set(expenses.map(e => e.Users?.name || e.user))).filter(Boolean);
-
-    // Filtered expenses
-    const filteredExpenses = expenses.filter(expense => {
-        const matchesCategory = expense?.material?.toLowerCase().includes(filter.toLowerCase());
-        const matchesUser = userFilter ? (expense?.Users?.name || expense?.user) === userFilter : true;
-        const expenseDate = expense?.created_at?.substring(0, 10);
-        const matchesFrom = dateRange.from ? expenseDate >= dateRange.from : true;
-        const matchesTo = dateRange.to ? expenseDate <= dateRange.to : true;
-        return matchesCategory && matchesUser && matchesFrom && matchesTo;
-    });
 
     // Group expenses by month
     const groupExpensesByMonth = (expenses) => {
@@ -40,7 +38,7 @@ export default function ExpenseHistory({ expenses }) {
 
             if (!groups[monthKey]) {
                 groups[monthKey] = {
-                    monthKey, // Store key for O(1) sorting
+                    monthKey,
                     monthName,
                     expenses: [],
                     total: 0
@@ -50,25 +48,97 @@ export default function ExpenseHistory({ expenses }) {
             groups[monthKey].total += parseFloat(expense.money);
         });
 
-        // PERFORMANCE FIX: Sort by stored monthKey directly (O(n log n))
-        // instead of reverse lookup with .find() (was O(n² log n))
         return Object.values(groups).sort((a, b) => b.monthKey.localeCompare(a.monthKey));
     };
 
-    const groupedExpenses = groupExpensesByMonth(filteredExpenses);
+    const groupedExpenses = groupExpensesByMonth(expenses);
 
-    const formatAmount = (amount) => {
-        return new Intl.NumberFormat('en-IN', {
-            style: 'currency',
-            currency: 'INR',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0,
-        }).format(amount);
-    };
+    // Load more expenses (next page)
+    const loadMore = useCallback(async () => {
+        if (loading || !hasMore) return;
+
+        setLoading(true);
+        const result = await fetchPaginatedExpenses({
+            roomId,
+            cursor,
+            limit: 20,
+            filters: {
+                textSearch: filter,
+                user: userFilter,
+                dateFrom: dateRange.from,
+                dateTo: dateRange.to,
+            },
+        });
+
+        if (result.success) {
+            setExpenses(prev => [...prev, ...result.expenses]);
+            setCursor(result.nextCursor);
+            setHasMore(result.hasMore);
+        }
+        setLoading(false);
+    }, [loading, hasMore, cursor, roomId, filter, userFilter, dateRange]);
+
+    // Fetch fresh results when filters change
+    useEffect(() => {
+        const debounceTimer = setTimeout(async () => {
+            // Skip on initial render (no filters applied)
+            if (!filter && !userFilter && !dateRange.from && !dateRange.to) {
+                setExpenses(initialExpenses);
+                setCursor(initialCursor);
+                setHasMore(initialHasMore);
+                return;
+            }
+
+            setLoading(true);
+            const result = await fetchPaginatedExpenses({
+                roomId,
+                cursor: null,
+                limit: 20,
+                filters: {
+                    textSearch: filter,
+                    user: userFilter,
+                    dateFrom: dateRange.from,
+                    dateTo: dateRange.to,
+                },
+            });
+
+            if (result.success) {
+                setExpenses(result.expenses);
+                setCursor(result.nextCursor);
+                setHasMore(result.hasMore);
+            }
+            setLoading(false);
+        }, 300);
+
+        return () => clearTimeout(debounceTimer);
+    }, [filter, userFilter, dateRange, roomId]);
+
+    // Intersection Observer for infinite scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading) {
+                    loadMore();
+                }
+            },
+            { threshold: 0.5 }
+        );
+
+        const currentTarget = observerTarget.current;
+        if (currentTarget) {
+            observer.observe(currentTarget);
+        }
+
+        return () => {
+            if (currentTarget) {
+                observer.unobserve(currentTarget);
+            }
+        };
+    }, [hasMore, loading, loadMore]);
 
     return (
-        <Box sx={{ 
-            bgcolor: '#f8f9fa', 
+        <Box sx={{
+            bgcolor: '#f8f9fa',
             minHeight: '100vh',
             pt: 2,
         }}>
@@ -80,13 +150,13 @@ export default function ExpenseHistory({ expenses }) {
                     setUserFilter={setUserFilter}
                     dateRange={dateRange}
                     setDateRange={setDateRange}
-                    uniqueUsers={uniqueUsers}
+                    userMap={userMap}
                 />
             </Box>
 
-            {filteredExpenses.length === 0 ? (
-                <Box sx={{ 
-                    textAlign: 'center', 
+            {expenses.length === 0 && !loading ? (
+                <Box sx={{
+                    textAlign: 'center',
                     mt: 8,
                     py: 6,
                     mx: 2,
@@ -94,7 +164,7 @@ export default function ExpenseHistory({ expenses }) {
                     borderRadius: '16px',
                     border: '1px solid rgba(0,0,0,0.06)',
                 }}>
-                    <Box sx={{ 
+                    <Box sx={{
                         width: 60,
                         height: 60,
                         borderRadius: '50%',
@@ -117,73 +187,94 @@ export default function ExpenseHistory({ expenses }) {
                     </Typography>
                 </Box>
             ) : (
-                groupedExpenses.map((group) => (
-                    <Box key={group.monthName} sx={{ mb: 3 }}>
-                        {/* Month Header */}
-                        <Box sx={{ 
-                            px: 2,
-                            py: 2,
-                            bgcolor: 'background.surface',
-                            borderBottom: '1px solid rgba(0,0,0,0.06)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        }}>
-                            <Typography 
-                                level="title-md" 
-                                sx={{ 
-                                    fontWeight: 600,
-                                    color: 'text.primary',
-                                }}
-                            >
-                                {group.monthName}
-                            </Typography>
-                            <Typography 
-                                level="title-sm" 
-                                sx={{ 
-                                    fontWeight: 700,
-                                    color: 'text.primary',
-                                }}
-                            >
-                                {formatAmount(group.total)}
-                            </Typography>
-                        </Box>
+                <>
+                    {groupedExpenses.map((group) => (
+                        <Box key={group.monthKey} sx={{ mb: 3 }}>
+                            {/* Month Header */}
+                            <Box sx={{
+                                px: 2,
+                                py: 2,
+                                bgcolor: 'background.surface',
+                                borderBottom: '1px solid rgba(0,0,0,0.06)',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                            }}>
+                                <Typography
+                                    level="title-md"
+                                    sx={{
+                                        fontWeight: 600,
+                                        color: 'text.primary',
+                                    }}
+                                >
+                                    {group.monthName}
+                                </Typography>
+                                <Typography
+                                    level="title-sm"
+                                    sx={{
+                                        fontWeight: 700,
+                                        color: 'text.primary',
+                                    }}
+                                >
+                                    {formatAmount(group.total)}
+                                </Typography>
+                            </Box>
 
-                        {/* Month's Expenses */}
-                        <Box sx={{ bgcolor: 'background.surface' }}>
-                            {group.expenses.map((expense, index) => (
-                                <Box key={expense.id}>
-                                    <ExpenseCard
-                                        user={expense.Users?.name || expense.user || 'Unknown User'}
-                                        amount={parseFloat(expense.money)}
-                                        date={expense.created_at}
-                                        material={expense.material}
-                                        userProfile={expense.Users?.profile}
-                                        sx={{ 
-                                            mx: 0,
-                                            my: 0,
-                                            boxShadow: 'none',
-                                            border: 'none',
-                                            bgcolor: 'transparent',
-                                            borderRadius: 0,
-                                            '&:hover': {
-                                                bgcolor: 'background.level1',
-                                            },
-                                        }}
-                                    />
-                                    {index < group.expenses.length - 1 && (
-                                        <Box sx={{ 
-                                            height: 1, 
-                                            bgcolor: 'divider',
-                                            mx: 2,
-                                            opacity: 0.3,
-                                        }} />
-                                    )}
-                                </Box>
-                            ))}
+                            {/* Month's Expenses */}
+                            <Box sx={{ bgcolor: 'background.surface' }}>
+                                {group.expenses.map((expense, index) => (
+                                    <Box key={expense.id}>
+                                        <ExpenseCard
+                                            user={expense.Users?.name || expense.user || 'Unknown User'}
+                                            amount={parseFloat(expense.money)}
+                                            date={expense.created_at}
+                                            material={expense.material}
+                                            userProfile={expense.Users?.profile}
+                                            sx={{
+                                                mx: 0,
+                                                my: 0,
+                                                boxShadow: 'none',
+                                                border: 'none',
+                                                bgcolor: 'transparent',
+                                                borderRadius: 0,
+                                                '&:hover': {
+                                                    bgcolor: 'background.level1',
+                                                },
+                                            }}
+                                        />
+                                        {index < group.expenses.length - 1 && (
+                                            <Box sx={{
+                                                height: 1,
+                                                bgcolor: 'divider',
+                                                mx: 2,
+                                                opacity: 0.3,
+                                            }} />
+                                        )}
+                                    </Box>
+                                ))}
+                            </Box>
                         </Box>
-                    </Box>
-                ))
+                    ))}
+
+                    {/* Loading spinner */}
+                    {loading && (
+                        <Box sx={{ textAlign: 'center', py: 3 }}>
+                            <CircularProgress size="sm" />
+                        </Box>
+                    )}
+
+                    {/* Scroll sentinel for Intersection Observer */}
+                    {hasMore && <div ref={observerTarget} style={{ height: 20 }} />}
+
+                    {/* End of list indicator */}
+                    {!hasMore && expenses.length > 0 && (
+                        <Box sx={{ textAlign: 'center', py: 3 }}>
+                            <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
+                                No more expenses
+                            </Typography>
+                        </Box>
+                    )}
+                </>
             )}
         </Box>
     );

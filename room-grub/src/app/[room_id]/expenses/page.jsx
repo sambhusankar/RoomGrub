@@ -2,6 +2,7 @@ import ExpenseHistory from './_components/ExpenseHistory';
 import { LoginRequired } from '@/policies/LoginRequired';
 import { validRoom } from '@/policies/validRoom';
 import { createClient } from '@/utils/supabase/client';
+import { fetchPaginatedExpenses } from './actions';
 
 export default async function ExpensesPage({ params }) {
     const user = await LoginRequired();
@@ -9,42 +10,34 @@ export default async function ExpensesPage({ params }) {
     const param = await params;
     const supabase = createClient();
 
-    const fetchExpenses = async () => {
-        try {
-            // First get all expenses
-            const { data: expensesData, error: fetchError } = await supabase
-                .from("Spendings")
-                .select("*")
-                .eq("room", param.room_id)
-                .order("created_at", { ascending: false });
+    // Fetch first page of expenses
+    const initialData = await fetchPaginatedExpenses({
+        roomId: param.room_id,
+        cursor: null,
+        limit: 20,
+        filters: {},
+    });
 
-            if (fetchError) throw fetchError;
+    // Fetch all room members for the user filter dropdown
+    const { data: roomMembers } = await supabase
+        .from('Users')
+        .select('email, name')
+        .eq('room', param.room_id);
 
-            // Then get user data for each unique email
-            const uniqueEmails = [...new Set(expensesData?.map(e => e.user))].filter(Boolean);
-            const { data: usersData, error: usersError } = await supabase
-                .from("Users")
-                .select("email, name, profile")
-                .in("email", uniqueEmails);
-
-            if (usersError) throw usersError;
-
-            // PERFORMANCE FIX: Use Map for O(1) lookups instead of O(n) .find()
-            const userMap = new Map(usersData?.map(user => [user.email, user]) || []);
-
-            // Merge the data with O(1) lookup per expense
-            const expensesWithUsers = expensesData?.map(expense => ({
-                ...expense,
-                Users: userMap.get(expense.user)
-            }));
-
-            return expensesWithUsers || [];
-        } catch (error) {
-            console.error('Error fetching Expenses:', error);
+    const userMap = {};
+    (roomMembers || []).forEach(m => {
+        if (m.email && !userMap[m.email]) {
+            userMap[m.email] = m.name || m.email;
         }
-    };
+    });
 
-    const expenses = await fetchExpenses();
-
-    return <ExpenseHistory expenses={expenses} />;
+    return (
+        <ExpenseHistory
+            initialExpenses={initialData.expenses || []}
+            initialCursor={initialData.nextCursor}
+            initialHasMore={initialData.hasMore}
+            roomId={param.room_id}
+            userMap={userMap}
+        />
+    );
 }

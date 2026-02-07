@@ -10,7 +10,7 @@ export default function FilterPanel({
     setUserFilter, 
     dateRange, 
     setDateRange, 
-    uniqueUsers 
+    userMap
 }) {
     return (
         <Card
@@ -49,8 +49,8 @@ export default function FilterPanel({
                             }}
                         >
                             <Option value="">All Users</Option>
-                            {uniqueUsers.map(user => (
-                                <Option key={user} value={user}>{user}</Option>
+                            {Object.entries(userMap || {}).map(([email, name]) => (
+                                <Option key={email} value={email}>{name}</Option>
                             ))}
                         </Select>
         
