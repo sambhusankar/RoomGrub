@@ -50,7 +50,7 @@ export async function settlePayment(roomId, memberEmail, finalBalance, memberSta
     }
 }
 
-export async function settleAllPending(roomId, memberBalances) {
+export async function settleAllPending(roomId, memberBalances, filters) {
     try {
         const supabase = await createClient();
 
@@ -91,19 +91,29 @@ export async function settleAllPending(roomId, memberBalances) {
         // instead of 2 queries per member (N+1 problem)
         const memberEmails = pendingMembers.map(mb => mb.member.email);
 
-        const [expensesResult, paymentsResult] = await Promise.all([
-            supabase
-                .from('Spendings')
-                .select('money, user')
-                .in('user', memberEmails)
-                .eq('room', roomId),
-            supabase
-                .from('balance')
-                .select('amount, status, user')
-                .in('user', memberEmails)
-                .eq('room', roomId)
-                .eq('status', 'debit')
-        ]);
+        let expensesQuery = supabase
+            .from('Spendings')
+            .select('money, user')
+            .in('user', memberEmails)
+            .eq('room', roomId);
+
+        let paymentsQuery = supabase
+            .from('balance')
+            .select('amount, status, user')
+            .in('user', memberEmails)
+            .eq('room', roomId)
+            .eq('status', 'debit');
+
+        if (filters?.dateRange?.from) {
+            expensesQuery = expensesQuery.gte('created_at', filters.dateRange.from);
+            paymentsQuery = paymentsQuery.gte('created_at', filters.dateRange.from);
+        }
+        if (filters?.dateRange?.to) {
+            expensesQuery = expensesQuery.lte('created_at', filters.dateRange.to + 'T23:59:59.999Z');
+            paymentsQuery = paymentsQuery.lte('created_at', filters.dateRange.to + 'T23:59:59.999Z');
+        }
+
+        const [expensesResult, paymentsResult] = await Promise.all([expensesQuery, paymentsQuery]);
 
         const allExpenses = expensesResult.data || [];
         const allPayments = paymentsResult.data || [];
@@ -132,26 +142,17 @@ export async function settleAllPending(roomId, memberBalances) {
             const memberExpenses = expensesByUser.get(mb.member.email) || [];
             const memberPayments = paymentsByUser.get(mb.member.email) || [];
 
-            // Calculate actual pending amount
             const totalExpenses = memberExpenses.reduce((sum, e) => sum + parseFloat(e.money || 0), 0);
             const totalSettlements = memberPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
-            const actualPending = totalExpenses + totalSettlements; // settlements are negative
+            const actualPending = totalExpenses + totalSettlements;
 
-            // Verify pending amount matches (allow 0.01 difference for rounding)
-            if (Math.abs(actualPending - mb.pendingAmount) > 0.01) {
-                return {
-                    success: false,
-                    error: `Pending amount mismatch for ${mb.member.name || mb.member.email}. Please refresh and try again.`
-                };
-            }
-
-            // Only include if actually has pending amount
+            // Only settle members who have actual pending expenses
             if (actualPending > 0.01) {
                 verifiedSettlements.push({
                     room: roomId,
                     user: mb.member.email,
-                    amount: actualPending * -1,  // Negative of pending amount
-                    status: 'debit'              // Always debit
+                    amount: actualPending * -1,
+                    status: 'debit'
                 });
             }
         }

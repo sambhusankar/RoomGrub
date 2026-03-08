@@ -130,7 +130,7 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
         setSuccess('');
 
         try {
-            const result = await settleAllPending(roomId, splitCalculation.memberBalances);
+            const result = await settleAllPending(roomId, splitCalculation.memberBalances, filters);
 
             if (!result.success) {
                 throw new Error(result.error || 'Failed to settle all balances');
