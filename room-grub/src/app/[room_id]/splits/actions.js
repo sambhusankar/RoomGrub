@@ -85,7 +85,7 @@ export async function settlePayment(roomId, memberEmail) {
     }
 }
 
-export async function settleAllPending(roomId, memberBalances) {
+export async function settleAllPending(roomId, memberBalances, filters = {}) {
     try {
         const supabase = await createClient();
 
@@ -215,6 +215,29 @@ export async function settleAllPending(roomId, memberBalances) {
         if (settleError) {
             console.error('Error marking expenses as settled:', settleError);
             throw new Error('Failed to mark expenses as settled');
+        }
+
+        // Delete legacy debit records (spending_id IS NULL) for settled members,
+        // scoped to the same filters active during settlement.
+        let deleteQuery = supabase
+            .from('balance')
+            .delete()
+            .in('user', memberEmails)
+            .eq('room', roomId)
+            .eq('status', 'debit')
+            .is('spending_id', null);
+
+        if (filters.dateRange?.from) {
+            deleteQuery = deleteQuery.gte('created_at', filters.dateRange.from);
+        }
+        if (filters.dateRange?.to) {
+            deleteQuery = deleteQuery.lte('created_at', filters.dateRange.to);
+        }
+
+        const { error: deleteError } = await deleteQuery;
+        if (deleteError) {
+            console.error('Error deleting legacy debits:', deleteError);
+            // Non-fatal — settlement succeeded, log and continue
         }
 
         revalidatePath(`/${roomId}/splits`);
