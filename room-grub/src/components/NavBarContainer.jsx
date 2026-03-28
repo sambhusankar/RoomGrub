@@ -1,5 +1,6 @@
 'server-only'
 import NavBar from './NavBar'
+import BottomNav from './BottomNav'
 import { auth, signOut } from '@/auth'
 import { redirect } from 'next/navigation'
 
@@ -17,7 +18,8 @@ export default async function NavBarContainer({ children }) {
   return (
     <div className="min-h-screen w-full">
       <NavBar user={session?.user} signOut={signOutFn} />
-      <main>{children}</main>
+      <main className="pb-20">{children}</main>
+      <BottomNav />
     </div>
   )
 }
