@@ -43,12 +43,27 @@ export default function MembersList({ memberStats }) {
                                     }}
                                     onClick={() => router.push(`/${params.room_id}/members/${stat.member.id}`)}
                                 >
-                                    <Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                        {stat.member.profile ? (
+                                            <Box
+                                                component="img"
+                                                src={stat.member.profile}
+                                                alt={stat.member.name}
+                                                sx={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                                            />
+                                        ) : (
+                                            <Box sx={{
+                                                width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                                                bgcolor: 'primary.100', border: '2px solid', borderColor: 'primary.200',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            }}>
+                                                <Typography level="body-xs" sx={{ color: 'primary.600', fontWeight: 700 }}>
+                                                    {stat.member.name?.[0]?.toUpperCase()}
+                                                </Typography>
+                                            </Box>
+                                        )}
                                         <Typography level="title-sm" sx={{ fontSize: '1rem' }}>
                                             {stat.member.name}
-                                        </Typography>
-                                        <Typography level="body-xs" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
-                                            {stat.member.email}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ textAlign: 'right' }}>
@@ -95,12 +110,27 @@ export default function MembersList({ memberStats }) {
                                         onClick={() => router.push(`/${params.room_id}/members/${stat.member.id}`)}
                                     >
                                         <td>
-                                            <Box>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                                {stat.member.profile ? (
+                                                    <Box
+                                                        component="img"
+                                                        src={stat.member.profile}
+                                                        alt={stat.member.name}
+                                                        sx={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+                                                    />
+                                                ) : (
+                                                    <Box sx={{
+                                                        width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                                                        bgcolor: 'primary.100', border: '2px solid', borderColor: 'primary.200',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    }}>
+                                                        <Typography level="body-xs" sx={{ color: 'primary.600', fontWeight: 700 }}>
+                                                            {stat.member.name?.[0]?.toUpperCase()}
+                                                        </Typography>
+                                                    </Box>
+                                                )}
                                                 <Typography level="title-sm" sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}>
                                                     {stat.member.name}
-                                                </Typography>
-                                                <Typography level="body-xs" sx={{ color: 'text.secondary', fontSize: { xs: '0.8rem', sm: '0.9rem' } }}>
-                                                    {stat.member.email}
                                                 </Typography>
                                             </Box>
                                         </td>
