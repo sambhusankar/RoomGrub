@@ -97,3 +97,84 @@ export async function fetchHomeSummary(roomId) {
         return { totalPurchases: 0, pendingAmount: 0, recentExpenses: [] };
     }
 }
+
+export async function fetchRoomDashboard(roomId) {
+    try {
+        const session = await auth();
+        if (!session) return { totalRoomStats: null, memberStats: [] };
+
+        const { data: userRoom, error: roomError } = await getUserRoom(session.user.email);
+        if (roomError || !userRoom || userRoom.room != roomId) {
+            return { totalRoomStats: null, memberStats: [] };
+        }
+
+        const supabase = await createClient();
+
+        const { data: membersData, error: membersError } = await supabase
+            .from('Users')
+            .select('*')
+            .eq('room', roomId);
+
+        if (membersError) throw membersError;
+
+        const [purchasesResult, paymentsResult] = await Promise.all([
+            supabase.from('Spendings').select('*').eq('room', roomId),
+            supabase.from('balance').select('*').eq('room', roomId),
+        ]);
+
+        const allPurchases = purchasesResult.data || [];
+        const allPayments = paymentsResult.data || [];
+
+        const purchasesByUser = new Map();
+        const paymentsByUser = new Map();
+
+        allPurchases.forEach(purchase => {
+            if (!purchasesByUser.has(purchase.user)) purchasesByUser.set(purchase.user, []);
+            purchasesByUser.get(purchase.user).push(purchase);
+        });
+
+        allPayments.forEach(payment => {
+            if (!paymentsByUser.has(payment.user)) paymentsByUser.set(payment.user, []);
+            paymentsByUser.get(payment.user).push(payment);
+        });
+
+        const memberStats = (membersData || []).map((member) => {
+            const purchases = purchasesByUser.get(member.email) || [];
+            const payments = paymentsByUser.get(member.email) || [];
+
+            const totalPurchases = purchases.reduce((sum, p) => sum + parseFloat(p.money), 0);
+            const totalReceived = payments
+                .filter(p => p.status === 'debit')
+                .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+            const totalContributed = payments
+                .filter(p => p.status === 'credit')
+                .reduce((sum, p) => sum + parseFloat(p.amount), 0);
+            const pendingAmount = totalPurchases + totalReceived;
+            const lastPayment = payments.length > 0
+                ? new Date(Math.max(...payments.map(p => new Date(p.created_at)))).toLocaleDateString('en-IN')
+                : 'Never';
+
+            return {
+                member,
+                totalPurchases,
+                totalReceived,
+                totalContributed,
+                pendingAmount,
+                lastPayment,
+                status: pendingAmount > 0 ? 'pending' : 'settled',
+            };
+        });
+
+        const totalRoomStats = memberStats.reduce((acc, stat) => ({
+            totalPurchases: acc.totalPurchases + stat.totalPurchases,
+            totalPaid: acc.totalPaid + stat.totalReceived,
+            totalContributions: acc.totalContributions + stat.totalContributed,
+            pendingPayments: acc.pendingPayments + (stat.pendingAmount > 0 ? stat.pendingAmount : 0),
+        }), { totalPurchases: 0, totalPaid: 0, totalContributions: 0, pendingPayments: 0 });
+
+        return { totalRoomStats, memberStats };
+    } catch (error) {
+        console.error('Error fetching room dashboard:', error);
+        return { totalRoomStats: null, memberStats: [] };
+    }
+}
