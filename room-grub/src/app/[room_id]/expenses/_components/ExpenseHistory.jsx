@@ -230,6 +230,8 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
                                             date={expense.created_at}
                                             material={expense.material}
                                             userProfile={expense.Users?.profile}
+                                            settled={expense.settled}
+                                            settledAt={expense.settledAt}
                                             sx={{
                                                 mx: 0,
                                                 my: 0,
