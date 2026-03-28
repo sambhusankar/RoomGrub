@@ -1,45 +1,21 @@
-'use client';
-
-import { useParams } from 'next/navigation';
-import { useOfflineAuth } from '@/hooks/useOfflineAuth';
-import useUserRole from '@/hooks/useUserRole';
-import ListOptions from './_components/ListOptions';
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
 import WelCome from './_components/WelCome';
 import LazyNotificationPrompt from './_components/LazyNotificationPrompt';
+import HomeDashboard from './_components/HomeDashboard';
 import Box from '@mui/joy/Box';
-import CircularProgress from '@mui/joy/CircularProgress';
 
-export default function Page() {
-  const params = useParams();
-  const { session, loading, isAuthenticated } = useOfflineAuth();
-  const { role } = useUserRole();
+export default async function Page() {
+  const session = await auth();
+  if (!session) redirect('/login');
 
-  // Show loading state while checking auth
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '50vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // If not authenticated, useOfflineAuth will redirect to /login
-  if (!isAuthenticated) {
-    return null;
-  }
+  const firstName = session.user.user_metadata?.full_name?.split(' ')[0] || 'there';
 
   return (
-    <>
-      <WelCome session={session} />
+    <Box sx={{ px: 2, py: 1 }}>
+      <WelCome firstName={firstName} />
       <LazyNotificationPrompt />
-      <ListOptions params={params} userRole={role} />
-    </>
+      <HomeDashboard />
+    </Box>
   );
 }
