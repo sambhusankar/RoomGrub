@@ -50,21 +50,21 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
             }
         });
 
-        // Sum up settlements received (debit transactions with negative amounts)
+        // Sum legacy lump-sum debit settlements (spending_id IS NULL records — negative amounts)
+        // New per-expense settlements are tracked via settled=true on the expense itself,
+        // so those expenses never appear in the expenses list above.
         payments.forEach(payment => {
             if (memberSettlements.hasOwnProperty(payment.user)) {
-                if (payment.status === 'debit') {
-                    // Debit amounts are negative, add them directly
-                    memberSettlements[payment.user] += parseFloat(payment.amount || 0);
-                }
+                memberSettlements[payment.user] += parseFloat(payment.amount || 0);
             }
         });
 
-        // Calculate pending expenses for each member
-        // Pending = Expenses + Settlements (settlements are negative, so this subtracts)
+        // Pending = unsettled expenses + legacy debit settlements (negative, so subtracts)
+        // Clamped to 0 minimum — a member cannot have negative pending
         const memberPending = {};
         activeMembers.forEach(member => {
-            memberPending[member.email] = memberExpenses[member.email] + memberSettlements[member.email];
+            const raw = memberExpenses[member.email] + memberSettlements[member.email];
+            memberPending[member.email] = Math.max(0, raw);
         });
 
         // Calculate total pending expenses (only positive pending amounts)
@@ -136,7 +136,7 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                 throw new Error(result.error || 'Failed to settle all balances');
             }
 
-            setSuccess(`Successfully settled ${result.settledCount} member${result.settledCount !== 1 ? 's' : ''}!`);
+            setSuccess(`Successfully settled ${result.expensesSettled} expense${result.expensesSettled !== 1 ? 's' : ''} across ${result.settledCount} member${result.settledCount !== 1 ? 's' : ''}!`);
 
             // Refresh the page to show updated data
             setTimeout(() => {

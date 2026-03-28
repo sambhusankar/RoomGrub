@@ -42,11 +42,6 @@ export default async function SplitsPage({ params }) {
       .eq('room', roomId)
   ]);
 
-  console.log('[splits/page] expensesResult.error:', expensesResult.error);
-  console.log('[splits/page] paymentsResult.error:', paymentsResult.error);
-  console.log('[splits/page] expenses count:', expensesResult.data?.length, expensesResult.data);
-  console.log('[splits/page] payments count:', paymentsResult.data?.length, paymentsResult.data);
-
   if (expensesResult.error || paymentsResult.error || membersResult.error) {
     console.error('Error fetching splits data:', {
       expensesError: expensesResult.error,
