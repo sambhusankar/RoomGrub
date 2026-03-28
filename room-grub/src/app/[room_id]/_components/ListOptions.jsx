@@ -11,9 +11,7 @@ import Box from '@mui/joy/Box';
 
 import {
   Group,
-  AccountBalanceWallet,
   ReceiptLong,
-  Payment,
   ShoppingCart,
   Dashboard,
   Analytics,
@@ -27,22 +25,10 @@ const navItems = [
     path: '/members',
   },
   {
-    label: 'Balance',
-    subtext: 'See your current balance',
-    icon: AccountBalanceWallet,
-    path: '/balance',
-  },
-  {
     label: 'Expenses',
     subtext: 'Track shared expenses',
     icon: ReceiptLong,
     path: '/expenses',
-  },
-  {
-    label: 'Payments',
-    subtext: 'View or add payments',
-    icon: Payment,
-    path: '/payments',
   },
   {
     label: 'Splits',

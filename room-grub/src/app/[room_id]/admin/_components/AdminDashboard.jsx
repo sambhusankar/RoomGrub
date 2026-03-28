@@ -5,7 +5,6 @@ import { Box, Typography } from '@mui/joy';
 import { useParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import RoomOverview from './RoomOverview';
-import PendingPaymentsAlert from './PendingPaymentsAlert';
 import MembersList from './MembersList';
 
 export default function AdminDashboard() {
@@ -162,13 +161,7 @@ export default function AdminDashboard() {
             </Box>
 
             <RoomOverview totalRoomStats={totalRoomStats} />
-            
-            <PendingPaymentsAlert 
-                totalRoomStats={totalRoomStats} 
-                memberStats={memberStats}
-                onDataRefresh={fetchDashboardData}
-            />
-            
+
             <MembersList memberStats={memberStats} />
         </Box>
     );

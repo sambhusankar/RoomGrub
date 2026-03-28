@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Box } from '@mui/joy';
 import { CheckCircleRounded, ShoppingCartRounded } from '@mui/icons-material';
 
-export default function ExpenseCard({ user, amount, date, material, userProfile, sx }) {
+export default function ExpenseCard({ user, amount, date, material, userProfile, settled, settledAt, sx }) {
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-IN', { 
@@ -124,18 +124,18 @@ export default function ExpenseCard({ user, amount, date, material, userProfile,
 
                         {/* Secondary info - Material and category */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography 
-                                level="body-sm" 
-                                sx={{ 
+                            <Typography
+                                level="body-sm"
+                                sx={{
                                     color: 'text.tertiary',
                                     fontWeight: 500,
                                 }}
                             >
                                 {material}
                             </Typography>
-                            <Typography 
-                                level="body-sm" 
-                                sx={{ 
+                            <Typography
+                                level="body-sm"
+                                sx={{
                                     color: 'text.secondary',
                                     fontWeight: 500,
                                 }}
@@ -143,6 +143,26 @@ export default function ExpenseCard({ user, amount, date, material, userProfile,
                                 {formatDate(date)}
                             </Typography>
                         </Box>
+
+                        {/* Settled badge */}
+                        {settled && (
+                            <Box sx={{ mt: 0.75 }}>
+                                <Typography
+                                    level="body-xs"
+                                    sx={{
+                                        display: 'inline-block',
+                                        px: 1,
+                                        py: 0.25,
+                                        borderRadius: '999px',
+                                        bgcolor: 'success.softBg',
+                                        color: 'success.600',
+                                        fontWeight: 600,
+                                    }}
+                                >
+                                    Settled{settledAt ? ` · ${formatDate(settledAt)}` : ''}
+                                </Typography>
+                            </Box>
+                        )}
                     </Box>
                 </Box>
             </CardContent>

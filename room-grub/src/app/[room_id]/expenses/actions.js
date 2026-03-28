@@ -70,9 +70,28 @@ export async function fetchPaginatedExpenses({ roomId, cursor = null, limit = 20
             userMap = new Map(usersData?.map(u => [u.email, u]) || []);
         }
 
+        // Enrich settled expenses with settlement date from balance table
+        const settledExpenseIds = expenses.filter(e => e.settled).map(e => e.id);
+        let settlementDateMap = new Map();
+
+        if (settledExpenseIds.length > 0) {
+            const { data: settlementData } = await supabase
+                .from('balance')
+                .select('spending_id, created_at')
+                .in('spending_id', settledExpenseIds)
+                .eq('status', 'debit');
+
+            (settlementData || []).forEach(record => {
+                if (!settlementDateMap.has(record.spending_id)) {
+                    settlementDateMap.set(record.spending_id, record.created_at);
+                }
+            });
+        }
+
         const enrichedExpenses = expenses.map(expense => ({
             ...expense,
             Users: userMap.get(expense.user),
+            settledAt: settlementDateMap.get(expense.id) || null,
         }));
 
         return {
