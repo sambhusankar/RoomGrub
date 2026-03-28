@@ -1,45 +1,26 @@
-'use client';
-
-import { useParams } from 'next/navigation';
-import { useOfflineAuth } from '@/hooks/useOfflineAuth';
-import useUserRole from '@/hooks/useUserRole';
-import ListOptions from './_components/ListOptions';
+import { LoginRequired } from '@/policies/LoginRequired';
+import { validRoom } from '@/policies/validRoom';
+import { fetchRoomDashboard } from './homeActions';
 import WelCome from './_components/WelCome';
 import LazyNotificationPrompt from './_components/LazyNotificationPrompt';
+import HomeDashboard from './_components/HomeDashboard';
 import Box from '@mui/joy/Box';
-import CircularProgress from '@mui/joy/CircularProgress';
 
-export default function Page() {
-  const params = useParams();
-  const { session, loading, isAuthenticated } = useOfflineAuth();
-  const { role } = useUserRole();
+export default async function Page({ params }) {
+  const session = await LoginRequired();
+  await validRoom({ params });
 
-  // Show loading state while checking auth
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '50vh',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // If not authenticated, useOfflineAuth will redirect to /login
-  if (!isAuthenticated) {
-    return null;
-  }
+  const { room_id } = await params;
+  const firstName = session.user.user_metadata?.full_name?.split(' ')[0] || 'there';
+  const { totalRoomStats, memberStats } = await fetchRoomDashboard(room_id);
 
   return (
-    <>
-      <WelCome session={session} />
+    <Box sx={{ px: 2, py: 1 }}>
+      <WelCome firstName={firstName} />
       <LazyNotificationPrompt />
-      <ListOptions params={params} userRole={role} />
-    </>
+      {totalRoomStats && (
+        <HomeDashboard totalRoomStats={totalRoomStats} memberStats={memberStats} />
+      )}
+    </Box>
   );
 }
