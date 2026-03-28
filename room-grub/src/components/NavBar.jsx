@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 
-// Inline SVG icons to avoid MUI icons dependency
 const LogoutIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -23,7 +22,6 @@ export default function NavBar({ user, signOut }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  // Close menu on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -39,60 +37,51 @@ export default function NavBar({ user, signOut }) {
     signOut();
   }
 
+  if (!user) return null;
+
   return (
-    <header className="w-full h-max flex justify-between items-center px-4 border-b border-gray-200">
-      <h1
-        className="text-xl font-bold text-black cursor-pointer hover:opacity-80 transition-opacity"
-        onClick={() => router.push(`/${room_id}`)}
+    <div className="flex justify-end px-4 pt-4 relative" ref={menuRef}>
+      <button
+        onClick={() => setMenuOpen(!menuOpen)}
+        className="w-10 h-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-gray-300"
       >
-        RoomGrub
-      </h1>
+        {user?.user_metadata?.picture ? (
+          <Image
+            src={user.user_metadata.picture}
+            alt="Profile"
+            width={40}
+            height={40}
+            className="object-cover w-full h-full rounded-full"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white text-sm font-medium rounded-full">
+            {user?.user_metadata?.name?.[0] || '?'}
+          </div>
+        )}
+      </button>
 
-      {user && (
-        <div className="relative" ref={menuRef}>
+      {menuOpen && (
+        <div className="absolute top-14 right-4 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
+          <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 truncate">
+            {user?.user_metadata?.name}
+          </div>
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="w-9 h-9 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-black"
+            onClick={handleSignOut}
+            className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
           >
-            {user?.user_metadata?.picture ? (
-              <Image
-                src={user.user_metadata.picture}
-                alt="Profile"
-                width={36}
-                height={36}
-                className="object-cover w-full h-full rounded-full"
-              />
-            ) : (
-              <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white text-sm font-medium rounded-full">
-                {user?.user_metadata?.name?.[0] || '?'}
-              </div>
-            )}
+            <LogoutIcon /> Logout
           </button>
-
-          {menuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
-              <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 truncate">
-                {user?.user_metadata?.name}
-              </div>
-              <button
-                onClick={handleSignOut}
-                className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
-              >
-                <LogoutIcon /> Logout
-              </button>
-              <button
-                onClick={() => {
-                  router.push(`/${room_id}/settings`);
-                  setMenuOpen(false);
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
-              >
-                <SettingsIcon /> Settings
-              </button>
-            </div>
-          )}
+          <button
+            onClick={() => {
+              router.push(`/${room_id}/settings`);
+              setMenuOpen(false);
+            }}
+            className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
+          >
+            <SettingsIcon /> Settings
+          </button>
         </div>
       )}
-    </header>
+    </div>
   );
 }
