@@ -27,11 +27,14 @@ export default async function SplitsPage({ params }) {
       .from('Spendings')
       .select(`*, Users(name, email, profile)`)
       .eq('room', roomId)
+      .or('settled.is.null,settled.eq.false') // unsettled: NULL (legacy) or explicitly false
       .order('created_at', { ascending: false }),
     supabase
       .from('balance')
-      .select(`*, Users(name, email, profile)`)
+      .select('user, amount, status, spending_id')
       .eq('room', roomId)
+      .eq('status', 'debit')
+      .is('spending_id', null) // legacy lump-sum records only — new per-expense debits excluded
       .order('created_at', { ascending: false }),
     supabase
       .from('Users')
