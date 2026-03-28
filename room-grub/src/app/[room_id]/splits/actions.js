@@ -121,21 +121,32 @@ export async function settleAllPending(roomId, memberBalances, filters = {}) {
         const memberEmails = pendingMembers.map(mb => mb.member.email);
 
         // Batch fetch unsettled expenses and legacy lump-sum debits (spending_id IS NULL)
-        const [expensesResult, paymentsResult] = await Promise.all([
-            supabase
-                .from('Spendings')
-                .select('id, money, user')
-                .in('user', memberEmails)
-                .eq('room', roomId)
-                .or('settled.is.null,settled.eq.false'), // IS NOT TRUE — covers NULL and false
-            supabase
-                .from('balance')
-                .select('amount, user')
-                .in('user', memberEmails)
-                .eq('room', roomId)
-                .eq('status', 'debit')
-                .is('spending_id', null) // legacy lump-sum records only
-        ]);
+        // Apply the same date filters the client used so server-side pending matches client calculation
+        let expensesQuery = supabase
+            .from('Spendings')
+            .select('id, money, user')
+            .in('user', memberEmails)
+            .eq('room', roomId)
+            .or('settled.is.null,settled.eq.false'); // IS NOT TRUE — covers NULL and false
+
+        let paymentsQuery = supabase
+            .from('balance')
+            .select('amount, user')
+            .in('user', memberEmails)
+            .eq('room', roomId)
+            .eq('status', 'debit')
+            .is('spending_id', null); // legacy lump-sum records only
+
+        if (filters.dateRange?.from) {
+            expensesQuery = expensesQuery.gte('created_at', filters.dateRange.from);
+            paymentsQuery = paymentsQuery.gte('created_at', filters.dateRange.from);
+        }
+        if (filters.dateRange?.to) {
+            expensesQuery = expensesQuery.lte('created_at', filters.dateRange.to);
+            paymentsQuery = paymentsQuery.lte('created_at', filters.dateRange.to);
+        }
+
+        const [expensesResult, paymentsResult] = await Promise.all([expensesQuery, paymentsQuery]);
 
         const allExpenses = expensesResult.data || [];
         const allPayments = paymentsResult.data || [];
