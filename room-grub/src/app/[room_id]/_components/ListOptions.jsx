@@ -96,7 +96,7 @@ export default function ListOptions({ userRole }) {
                 >
                   <Box
                     sx={{
-                      background: 'linear-gradient(135deg, #7b61ff, #619eff)',
+                      background: 'linear-gradient(135deg, #9333ea, #c084fc)',
                       borderRadius: '12px',
                       padding: 1,
                       display: 'flex',
@@ -121,7 +121,7 @@ export default function ListOptions({ userRole }) {
       <Button
         onClick={() => navigateTo('/addgroccery')}
         variant="solid"
-        color="success"
+        color="primary"
         sx={{
           position: 'fixed',
           bottom: 24,
