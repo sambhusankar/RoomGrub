@@ -59,7 +59,7 @@ export default async function Login() {
                         variant="h5"
                         sx={{
                             fontWeight: 800,
-                            background: 'linear-gradient(90deg,rgba(191, 55, 126, 1) 0%, rgba(118, 125, 156, 1) 69%)',
+                            background: 'linear-gradient(90deg, #9333ea 0%, #7e22ce 100%)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text',
