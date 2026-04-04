@@ -15,7 +15,7 @@ export default function MemberDetail() {
     const [loading, setLoading] = useState(true);
     const [showContributionForm, setShowContributionForm] = useState(false);
     const [isSettling, setIsSettling] = useState(false);
-    const [summary, setSummary] = useState({ pendingAmount: 0 });
+    const [summary, setSummary] = useState({ pendingAmount: 0, totalPurchases: 0 });
     
     const { role, loadings } = useUserRole();
     const params = useParams();
@@ -41,21 +41,22 @@ export default function MemberDetail() {
             if (memberError) throw memberError;
             setMember(memberData);
 
-            // Get member's purchases (unsettled spendings only)
-            const { data: purchaseData, error: purchaseError } = await supabase
-                .from('Spendings')
-                .select('*')
-                .eq('user', memberData.email)
-                .eq('room', params.room_id)
-                .or('settled.is.null,settled.eq.false')
-                .order('created_at', { ascending: false });
+            // Fetch unsettled (for display + pending) and all (for total) in parallel
+            const [pendingResult, allResult] = await Promise.all([
+                supabase.from('Spendings').select('*')
+                    .eq('user', memberData.email).eq('room', params.room_id)
+                    .or('settled.is.null,settled.eq.false')
+                    .order('created_at', { ascending: false }),
+                supabase.from('Spendings').select('money')
+                    .eq('user', memberData.email).eq('room', params.room_id),
+            ]);
 
-            if (purchaseError) throw purchaseError;
-            setPurchases(purchaseData || []);
+            if (pendingResult.error) throw pendingResult.error;
+            setPurchases(pendingResult.data || []);
 
-            // Calculate summary from unsettled purchases only
-            const pendingAmount = (purchaseData || []).reduce((sum, p) => sum + parseFloat(p.money), 0);
-            setSummary({ pendingAmount });
+            const pendingAmount = (pendingResult.data || []).reduce((sum, p) => sum + parseFloat(p.money), 0);
+            const totalPurchases = (allResult.data || []).reduce((sum, p) => sum + parseFloat(p.money), 0);
+            setSummary({ pendingAmount, totalPurchases });
 
         } catch (error) {
             console.error('Error fetching member data:', error);
