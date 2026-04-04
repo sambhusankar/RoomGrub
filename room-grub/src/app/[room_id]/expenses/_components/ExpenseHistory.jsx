@@ -16,6 +16,7 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
     const [filter, setFilter] = useState('');
     const [dateRange, setDateRange] = useState({ from: '', to: '' });
     const [userFilter, setUserFilter] = useState('');
+    const [showAll, setShowAll] = useState(false);
 
     const observerTarget = useRef(null);
 
@@ -63,6 +64,7 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
             cursor,
             limit: 20,
             filters: {
+                settled: showAll ? undefined : false,
                 textSearch: filter,
                 user: userFilter,
                 dateFrom: dateRange.from,
@@ -76,13 +78,13 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
             setHasMore(result.hasMore);
         }
         setLoading(false);
-    }, [loading, hasMore, cursor, roomId, filter, userFilter, dateRange]);
+    }, [loading, hasMore, cursor, roomId, filter, userFilter, dateRange, showAll]);
 
     // Fetch fresh results when filters change
     useEffect(() => {
         const debounceTimer = setTimeout(async () => {
-            // Skip on initial render (no filters applied)
-            if (!filter && !userFilter && !dateRange.from && !dateRange.to) {
+            // Skip on initial render (no filters applied, pending-only mode)
+            if (!filter && !userFilter && !dateRange.from && !dateRange.to && !showAll) {
                 setExpenses(initialExpenses);
                 setCursor(initialCursor);
                 setHasMore(initialHasMore);
@@ -95,6 +97,7 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
                 cursor: null,
                 limit: 20,
                 filters: {
+                    settled: showAll ? undefined : false,
                     textSearch: filter,
                     user: userFilter,
                     dateFrom: dateRange.from,
@@ -111,7 +114,7 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
         }, 300);
 
         return () => clearTimeout(debounceTimer);
-    }, [filter, userFilter, dateRange, roomId]);
+    }, [filter, userFilter, dateRange, showAll, roomId]);
 
     // Intersection Observer for infinite scroll
     useEffect(() => {
@@ -151,6 +154,8 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
                     dateRange={dateRange}
                     setDateRange={setDateRange}
                     userMap={userMap}
+                    showAll={showAll}
+                    setShowAll={setShowAll}
                 />
             </Box>
 

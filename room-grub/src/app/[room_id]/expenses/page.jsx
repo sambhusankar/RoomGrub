@@ -15,7 +15,7 @@ export default async function ExpensesPage({ params }) {
         roomId: param.room_id,
         cursor: null,
         limit: 20,
-        filters: {},
+        filters: { settled: false },
     });
 
     // Fetch all room members for the user filter dropdown

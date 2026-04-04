@@ -33,6 +33,9 @@ export async function fetchPaginatedExpenses({ roomId, cursor = null, limit = 20
         }
 
         // Server-side filters
+        if (filters.settled === false) {
+            query = query.or('settled.is.null,settled.eq.false');
+        }
         if (filters.textSearch) {
             query = query.ilike('material', `%${filters.textSearch}%`);
         }

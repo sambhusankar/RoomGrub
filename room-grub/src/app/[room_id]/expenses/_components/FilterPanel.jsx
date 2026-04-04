@@ -1,16 +1,18 @@
 'use client';
 
 import React from 'react';
-import { Box, Card, Select, Input, Option } from '@mui/joy';
+import { Box, Card, Select, Input, Option, Chip } from '@mui/joy';
 
-export default function FilterPanel({ 
-    filter, 
-    setFilter, 
-    userFilter, 
-    setUserFilter, 
-    dateRange, 
-    setDateRange, 
-    userMap
+export default function FilterPanel({
+    filter,
+    setFilter,
+    userFilter,
+    setUserFilter,
+    dateRange,
+    setDateRange,
+    userMap,
+    showAll,
+    setShowAll,
 }) {
     return (
         <Card
@@ -94,6 +96,16 @@ export default function FilterPanel({
                             }}
                             placeholder="To"
                         />
+
+                        <Chip
+                            size="sm"
+                            variant="soft"
+                            color={showAll ? 'neutral' : 'warning'}
+                            onClick={() => setShowAll(v => !v)}
+                            sx={{ cursor: 'pointer', whiteSpace: 'nowrap', alignSelf: 'center' }}
+                        >
+                            {showAll ? 'All expenses' : 'Pending only'}
+                        </Chip>
                     </Box>
                 </Card>
     );
