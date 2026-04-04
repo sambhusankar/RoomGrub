@@ -75,7 +75,7 @@ export async function settlePayment(roomId, memberEmail) {
             throw new Error('Failed to mark expenses as settled');
         }
 
-        revalidatePath(`/${roomId}/splits`);
+        revalidatePath(`/${roomId}`, 'layout');
 
         return { success: true, expensesSettled: expenseIds.length };
 
@@ -251,7 +251,7 @@ export async function settleAllPending(roomId, memberBalances, filters = {}) {
             // Non-fatal — settlement succeeded, log and continue
         }
 
-        revalidatePath(`/${roomId}/splits`);
+        revalidatePath(`/${roomId}`, 'layout');
 
         return {
             success: true,

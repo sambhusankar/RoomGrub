@@ -91,9 +91,7 @@ export async function addGroceryForFriend(roomId, friendEmail, grocery, price, d
             // Don't fail the operation if notification fails
         }
 
-        // Revalidate relevant pages
-        revalidatePath(`/${roomId}/addgroccery`);
-        revalidatePath(`/${roomId}/admin`);
+        revalidatePath(`/${roomId}`, 'layout');
 
         return {
             success: true,

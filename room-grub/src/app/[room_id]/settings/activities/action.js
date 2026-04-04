@@ -64,7 +64,7 @@ console.log(material,money)
       data: { activityId, type: 'edit' }
     });
 
-  revalidatePath(`/${roomId}/settings/activities`);
+  revalidatePath(`/${roomId}`, 'layout');
   return { success: true };
 }
 
@@ -117,7 +117,7 @@ export async function editPaymentActivity(activityId, formData) {
       data: { activityId, type: 'edit' }
     });
 
-  revalidatePath(`/${roomId}/settings/activities`);
+  revalidatePath(`/${roomId}`, 'layout');
   return { success: true };
 }
 
@@ -164,7 +164,7 @@ export async function deleteGroceryActivity(activityId, material, money) {
       data: { activityId, type: 'delete' }
     });
 
-  revalidatePath(`/${roomId}/settings/activities`);
+  revalidatePath(`/${roomId}`, 'layout');
   return { success: true };
 }
 
@@ -212,6 +212,6 @@ export async function deletePaymentActivity(activityId, amount, status) {
       data: { activityId, type: 'delete' }
     });
 
-  revalidatePath(`/${roomId}/settings/activities`);
+  revalidatePath(`/${roomId}`, 'layout');
   return { success: true };
 }
