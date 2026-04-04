@@ -298,10 +298,25 @@ export default function AddGrocery({ userRole }) {
                                     const friend = roomMembers.find(m => m.id === newValue);
                                     setSelectedFriend(friend || null);
                                 }}
+                                renderValue={(option) => {
+                                    if (!option) return null;
+                                    const friend = roomMembers.find(m => m.id === option.value);
+                                    if (!friend) return null;
+                                    return (
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Avatar
+                                                src={friend.profile || '/default-profile.png'}
+                                                alt={friend.name}
+                                                size="sm"
+                                            />
+                                            <span>{friend.name}</span>
+                                        </Stack>
+                                    );
+                                }}
                             >
                                 {roomMembers.map((member) => (
                                     <Option key={member.id} value={member.id}>
-                                        <Stack direction="row" spacing={2} alignItems="center">
+                                        <Stack direction="row" spacing={1} alignItems="center">
                                             <Avatar
                                                 src={member.profile || '/default-profile.png'}
                                                 alt={member.name}
