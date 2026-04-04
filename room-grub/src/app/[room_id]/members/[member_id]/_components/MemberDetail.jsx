@@ -1,29 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Stack, Button } from '@mui/joy';
+import { Box, Typography, Button } from '@mui/joy';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import useUserRole from '@/hooks/useUserRole';
 import AccountOverview from './AccountOverview';
 import PurchaseHistory from './PurchaseHistory';
-import PaymentHistory from './PaymentHistory';
 import ContributionModal from './ContributionModal';
 
 export default function MemberDetail() {
     const [member, setMember] = useState(null);
     const [purchases, setPurchases] = useState([]);
-    const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showContributionForm, setShowContributionForm] = useState(false);
     const [isSettling, setIsSettling] = useState(false);
-    const [summary, setSummary] = useState({
-        totalPurchases: 0,
-        totalPaid: 0,
-        pendingAmount: 0,
-        monthlyContribution: 0,
-        lastPayment: null
-    });
+    const [summary, setSummary] = useState({ pendingAmount: 0 });
     
     const { role, loadings } = useUserRole();
     const params = useParams();
@@ -61,48 +53,15 @@ export default function MemberDetail() {
             if (purchaseError) throw purchaseError;
             setPurchases(purchaseData || []);
 
-            // Get member's payments (balance records)
-            const { data: paymentData, error: paymentError } = await supabase
-                .from('balance')
-                .select('*')
-                .eq('user', memberData.email)
-                .eq('room', params.room_id)
-                .order('created_at', { ascending: false });
-
-            if (paymentError) throw paymentError;
-            setPayments(paymentData || []);
-
-            // Calculate summary
-            calculateSummary(purchaseData || [], paymentData || []);
+            // Calculate summary from unsettled purchases only
+            const pendingAmount = (purchaseData || []).reduce((sum, p) => sum + parseFloat(p.money), 0);
+            setSummary({ pendingAmount });
 
         } catch (error) {
             console.error('Error fetching member data:', error);
         } finally {
             setLoading(false);
         }
-    };
-
-    const calculateSummary = (purchaseData, paymentData) => {
-        const totalPurchases = purchaseData.reduce((sum, purchase) => sum + parseFloat(purchase.money), 0);
-
-        // Only legacy lump-sum debits (spending_id IS NULL) — per-expense debits are already
-        // excluded via settled=true on the expense itself, same logic as splits page
-        const purchaseSettlements = paymentData.filter(p => p.status === 'debit' && !p.spending_id);
-        const monthlyContributions = paymentData.filter(p => p.status === 'credit');
-
-        const totalReceived = purchaseSettlements.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-        const totalContributed = monthlyContributions.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-
-        const pendingAmount = Math.max(0, totalPurchases + totalReceived);
-        const lastPayment = paymentData.length > 0 ? paymentData[0] : null;
-
-        setSummary({
-            totalPurchases,
-            totalReceived,
-            totalContributed,
-            pendingAmount,
-            lastPayment
-        });
     };
 
     const handleSettlePayment = async () => {
@@ -160,18 +119,12 @@ export default function MemberDetail() {
                 </Typography>
             </Box>
 
-            <AccountOverview 
+            <AccountOverview
                 summary={summary}
                 member={member}
-                onSettlePayment={handleSettlePayment}
-                onShowContributionForm={() => setShowContributionForm(true)}
-                isSettling={isSettling}
             />
 
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-                <PurchaseHistory purchases={purchases} />
-                <PaymentHistory payments={payments} />
-            </Stack>
+            <PurchaseHistory purchases={purchases} />
 
             <ContributionModal 
                 showContributionForm={showContributionForm}
