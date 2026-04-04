@@ -17,25 +17,28 @@ export async function fetchHomeSummary(roomId) {
 
         const supabase = await createClient();
 
-        // Total purchases for current user in this room
+        // Total purchases for current user in this room (unsettled only)
         const { data: spendingsData } = await supabase
             .from('Spendings')
             .select('money')
             .eq('user', session.user.email)
-            .eq('room', roomId);
+            .eq('room', roomId)
+            .or('settled.is.null,settled.eq.false');
 
         const totalPurchases = (spendingsData || []).reduce(
             (sum, s) => sum + parseFloat(s.money || 0),
             0
         );
 
-        // Debit balance records (negative amounts, reduce pending)
+        // Legacy lump-sum debit records only (spending_id IS NULL)
+        // Per-expense debits (spending_id IS NOT NULL) are already handled by filtering settled spendings out above
         const { data: balanceData } = await supabase
             .from('balance')
             .select('amount')
             .eq('user', session.user.email)
             .eq('room', roomId)
-            .eq('status', 'debit');
+            .eq('status', 'debit')
+            .is('spending_id', null);
 
         const totalReceived = (balanceData || []).reduce(
             (sum, b) => sum + parseFloat(b.amount || 0),
@@ -118,8 +121,8 @@ export async function fetchRoomDashboard(roomId) {
         if (membersError) throw membersError;
 
         const [purchasesResult, paymentsResult] = await Promise.all([
-            supabase.from('Spendings').select('*').eq('room', roomId),
-            supabase.from('balance').select('*').eq('room', roomId),
+            supabase.from('Spendings').select('*').eq('room', roomId).or('settled.is.null,settled.eq.false'),
+            supabase.from('balance').select('*').eq('room', roomId).is('spending_id', null),
         ]);
 
         const allPurchases = purchasesResult.data || [];
