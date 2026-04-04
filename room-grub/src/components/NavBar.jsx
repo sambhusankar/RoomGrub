@@ -43,7 +43,7 @@ export default function NavBar({ user, signOut }) {
     <div className="flex justify-end px-4 pt-4 relative" ref={menuRef}>
       <button
         onClick={() => setMenuOpen(!menuOpen)}
-        className="w-10 h-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-gray-300"
+        className="w-10 h-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-300"
       >
         {user?.user_metadata?.picture ? (
           <Image
@@ -54,20 +54,20 @@ export default function NavBar({ user, signOut }) {
             className="object-cover w-full h-full rounded-full"
           />
         ) : (
-          <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white text-sm font-medium rounded-full">
+          <div className="w-full h-full bg-brand flex items-center justify-center text-white text-sm font-medium rounded-full">
             {user?.user_metadata?.name?.[0] || '?'}
           </div>
         )}
       </button>
 
       {menuOpen && (
-        <div className="absolute top-14 right-4 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-gray-200">
-          <div className="px-4 py-2 text-sm text-gray-600 border-b border-gray-200 truncate">
+        <div className="absolute top-14 right-4 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-purple-100">
+          <div className="px-4 py-2 text-sm text-gray-600 border-b border-purple-100 truncate">
             {user?.user_metadata?.name}
           </div>
           <button
             onClick={handleSignOut}
-            className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
+            className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-brand-light flex items-center gap-2"
           >
             <LogoutIcon /> Logout
           </button>
@@ -76,7 +76,7 @@ export default function NavBar({ user, signOut }) {
               router.push(`/${room_id}/settings`);
               setMenuOpen(false);
             }}
-            className="w-full text-left px-4 py-2 text-sm text-black hover:bg-gray-100 flex items-center gap-2"
+            className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-brand-light flex items-center gap-2"
           >
             <SettingsIcon /> Settings
           </button>
