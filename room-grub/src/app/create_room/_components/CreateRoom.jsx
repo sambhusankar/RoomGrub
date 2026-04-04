@@ -61,7 +61,7 @@ export default function CreateRoom() {
             mx: 'auto',
             mb: 3,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #7b61ff, #619eff)',
+            background: 'linear-gradient(135deg, #9333ea, #c084fc)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
