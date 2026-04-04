@@ -65,7 +65,7 @@ export default function ListMembers({ members, roomId }) {
         <Box
             sx={{
                 p: { xs: 2, sm: 4 },
-                bgcolor: 'background.body',
+                bgcolor: '#faf5ff',
                 minHeight: '100vh',
                 width: '100%',
                 boxSizing: 'border-box',
@@ -173,6 +173,8 @@ export default function ListMembers({ members, roomId }) {
                     width: { xs: '100%', sm: 'auto' },
                     display: 'block',
                     mx: { xs: 'auto', sm: 0 },
+                    bgcolor: '#9333ea',
+                    '&:hover': { bgcolor: '#7e22ce' },
                 }}
             >
                 Add Friend
