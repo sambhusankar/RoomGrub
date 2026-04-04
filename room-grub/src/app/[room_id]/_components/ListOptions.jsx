@@ -13,7 +13,6 @@ import {
   Group,
   ReceiptLong,
   ShoppingCart,
-  Dashboard,
   Analytics,
 } from '@mui/icons-material';
 
@@ -114,41 +113,6 @@ export default function ListOptions({ userRole }) {
               </ListItem>
             ))}
 
-            {userRole === 'Admin' && (
-              <ListItem sx={{ alignItems: 'stretch', padding: 0 }}>
-                <Button
-                  fullWidth
-                  variant="soft"
-                  color="success"
-                  onClick={() => navigateTo('/admin')}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    padding: 2,
-                    minHeight: 70,
-                    textAlign: 'left',
-                    gap: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      background: 'linear-gradient(135deg, #00c851, #007e33)',
-                      borderRadius: '12px',
-                      padding: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Dashboard sx={{ color: 'white' }} />
-                  </Box>
-                  <Box>
-                    <Typography level="title-md">Admin Dashboard</Typography>
-                  </Box>
-                </Button>
-              </ListItem>
-            )}
           </List>
         </Sheet>
       </Sheet>

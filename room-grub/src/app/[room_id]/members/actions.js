@@ -71,9 +71,7 @@ export async function updateMemberRole(roomId, memberEmail, newRole) {
             throw new Error('Failed to update member role');
         }
 
-        // Revalidate relevant pages
-        revalidatePath(`/${roomId}/members`);
-        revalidatePath(`/${roomId}/admin`);
+        revalidatePath(`/${roomId}`, 'layout');
 
         return {
             success: true,

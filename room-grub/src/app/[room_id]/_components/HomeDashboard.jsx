@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Card, CardContent, Typography } from '@mui/joy';
-import MembersList from '../admin/_components/MembersList';
+import MembersList from './MembersList';
 
 export default function HomeDashboard({ totalRoomStats, memberStats }) {
     const formatCurrency = (amount) => `₹${parseFloat(amount).toFixed(2)}`;
