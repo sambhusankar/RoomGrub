@@ -159,9 +159,9 @@ export default function AddGrocery({ userRole }) {
     };
 
     return(
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="min-h-screen p-4">
             <Paper className="p-8 max-w-lg mx-auto mt-10 shadow-2xl bg-white rounded-2xl">
-                <h2 className="text-3xl font-bold mb-6 text-center text-gray-800 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                     Add Grocery
                 </h2>
                 <div className="flex flex-col gap-6">
@@ -176,10 +176,10 @@ export default function AddGrocery({ userRole }) {
                             '& .MuiOutlinedInput-root': {
                                 borderRadius: '12px',
                                 '&:hover fieldset': {
-                                    borderColor: '#3b82f6',
+                                    borderColor: '#9333ea',
                                 },
                                 '&.Mui-focused fieldset': {
-                                    borderColor: '#2563eb',
+                                    borderColor: '#7e22ce',
                                 },
                             },
                         }}
@@ -197,10 +197,10 @@ export default function AddGrocery({ userRole }) {
                             '& .MuiOutlinedInput-root': {
                                 borderRadius: '12px',
                                 '&:hover fieldset': {
-                                    borderColor: '#3b82f6',
+                                    borderColor: '#9333ea',
                                 },
                                 '&.Mui-focused fieldset': {
-                                    borderColor: '#2563eb',
+                                    borderColor: '#7e22ce',
                                 },
                             },
                         }}
@@ -221,10 +221,10 @@ export default function AddGrocery({ userRole }) {
                             '& .MuiOutlinedInput-root': {
                                 borderRadius: '12px',
                                 '&:hover fieldset': {
-                                    borderColor: '#3b82f6',
+                                    borderColor: '#9333ea',
                                 },
                                 '&.Mui-focused fieldset': {
-                                    borderColor: '#2563eb',
+                                    borderColor: '#7e22ce',
                                 },
                             },
                             '& .MuiFormHelperText-root': {
@@ -239,11 +239,11 @@ export default function AddGrocery({ userRole }) {
                         disabled={loading}
                         className="!py-4 !mt-4 !rounded-xl !text-lg !font-semibold"
                         sx={{
-                            background: loading ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                            boxShadow: loading ? 'none' : '0 4px 15px 0 rgba(59, 130, 246, 0.4)',
+                            background: loading ? '#9ca3af' : 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)',
+                            boxShadow: loading ? 'none' : '0 4px 15px 0 rgba(147, 51, 234, 0.4)',
                             '&:hover': {
-                                background: loading ? '#9ca3af' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                                boxShadow: loading ? 'none' : '0 6px 20px 0 rgba(59, 130, 246, 0.6)',
+                                background: loading ? '#9ca3af' : 'linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%)',
+                                boxShadow: loading ? 'none' : '0 6px 20px 0 rgba(147, 51, 234, 0.6)',
                                 transform: loading ? 'none' : 'translateY(-2px)',
                             },
                             transition: 'all 0.3s ease',
@@ -269,7 +269,7 @@ export default function AddGrocery({ userRole }) {
                     <div className="mt-6 text-left">
                         <p
                             onClick={() => setShowFriendModal(true)}
-                            className="text-blue-600 underline cursor-pointer hover:text-blue-800 transition-colors"
+                            className="text-brand underline cursor-pointer hover:text-brand-dark transition-colors"
                             style={{ display: 'inline-block' }}
                         >
                             Add for your friend
@@ -373,9 +373,9 @@ export default function AddGrocery({ userRole }) {
                             disabled={friendLoading}
                             className="!py-3 !mt-2 !rounded-xl !text-base !font-semibold"
                             sx={{
-                                background: friendLoading ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                background: friendLoading ? '#9ca3af' : 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)',
                                 '&:hover': {
-                                    background: friendLoading ? '#9ca3af' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                                    background: friendLoading ? '#9ca3af' : 'linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%)',
                                 },
                             }}
                         >
