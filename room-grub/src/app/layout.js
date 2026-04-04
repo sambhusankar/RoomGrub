@@ -13,7 +13,7 @@ export const metadata = {
   generator: "Next.js",
   keywords: "Room Grub, bill splitting, expense sharing, group expenses, financial management",
   authors: [{ name: "Sankar", url: "https://sankar.com" }],
-  themeColor: "#ffffff",
+  themeColor: "#9333ea",
 };
 
 export default function RootLayout({ children }) {
@@ -21,13 +21,13 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="icon" type="image/x-icon" href="/logo.png" />
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#9333ea" />
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         style={{
-          background: "linear-gradient(135deg, #f0f0f0 0%, #e0e7ff 100%)",
+          background: "linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)",
           minHeight: "100vh"
         }}
       >
