@@ -49,12 +49,13 @@ export default function MemberDetail() {
             if (memberError) throw memberError;
             setMember(memberData);
 
-            // Get member's purchases (spendings)
+            // Get member's purchases (unsettled spendings only)
             const { data: purchaseData, error: purchaseError } = await supabase
                 .from('Spendings')
                 .select('*')
                 .eq('user', memberData.email)
                 .eq('room', params.room_id)
+                .or('settled.is.null,settled.eq.false')
                 .order('created_at', { ascending: false });
 
             if (purchaseError) throw purchaseError;
@@ -83,14 +84,16 @@ export default function MemberDetail() {
 
     const calculateSummary = (purchaseData, paymentData) => {
         const totalPurchases = purchaseData.reduce((sum, purchase) => sum + parseFloat(purchase.money), 0);
-        
-        const purchaseSettlements = paymentData.filter(p => p.status === 'debit');
+
+        // Only legacy lump-sum debits (spending_id IS NULL) — per-expense debits are already
+        // excluded via settled=true on the expense itself, same logic as splits page
+        const purchaseSettlements = paymentData.filter(p => p.status === 'debit' && !p.spending_id);
         const monthlyContributions = paymentData.filter(p => p.status === 'credit');
-        
+
         const totalReceived = purchaseSettlements.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
         const totalContributed = monthlyContributions.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-        
-        const pendingAmount = totalPurchases + totalReceived;
+
+        const pendingAmount = Math.max(0, totalPurchases + totalReceived);
         const lastPayment = paymentData.length > 0 ? paymentData[0] : null;
 
         setSummary({
