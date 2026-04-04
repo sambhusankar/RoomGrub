@@ -8,9 +8,9 @@ export default function HomeDashboard({ totalRoomStats, memberStats }) {
 
     return (
         <Box>
-            <Card sx={{ mb: 3 }}>
+            <Card sx={{ mb: 3, borderTop: '3px solid #9333ea' }}>
                 <CardContent>
-                    <Typography level="title-lg" sx={{ mb: 2 }}>Room Overview</Typography>
+                    <Typography level="title-lg" sx={{ mb: 2, color: '#1e1b4b' }}>Room Overview</Typography>
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
                         <Box sx={{ p: 2, bgcolor: '#f3fbf6', borderRadius: 'xl', boxShadow: 'sm' }}>
                             <Typography level="body-sm" sx={{ color: '#166534' }}>Total Purchases</Typography>
