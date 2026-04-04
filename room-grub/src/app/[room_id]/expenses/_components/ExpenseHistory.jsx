@@ -141,7 +141,7 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
 
     return (
         <Box sx={{
-            bgcolor: '#f8f9fa',
+            bgcolor: '#faf5ff',
             minHeight: '100vh',
             pt: 2,
         }}>
