@@ -311,7 +311,7 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
             {splitCalculation.pendingSettlements.length > 0 && userRole === 'Admin' && (
                 <Button
                     fullWidth
-                    color="success"
+                    color="primary"
                     size="lg"
                     onClick={handleSettleAll}
                     loading={isSettling}
@@ -322,7 +322,9 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                         fontSize: '1rem',
                         fontWeight: 600,
                         borderRadius: 'md',
-                        textTransform: 'none'
+                        textTransform: 'none',
+                        bgcolor: '#7e22ce',
+                        '&:hover': { bgcolor: '#6b21a8' },
                     }}
                 >
                     {isSettling

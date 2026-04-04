@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Box, Typography } from '@mui/joy';
+import { Box } from '@mui/joy';
 import { useRouter, useSearchParams } from 'next/navigation';
 import SplitCalculator from './SplitCalculator';
 import FilterPanel from './FilterPanel';
@@ -101,18 +101,9 @@ export default function SplitsDashboard({ expenses, payments, members, roomId, u
     return (
         <Box sx={{
             p: { xs: 2, md: 4 },
-            bgcolor: 'background.body',
+            bgcolor: '#faf5ff',
             minHeight: '100vh'
         }}>
-            <Box sx={{ mb: 3 }}>
-                <Typography level="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
-                    Splits
-                </Typography>
-                <Typography level="body-md" sx={{ color: 'text.secondary' }}>
-                    Split expenses and settle all balances
-                </Typography>
-            </Box>
-
             {/* Filter Panel */}
             <FilterPanel
                 filters={filters}
