@@ -39,7 +39,7 @@ export default function BottomNav() {
                 right: 0,
                 height: 64,
                 backgroundColor: '#ffffff',
-                borderTop: '1px solid #e5e7eb',
+                borderTop: '1px solid #e9d5ff',
                 display: 'flex',
                 alignItems: 'center',
                 zIndex: 1000,
@@ -59,22 +59,22 @@ export default function BottomNav() {
                                     width: 56,
                                     height: 56,
                                     borderRadius: '50%',
-                                    backgroundColor: '#16a34a',
+                                    backgroundColor: '#9333ea',
                                     border: 'none',
                                     cursor: 'pointer',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    boxShadow: '0 4px 12px rgba(22, 163, 74, 0.4)',
+                                    boxShadow: '0 4px 12px rgba(147, 51, 234, 0.4)',
                                     transition: 'transform 0.15s ease, box-shadow 0.15s ease',
                                 }}
                                 onMouseEnter={e => {
                                     e.currentTarget.style.transform = 'scale(1.08)';
-                                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(22, 163, 74, 0.5)';
+                                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(147, 51, 234, 0.5)';
                                 }}
                                 onMouseLeave={e => {
                                     e.currentTarget.style.transform = 'scale(1)';
-                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(22, 163, 74, 0.4)';
+                                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(147, 51, 234, 0.4)';
                                 }}
                                 aria-label="Add grocery"
                             >
@@ -102,7 +102,7 @@ export default function BottomNav() {
                             border: 'none',
                             cursor: 'pointer',
                             padding: '6px 0',
-                            color: active ? '#16a34a' : '#9ca3af',
+                            color: active ? '#9333ea' : '#9ca3af',
                             transition: 'color 0.15s ease',
                         }}
                         aria-label={label}
