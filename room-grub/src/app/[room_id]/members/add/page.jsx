@@ -64,8 +64,8 @@ export default function InvitePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm text-center">
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm text-center border border-purple-100">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">Invite a Member</h2>
 
         <TextField
@@ -82,13 +82,18 @@ export default function InvitePage() {
           color="primary"
           fullWidth
           onClick={handleInvite}
-          sx={{ fontWeight: 'bold', paddingY: 1 }}
+          sx={{
+            fontWeight: 'bold',
+            paddingY: 1,
+            backgroundColor: '#9333ea',
+            '&:hover': { backgroundColor: '#7e22ce' },
+          }}
         >
           Send Invite
         </Button>
 
         {status && (
-          <p className="mt-4 text-sm text-green-600 font-medium">{status}</p>
+          <p className="mt-4 text-sm text-brand font-medium">{status}</p>
         )}
       </div>
     </div>
