@@ -149,31 +149,19 @@ export async function fetchRoomDashboard(roomId) {
             const totalReceived = payments
                 .filter(p => p.status === 'debit')
                 .reduce((sum, p) => sum + parseFloat(p.amount), 0);
-            const totalContributed = payments
-                .filter(p => p.status === 'credit')
-                .reduce((sum, p) => sum + parseFloat(p.amount), 0);
-            const pendingAmount = totalPurchases + totalReceived;
-            const lastPayment = payments.length > 0
-                ? new Date(Math.max(...payments.map(p => new Date(p.created_at)))).toLocaleDateString('en-IN')
-                : 'Never';
+            const pendingAmount = Math.max(0, totalPurchases + totalReceived);
 
             return {
                 member,
-                totalPurchases,
-                totalReceived,
-                totalContributed,
                 pendingAmount,
-                lastPayment,
                 status: pendingAmount > 0 ? 'pending' : 'settled',
             };
         });
 
         const totalRoomStats = memberStats.reduce((acc, stat) => ({
-            totalPurchases: acc.totalPurchases + stat.totalPurchases,
-            totalPaid: acc.totalPaid + stat.totalReceived,
-            totalContributions: acc.totalContributions + stat.totalContributed,
-            pendingPayments: acc.pendingPayments + (stat.pendingAmount > 0 ? stat.pendingAmount : 0),
-        }), { totalPurchases: 0, totalPaid: 0, totalContributions: 0, pendingPayments: 0 });
+            totalPurchases: acc.totalPurchases + stat.pendingAmount,
+            pendingPayments: acc.pendingPayments + stat.pendingAmount,
+        }), { totalPurchases: 0, pendingPayments: 0 });
 
         return { totalRoomStats, memberStats };
     } catch (error) {
