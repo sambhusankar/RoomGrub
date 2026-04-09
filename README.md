@@ -23,7 +23,7 @@ Before RoomGrub, sharing expenses meant endless notes, complex math, and headach
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/sugyanis/RoomGrub.git
+git clone https://github.com/sambhusankar/RoomGrub.git
 cd RoomGrub
 npm install
 ```
