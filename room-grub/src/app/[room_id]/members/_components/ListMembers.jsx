@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { Box, Typography, Button, Card, CardContent, Stack, Chip, IconButton, Modal, ModalDialog, ModalClose } from '@mui/joy';
 import { useRouter } from 'next/navigation';
 import useUserRole from '@/hooks/useUserRole';
-import { updateMemberRole } from '../actions';
+import { updateMemberRole, removeMember } from '../actions';
 import EditIcon from '@mui/icons-material/Edit';
 
-export default function ListMembers({ members, roomId }) {
+export default function ListMembers({ members, roomId, currentUserEmail }) {
     const router = useRouter();
     const { role, loadings } = useUserRole();
     const [updating, setUpdating] = useState({});
@@ -25,6 +25,33 @@ export default function ListMembers({ members, roomId }) {
 
     const handleCloseEditModal = () => {
         setEditModal({ open: false, member: null });
+    };
+
+    const handleRemoveMember = async () => {
+        if (!editModal.member) return;
+
+        const memberEmail = editModal.member.email;
+
+        if (!confirm(`Are you sure you want to remove ${editModal.member.name} from the room?`)) {
+            return;
+        }
+
+        setUpdating({ ...updating, [memberEmail]: true });
+
+        try {
+            const result = await removeMember(roomId, memberEmail);
+
+            if (result.success) {
+                handleCloseEditModal();
+                router.refresh();
+            } else {
+                alert(`Error: ${result.error}`);
+            }
+        } catch (error) {
+            alert(`Failed to remove member: ${error.message}`);
+        } finally {
+            setUpdating({ ...updating, [memberEmail]: false });
+        }
     };
 
     const handleRoleChange = async (newRole) => {
@@ -217,6 +244,17 @@ export default function ListMembers({ members, roomId }) {
                             >
                                 {editModal.member.role === 'Admin' ? 'Demote to Member' : 'Promote to Admin'}
                             </Button>
+                            {editModal.member.email !== currentUserEmail && (
+                                <Button
+                                    variant="outlined"
+                                    color="danger"
+                                    onClick={handleRemoveMember}
+                                    loading={updating[editModal.member.email]}
+                                    sx={{ mt: 1 }}
+                                >
+                                    Remove from Room
+                                </Button>
+                            )}
                         </Box>
                     )}
                 </ModalDialog>

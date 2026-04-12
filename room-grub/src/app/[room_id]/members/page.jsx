@@ -19,6 +19,6 @@ export default async function MembersPage({ params }) {
     // Optionally handle error here
 
     return (
-        <ListMembers members={members || []} roomId={params.room_id} />
+        <ListMembers members={members || []} roomId={params.room_id} currentUserEmail={session.user.email} />
     );
 }
