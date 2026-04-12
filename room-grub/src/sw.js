@@ -242,15 +242,16 @@ if (workbox) {
             }
             return false;
         },
-        new workbox.strategies.CacheFirst({
+        new workbox.strategies.NetworkFirst({
             cacheName: 'room-dashboard',
+            networkTimeoutSeconds: 5, // fall back to cache if network takes >5s
             plugins: [
                 new workbox.cacheableResponse.CacheableResponsePlugin({
                     statuses: [0, 200],
                 }),
                 new workbox.expiration.ExpirationPlugin({
                     maxEntries: 10, // Cache up to 10 room dashboards
-                    maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                    maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days (for offline fallback only)
                 }),
             ],
         }),
