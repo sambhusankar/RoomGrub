@@ -86,6 +86,17 @@ class NotificationService {
             { amount, material }
         );
     }
+
+    async notifyRoomDeleted(roomId, triggeredBy) {
+        return this.notify(
+            roomId,
+            triggeredBy,
+            'room_deleted',
+            'Room Deleted',
+            'This room has been deleted by the admin.',
+            null
+        );
+    }
 }
 
 export default new NotificationService();
