@@ -1,10 +1,12 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
+import DB from '@/database';
 
 export async function deleteRoom(roomId) {
     try {
         const supabase = await createClient();
+        const rid = parseInt(roomId);
 
         // SECURITY CHECK 1: Verify user is authenticated
         const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -12,7 +14,7 @@ export async function deleteRoom(roomId) {
             return { success: false, error: 'Unauthorized: User not authenticated' };
         }
 
-        // SECURITY CHECK 2: Verify current user is admin
+        // SECURITY CHECK 2: Verify current user is admin and belongs to this room
         const { data: currentUser } = await supabase
             .from('Users')
             .select('role, room, email')
@@ -23,8 +25,7 @@ export async function deleteRoom(roomId) {
             return { success: false, error: 'Unauthorized: Only admins can delete the room' };
         }
 
-        // SECURITY CHECK 3: Verify current user belongs to this room
-        if (currentUser?.room !== parseInt(roomId)) {
+        if (currentUser?.room !== rid) {
             return { success: false, error: 'Unauthorized: User not a member of this room' };
         }
 
@@ -32,7 +33,7 @@ export async function deleteRoom(roomId) {
         const { data: pending } = await supabase
             .from('Spendings')
             .select('id')
-            .eq('room', roomId)
+            .eq('room', rid)
             .or('settled.is.null,settled.eq.false')
             .limit(1);
 
@@ -42,11 +43,11 @@ export async function deleteRoom(roomId) {
 
         // NOTIFY all members before deleting subscriptions
         try {
-            await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/notifications`, {
+            await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/notifications`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    roomId,
+                    roomId: rid,
                     triggeredBy: user.email,
                     activityType: 'room_deleted',
                     title: 'Room Deleted',
@@ -55,60 +56,46 @@ export async function deleteRoom(roomId) {
                 }),
             });
         } catch (notifyError) {
-            // Notification failure should not block deletion
             console.error('Failed to send room deletion notification:', notifyError);
         }
 
-        // DELETION SEQUENCE (order matters for FK integrity)
+        // DELETION SEQUENCE via direct DB connection (bypasses RLS)
+        // Delete dependent rows first, then members, then the room itself
 
-        // 1. Null out all members
-        const { error: usersError } = await supabase
-            .from('Users')
-            .update({ room: null, role: null })
-            .eq('room', roomId);
-        if (usersError) throw new Error('Failed to remove members from room');
+        await DB.sequelize.query(
+            'DELETE FROM "public"."balance" WHERE room = :roomId',
+            { replacements: { roomId: rid } }
+        );
 
-        // 2. Delete balance records
-        const { error: balanceError } = await supabase
-            .from('balance')
-            .delete()
-            .eq('room', roomId);
-        if (balanceError) throw new Error('Failed to delete balance records');
+        await DB.sequelize.query(
+            'DELETE FROM "public"."Spendings" WHERE room = :roomId',
+            { replacements: { roomId: rid } }
+        );
 
-        // 3. Delete spendings
-        const { error: spendingsError } = await supabase
-            .from('Spendings')
-            .delete()
-            .eq('room', roomId);
-        if (spendingsError) throw new Error('Failed to delete spendings');
+        await DB.sequelize.query(
+            'DELETE FROM "public"."Invite" WHERE room = :roomId',
+            { replacements: { roomId: rid } }
+        );
 
-        // 4. Delete invites
-        const { error: invitesError } = await supabase
-            .from('Invite')
-            .delete()
-            .eq('room', roomId);
-        if (invitesError) throw new Error('Failed to delete invites');
+        await DB.sequelize.query(
+            'DELETE FROM "public"."push_subscriptions" WHERE room_id = :roomId',
+            { replacements: { roomId: rid } }
+        );
 
-        // 5. Delete push subscriptions
-        const { error: pushError } = await supabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('room_id', roomId);
-        if (pushError) throw new Error('Failed to delete push subscriptions');
+        await DB.sequelize.query(
+            'DELETE FROM "public"."notifications" WHERE room_id = :roomId',
+            { replacements: { roomId: rid } }
+        );
 
-        // 6. Delete notifications
-        const { error: notificationsError } = await supabase
-            .from('notifications')
-            .delete()
-            .eq('room_id', roomId);
-        if (notificationsError) throw new Error('Failed to delete notifications');
+        await DB.sequelize.query(
+            'UPDATE "public"."Users" SET room = NULL, role = NULL WHERE room = :roomId',
+            { replacements: { roomId: rid } }
+        );
 
-        // 7. Delete the room itself
-        const { error: roomError } = await supabase
-            .from('Rooms')
-            .delete()
-            .eq('id', roomId);
-        if (roomError) throw new Error('Failed to delete room');
+        await DB.sequelize.query(
+            'DELETE FROM "public"."Rooms" WHERE id = :roomId',
+            { replacements: { roomId: rid } }
+        );
 
         return { success: true };
 
