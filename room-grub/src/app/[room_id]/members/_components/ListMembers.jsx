@@ -209,29 +209,14 @@ export default function ListMembers({ members, roomId }) {
                                     </Chip>
                                 </Box>
                             </Box>
-                            <Typography level="body-sm" sx={{ mb: 2 }}>
-                                Change role to:
-                            </Typography>
-                            <Stack spacing={2}>
-                                <Button
-                                    variant="solid"
-                                    color="success"
-                                    onClick={() => handleRoleChange('Admin')}
-                                    disabled={editModal.member.role === 'Admin' || updating[editModal.member.email]}
-                                    loading={updating[editModal.member.email]}
-                                >
-                                    Promote to Admin
-                                </Button>
-                                <Button
-                                    variant="solid"
-                                    color="danger"
-                                    onClick={() => handleRoleChange('Member')}
-                                    disabled={editModal.member.role === 'Member' || updating[editModal.member.email]}
-                                    loading={updating[editModal.member.email]}
-                                >
-                                    Demote to Member
-                                </Button>
-                            </Stack>
+                            <Button
+                                variant="solid"
+                                color={editModal.member.role === 'Admin' ? 'danger' : 'success'}
+                                onClick={() => handleRoleChange(editModal.member.role === 'Admin' ? 'Member' : 'Admin')}
+                                loading={updating[editModal.member.email]}
+                            >
+                                {editModal.member.role === 'Admin' ? 'Demote to Member' : 'Promote to Admin'}
+                            </Button>
                         </Box>
                     )}
                 </ModalDialog>
