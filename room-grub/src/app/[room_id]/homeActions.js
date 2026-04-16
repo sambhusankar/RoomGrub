@@ -121,7 +121,7 @@ export async function fetchRoomDashboard(roomId) {
         if (membersError) throw membersError;
 
         const [purchasesResult, paymentsResult] = await Promise.all([
-            supabase.from('Spendings').select('*').eq('room', roomId).or('settled.is.null,settled.eq.false'),
+            supabase.from('Spendings').select('*').eq('room', roomId),
             supabase.from('balance').select('*').eq('room', roomId).is('spending_id', null),
         ]);
 
@@ -146,20 +146,24 @@ export async function fetchRoomDashboard(roomId) {
             const payments = paymentsByUser.get(member.email) || [];
 
             const totalPurchases = purchases.reduce((sum, p) => sum + parseFloat(p.money), 0);
+            const unsettledPurchases = purchases
+                .filter(p => p.settled == null || p.settled === false)
+                .reduce((sum, p) => sum + parseFloat(p.money), 0);
             const totalReceived = payments
                 .filter(p => p.status === 'debit')
                 .reduce((sum, p) => sum + parseFloat(p.amount), 0);
-            const pendingAmount = Math.max(0, totalPurchases + totalReceived);
+            const pendingAmount = Math.max(0, unsettledPurchases + totalReceived);
 
             return {
                 member,
+                totalPurchases,
                 pendingAmount,
                 status: pendingAmount > 0 ? 'pending' : 'settled',
             };
         });
 
         const totalRoomStats = memberStats.reduce((acc, stat) => ({
-            totalPurchases: acc.totalPurchases + stat.pendingAmount,
+            totalPurchases: acc.totalPurchases + stat.totalPurchases,
             pendingPayments: acc.pendingPayments + stat.pendingAmount,
         }), { totalPurchases: 0, pendingPayments: 0 });
 
