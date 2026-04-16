@@ -1,3 +1,6 @@
+
+<img width="1920" height="1080" alt="Split bills, Share easy" src="https://github.com/user-attachments/assets/7b37b324-1fdb-4711-af91-ecd96d605f21" />
+
 # RoomGrub
 
 RoomGrub is a simple and intuitive app designed for working bachelors and groups of friends who share living spaces. Whether you're splitting rent, tracking groceries, managing gas bills, or keeping tabs on monthly expenses, RoomGrub makes it effortless to organize and share costs with your roommates.
