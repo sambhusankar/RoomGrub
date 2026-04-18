@@ -45,7 +45,7 @@ npm start
 
 ## Contributing
 
-Contributions are welcome! If you have ideas for new features or improvements, feel free to open an issue or submit a pull request.
+Contributions are welcome! If you have ideas for new features or improvements, feel free to open an issue or submit a pull request. Check out the [CONTRIBUTING.md](CONTRIBUTING.md) guide to get started — we'd love to have you on board.
 
 ---
 
