@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "review": {
+    "strictness": "medium",
+    "commentTypes": ["syntax", "logic", "style"],
+    "ignorePatterns": [
+      "*.md",
+      "package-lock.json",
+      "vendor/*"
+    ]
+  }
+}
