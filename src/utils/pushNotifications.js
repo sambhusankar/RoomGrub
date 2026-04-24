@@ -1061,12 +1061,17 @@ class PushNotificationManager {
                 auth_length: authKey.length
             });
 
+            // Delete any stale row first (e.g. after user reset browser permissions),
+            // then insert fresh — avoids unique constraint conflicts on re-subscribe
+            await this.supabase
+                .from('push_subscriptions')
+                .delete()
+                .eq('user_id', userId)
+                .eq('room_id', roomId);
+
             const { error } = await this.supabase
                 .from('push_subscriptions')
-                .upsert(subscriptionData, {
-                    onConflict: 'user_id,room_id',
-                    ignoreDuplicates: false
-                });
+                .insert(subscriptionData);
 
             if (error) throw error;
 
