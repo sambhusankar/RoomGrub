@@ -21,18 +21,12 @@ export default async function ActivitiesPage({ params }) {
 
   const isAdmin = currentUser?.role === 'Admin';
 
-  // Fetch groceries (Spendings)
-  const { data: groceries, error: groceriesError } = await supabase
+  // Fetch only unsettled groceries (Spendings)
+  const { data: groceries } = await supabase
     .from('Spendings')
-    .select('id, user, material, money, created_at')
+    .select('id, user, material, money, created_at, settled')
     .eq('room', room_id)
-    .order('created_at', { ascending: false });
-
-  // Fetch payments (Balance - both credits and debits)
-  const { data: payments, error: paymentsError } = await supabase
-    .from('balance')
-    .select('id, user, amount, status, created_at')
-    .eq('room', room_id)
+    .or('settled.is.null,settled.eq.false')
     .order('created_at', { ascending: false });
 
   // Fetch all users in the room to get their names
@@ -43,35 +37,23 @@ export default async function ActivitiesPage({ params }) {
 
   // Create a map for quick user lookup
   const userMap = {};
+  const emailToName = {};
   roomUsers?.forEach(user => {
     userMap[user.id] = user.name || user.email;
     userMap[user.email] = user.name || user.email;
+    emailToName[user.email] = user.name || user.email;
   });
 
-  // Transform groceries
-  const groceryActivities = groceries?.map(grocery => ({
+  // Transform groceries — keep raw email for client-side filtering
+  const allActivities = groceries?.map(grocery => ({
     id: grocery.id,
     type: 'grocery',
     user: userMap[grocery.user] || grocery.user,
+    userEmail: grocery.user,
     amount: grocery.money,
     description: grocery.material,
     createdAt: grocery.created_at,
   })) || [];
-
-  // Transform payments
-  const paymentActivities = payments?.map(payment => ({
-    id: payment.id,
-    type: 'payment',
-    user: userMap[payment.user] || payment.user,
-    amount: payment.amount,
-    description: payment.status === 'credit' ? 'Money Contributed' : 'Money Withdrawn',
-    paymentType: payment.status,
-    createdAt: payment.created_at,
-  })) || [];
-
-  // Combine and sort by date (newest first)
-  const allActivities = [...groceryActivities, ...paymentActivities]
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
     <Box sx={{
@@ -95,6 +77,7 @@ export default async function ActivitiesPage({ params }) {
         activities={allActivities}
         isAdmin={isAdmin}
         roomId={room_id}
+        userMap={emailToName}
       />
     </Box>
   );
