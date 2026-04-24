@@ -1,45 +1,90 @@
 'use client'
 import React from 'react';
-import { Box, Typography, Sheet } from '@mui/joy';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import { Box, Card, Select, Input, Option } from '@mui/joy';
 
-export default function ActivityFilters({ filterType, onFilterChange }) {
+export default function ActivityFilters({
+  userFilter,
+  setUserFilter,
+  textFilter,
+  setTextFilter,
+  dateRange,
+  setDateRange,
+  userMap,
+}) {
   return (
-    <Sheet
-      variant="outlined"
+    <Card
+      variant="soft"
       sx={{
-        padding: 2.5,
-        borderRadius: '12px',
-        bgcolor: 'background.surface',
-        border: '1px solid',
-        borderColor: 'neutral.outlinedBorder',
+        mb: 3,
+        borderRadius: 2,
+        boxShadow: 'none',
+        bgcolor: 'transparent',
+        p: 1,
+        overflowX: 'auto',
+        scrollbarWidth: 'none',
+        '&::-webkit-scrollbar': { display: 'none' },
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <FilterListIcon sx={{ color: 'text.secondary' }} />
-        <Typography level="title-sm" sx={{ fontWeight: 600 }}>
-          Filter by:
-        </Typography>
-        <select
-          value={filterType}
-          onChange={(e) => onFilterChange(e.target.value)}
-          style={{
-            flex: 1,
-            maxWidth: '250px',
-            padding: '8px 12px',
-            fontSize: '0.95rem',
-            border: '1px solid #ccc',
-            borderRadius: '6px',
-            backgroundColor: 'white',
-            color: 'black',
-            cursor: 'pointer',
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'nowrap', minWidth: 'max-content' }}>
+        <Select
+          value={userFilter}
+          onChange={(_, value) => setUserFilter(value || '')}
+          placeholder="All Users"
+          size="sm"
+          sx={{
+            minWidth: 170,
+            border: '1px solid',
+            borderColor: 'neutral.outlinedBorder',
+            borderRadius: 'md',
           }}
         >
-          <option value="all">All Activities</option>
-          <option value="grocery">Groceries Only</option>
-          <option value="payment">Payments Only</option>
-        </select>
+          <Option value="">All Users</Option>
+          {Object.entries(userMap || {}).map(([email, name]) => (
+            <Option key={email} value={email}>{name}</Option>
+          ))}
+        </Select>
+
+        <Input
+          value={textFilter}
+          onChange={e => setTextFilter(e.target.value)}
+          placeholder="Search items..."
+          size="sm"
+          sx={{
+            minWidth: 140,
+            border: '1px solid',
+            borderColor: 'neutral.outlinedBorder',
+            borderRadius: 'md',
+          }}
+        />
+
+        <Input
+          type="date"
+          value={dateRange.from}
+          onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
+          size="sm"
+          sx={{
+            minWidth: 140,
+            border: '1px solid',
+            borderColor: 'neutral.outlinedBorder',
+            borderRadius: 'md',
+          }}
+          placeholder="From"
+        />
+
+        <Input
+          type="date"
+          value={dateRange.to}
+          onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
+          size="sm"
+          sx={{
+            minWidth: 140,
+            border: '1px solid',
+            borderColor: 'neutral.outlinedBorder',
+            borderRadius: 'md',
+          }}
+          placeholder="To"
+        />
       </Box>
-    </Sheet>
+    </Card>
   );
 }
