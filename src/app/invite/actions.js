@@ -63,13 +63,6 @@ export async function createInvite(roomId) {
             return { success: false, error: 'Only room admins can create invite links' };
         }
 
-        // Revoke any previous pending invite for this room (one active link at a time)
-        await supabase
-            .from('Invite')
-            .update({ status: 'rejected', updated_at: new Date().toISOString() })
-            .eq('room', parseInt(roomId))
-            .eq('status', 'pending');
-
         const { data: invite, error } = await supabase
             .from('Invite')
             .insert({ room: parseInt(roomId), invited_by: currentUser.id })
@@ -180,73 +173,6 @@ export async function rejectInvite(token) {
         return { success: true };
     } catch (error) {
         console.error('rejectInvite error:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-export async function getPendingInvites(roomId) {
-    try {
-        const supabase = await createClient();
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) return { success: false, error: 'Unauthorized' };
-
-        const { data: currentUser } = await supabase
-            .from('Users')
-            .select('role, room')
-            .eq('uid', user.id)
-            .single();
-
-        if (currentUser?.role !== 'Admin' || currentUser?.room !== parseInt(roomId)) {
-            return { success: false, error: 'Unauthorized' };
-        }
-
-        const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() - 7);
-
-        const { data: invites, error } = await supabase
-            .from('Invite')
-            .select('id, token, created_at')
-            .eq('room', parseInt(roomId))
-            .eq('status', 'pending')
-            .gte('created_at', expiryDate.toISOString())
-            .order('created_at', { ascending: false });
-
-        if (error) return { success: false, error: error.message };
-        return { success: true, invites: invites || [] };
-    } catch (error) {
-        console.error('getPendingInvites error:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-export async function revokeInvite(inviteId, roomId) {
-    try {
-        const supabase = await createClient();
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) return { success: false, error: 'Unauthorized' };
-
-        const { data: currentUser } = await supabase
-            .from('Users')
-            .select('role, room')
-            .eq('uid', user.id)
-            .single();
-
-        if (currentUser?.role !== 'Admin' || currentUser?.room !== parseInt(roomId)) {
-            return { success: false, error: 'Unauthorized' };
-        }
-
-        const { error } = await supabase
-            .from('Invite')
-            .update({ status: 'rejected', updated_at: new Date().toISOString() })
-            .eq('id', inviteId)
-            .eq('room', parseInt(roomId));
-
-        if (error) return { success: false, error: error.message };
-        return { success: true };
-    } catch (error) {
-        console.error('revokeInvite error:', error);
         return { success: false, error: error.message };
     }
 }
