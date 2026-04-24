@@ -74,8 +74,7 @@ export default function InvitePanel({ roomId, initialInvites }) {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div style={styles.card}>
         <h2 style={styles.title}>Invite via Link</h2>
         <p style={styles.subtitle}>
           Generate a link and share it with your friend via WhatsApp or SMS.
@@ -151,7 +150,6 @@ export default function InvitePanel({ roomId, initialInvites }) {
             ))}
           </div>
         )}
-      </div>
     </div>
   );
 }
@@ -163,14 +161,6 @@ const WhatsAppIcon = () => (
 );
 
 const styles = {
-  container: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '16px',
-    backgroundColor: '#f9fafb',
-  },
   card: {
     backgroundColor: '#fff',
     borderRadius: '16px',
