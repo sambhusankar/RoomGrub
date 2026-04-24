@@ -1,12 +1,8 @@
 import ExpenseHistory from './_components/ExpenseHistory';
-import { LoginRequired } from '@/policies/LoginRequired';
-import { validRoom } from '@/policies/validRoom';
 import { createClient } from '@/utils/supabase/client';
 import { fetchPaginatedExpenses } from './actions';
 
 export default async function ExpensesPage({ params }) {
-    const user = await LoginRequired();
-    await validRoom({ params });
     const param = await params;
     const supabase = createClient();
 

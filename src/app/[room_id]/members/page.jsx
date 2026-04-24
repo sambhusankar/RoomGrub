@@ -1,16 +1,12 @@
 'use server'
 import { createClient } from '@/utils/supabase/server';
 import ListMembers from './_components/ListMembers';
-import { validRoom } from '@/policies/validRoom';
-import { LoginRequired } from '@/policies/LoginRequired';
+import { auth } from '@/auth';
 
 export default async function MembersPage({ params }) {
-    const session = await LoginRequired();
-    await validRoom({ params });
+    const session = await auth();
     const supabase = await createClient();
-    console.log("param is", params);
     const p = await params;
-    console.log("params is", p);
     const { data: members, error } = await supabase
         .from("Users")
         .select("*")
