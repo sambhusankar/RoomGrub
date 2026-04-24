@@ -15,11 +15,34 @@ export default function(sequelize) {
                 key: 'id'
             }
         },
-        email: {
+        invited_by: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'Users',
+                key: 'id'
+            }
+        },
+        token: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            unique: true,
+            defaultValue: DataTypes.UUIDV4
+        },
+        status: {
             type: DataTypes.TEXT,
-            allowNull: false
+            allowNull: false,
+            defaultValue: 'pending',
+            validate: {
+                isIn: [['pending', 'accepted', 'rejected', 'expired']]
+            }
         },
         created_at: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: DataTypes.NOW
+        },
+        updated_at: {
             type: DataTypes.DATE,
             allowNull: false,
             defaultValue: DataTypes.NOW

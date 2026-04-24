@@ -5,17 +5,17 @@ import { useRouter } from 'next/navigation';
 import useUserRole from '@/hooks/useUserRole';
 import { updateMemberRole, removeMember } from '../actions';
 import EditIcon from '@mui/icons-material/Edit';
+import InvitePanel from './InvitePanel';
 
 export default function ListMembers({ members, roomId, currentUserEmail }) {
     const router = useRouter();
     const { role, loadings } = useUserRole();
     const [updating, setUpdating] = useState({});
     const [editModal, setEditModal] = useState({ open: false, member: null });
-
-    console.log(members)
+    const [inviteModal, setInviteModal] = useState(false);
 
     const handleAddFriend = () => {
-        router.push(`/${roomId}/members/add`);
+        setInviteModal(true);
     };
 
     const handleOpenEditModal = (e, member) => {
@@ -206,6 +206,14 @@ export default function ListMembers({ members, roomId, currentUserEmail }) {
             >
                 Add Friend
             </Button>
+
+            {/* Invite Modal */}
+            <Modal open={inviteModal} onClose={() => setInviteModal(false)}>
+                <ModalDialog sx={{ p: 0, overflow: 'hidden', maxWidth: 440, width: '100%' }}>
+                    <ModalClose />
+                    <InvitePanel roomId={roomId} initialInvites={[]} />
+                </ModalDialog>
+            </Modal>
 
             {/* Edit Role Modal */}
             <Modal open={editModal.open} onClose={handleCloseEditModal}>

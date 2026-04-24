@@ -11,16 +11,18 @@ const GoogleIcon = () => (
   </svg>
 );
 
-export default function LoginBtn() {
+export default function LoginBtn({ inviteToken }) {
   const site_url = process.env.NEXT_PUBLIC_SITE_URL;
   const supabase = createClient();
 
   const signInWithGoogle = async () => {
+    const redirectTo = inviteToken
+      ? `${site_url}/callback?invite_token=${inviteToken}`
+      : `${site_url}/callback`;
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: {
-        redirectTo: `${site_url}/callback`
-      }
+      options: { redirectTo }
     });
   };
 
