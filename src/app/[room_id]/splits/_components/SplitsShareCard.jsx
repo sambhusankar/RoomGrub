@@ -10,7 +10,7 @@ const formatAmount = (amount) =>
         maximumFractionDigits: 0,
     }).format(Math.abs(amount));
 
-export default function SplitsShareCard({ shareRef, splitCalculation, roomName, filters }) {
+export default function SplitsShareCard({ shareRef, splitCalculation, filters }) {
     const { totalPendingExpenses, equalShare, memberBalances } = splitCalculation;
 
     const from = filters?.dateRange?.from;
@@ -42,7 +42,7 @@ export default function SplitsShareCard({ shareRef, splitCalculation, roomName, 
             {/* Header */}
             <div style={{ marginBottom: '20px', borderBottom: '2px solid #e9d5ff', paddingBottom: '16px' }}>
                 <div style={{ fontSize: '20px', fontWeight: 700, color: '#7e22ce', marginBottom: '4px' }}>
-                    🏠 {roomName || 'RoomGrub'}
+                    🏠 RoomGrub
                 </div>
                 <div style={{ fontSize: '13px', color: '#9333ea' }}>
                     Expense Splits Summary

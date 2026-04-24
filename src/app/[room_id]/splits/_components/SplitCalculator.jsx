@@ -161,22 +161,28 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
             const html2canvas = (await import('html2canvas')).default;
             const canvas = await html2canvas(shareRef.current, { useCORS: true, backgroundColor: '#faf5ff' });
             canvas.toBlob(async (blob) => {
-                const file = new File([blob], 'splits-summary.png', { type: 'image/png' });
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'RoomGrub Splits',
-                        text: 'Check out our expense splits!',
-                    });
-                } else {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'splits-summary.png';
-                    a.click();
-                    URL.revokeObjectURL(url);
+                try {
+                    if (!blob) throw new Error('Canvas toBlob failed');
+                    const file = new File([blob], 'splits-summary.png', { type: 'image/png' });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'RoomGrub Splits',
+                            text: 'Check out our expense splits!',
+                        });
+                    } else {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'splits-summary.png';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }
+                } catch (err) {
+                    if (err.name !== 'AbortError') setError('Failed to share. Please try again.');
+                } finally {
+                    setIsSharing(false);
                 }
-                setIsSharing(false);
             }, 'image/png');
         } catch (err) {
             if (err.name !== 'AbortError') setError('Failed to share. Please try again.');
@@ -342,7 +348,7 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
             )}
 
             {/* Action Buttons Row */}
-            {splitCalculation.pendingSettlements.length > 0 && (
+            {splitCalculation.pendingSettlements.length > 0 && userRole === 'Admin' && (
                 <Box sx={{ display: 'flex', gap: 1.5 }}>
                     {/* Share Icon Button */}
                     <Button
