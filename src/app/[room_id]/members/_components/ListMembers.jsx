@@ -58,7 +58,6 @@ export default function ListMembers({ members, roomId, currentUserEmail }) {
         if (!editModal.member) return;
 
         const memberEmail = editModal.member.email;
-        const currentRole = editModal.member.role;
 
         const confirmMessage = newRole === 'Admin'
             ? `Are you sure you want to promote ${editModal.member.name} to Admin?`
@@ -211,7 +210,7 @@ export default function ListMembers({ members, roomId, currentUserEmail }) {
             <Modal open={inviteModal} onClose={() => setInviteModal(false)}>
                 <ModalDialog sx={{ p: 0, overflow: 'hidden', maxWidth: 440, width: '100%' }}>
                     <ModalClose />
-                    <InvitePanel roomId={roomId} initialInvites={[]} />
+                    <InvitePanel roomId={roomId} />
                 </ModalDialog>
             </Modal>
 

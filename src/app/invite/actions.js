@@ -63,13 +63,6 @@ export async function createInvite(roomId) {
             return { success: false, error: 'Only room admins can create invite links' };
         }
 
-        // Revoke any previous pending invite for this room (one active link at a time)
-        await supabase
-            .from('Invite')
-            .update({ status: 'rejected', updated_at: new Date().toISOString() })
-            .eq('room', parseInt(roomId))
-            .eq('status', 'pending');
-
         const { data: invite, error } = await supabase
             .from('Invite')
             .insert({ room: parseInt(roomId), invited_by: currentUser.id })

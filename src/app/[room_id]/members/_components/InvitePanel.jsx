@@ -1,15 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { createInvite, revokeInvite } from '@/app/invite/actions';
+import { createInvite } from '@/app/invite/actions';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
-export default function InvitePanel({ roomId, initialInvites }) {
-  const [invites, setInvites] = useState(initialInvites || []);
-  const [currentToken, setCurrentToken] = useState(
-    initialInvites?.length > 0 ? initialInvites[0].token : null
-  );
+export default function InvitePanel({ roomId }) {
+  const [currentToken, setCurrentToken] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
@@ -22,10 +19,7 @@ export default function InvitePanel({ roomId, initialInvites }) {
     setError('');
     const result = await createInvite(roomId);
     if (result.success) {
-      const newToken = result.token;
-      setCurrentToken(newToken);
-      // Replace old invites since we enforce one at a time
-      setInvites([{ token: newToken, created_at: new Date().toISOString() }]);
+      setCurrentToken(result.token);
     } else {
       setError(result.error || 'Failed to generate link');
     }
@@ -59,97 +53,64 @@ export default function InvitePanel({ roomId, initialInvites }) {
     setShowShareMenu(false);
   };
 
-  const handleRevoke = async (inviteToken) => {
-    const invite = invites.find(i => i.token === inviteToken);
-    if (!invite) return;
-    await revokeInvite(invite.id, roomId);
-    setInvites([]);
-    setCurrentToken(null);
-  };
-
-  const daysLeft = (createdAt) => {
-    const expiry = new Date(createdAt);
-    expiry.setDate(expiry.getDate() + 7);
-    return Math.max(0, Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24)));
-  };
-
   return (
     <div style={styles.card}>
-        <h2 style={styles.title}>Invite via Link</h2>
-        <p style={styles.subtitle}>
-          Generate a link and share it with your friend via WhatsApp or SMS.
-          Anyone with the link can join your room.
-        </p>
+      <h2 style={styles.title}>Invite via Link</h2>
+      <p style={styles.subtitle}>
+        Generate a link and share it with your friend via WhatsApp or SMS.
+        Anyone with the link can join your room.
+      </p>
 
-        {error && <p style={styles.errorText}>{error}</p>}
+      {error && <p style={styles.errorText}>{error}</p>}
 
-        {inviteLink ? (
-          <>
-            <div style={styles.linkRow}>
-              <input
-                readOnly
-                value={inviteLink}
-                style={styles.linkInput}
-                onClick={e => e.target.select()}
-              />
-              <button style={styles.copyBtn} onClick={handleCopy}>
-                {copied ? '✓ Copied' : 'Copy'}
-              </button>
-            </div>
-
-            <div style={{ position: 'relative' }}>
-              <button style={styles.shareBtn} onClick={handleShare}>
-                Share
-              </button>
-              {showShareMenu && (
-                <div style={styles.shareMenu}>
-                  <button style={styles.shareMenuItem} onClick={handleWhatsApp}>
-                    <WhatsAppIcon />
-                    WhatsApp
-                  </button>
-                  <button style={styles.shareMenuItem} onClick={handleCopy}>
-                    📋 {copied ? 'Copied!' : 'Copy Link'}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <button
-              style={generating ? { ...styles.generateBtn, opacity: 0.6 } : styles.generateBtn}
-              onClick={handleGenerate}
-              disabled={generating}
-            >
-              {generating ? 'Generating...' : 'Generate New Link'}
+      {inviteLink ? (
+        <>
+          <div style={styles.linkRow}>
+            <input
+              readOnly
+              value={inviteLink}
+              style={styles.linkInput}
+              onClick={e => e.target.select()}
+            />
+            <button style={styles.copyBtn} onClick={handleCopy}>
+              {copied ? '✓ Copied' : 'Copy'}
             </button>
-          </>
-        ) : (
+          </div>
+
+          <div style={{ position: 'relative' }}>
+            <button style={styles.shareBtn} onClick={handleShare}>
+              Share
+            </button>
+            {showShareMenu && (
+              <div style={styles.shareMenu}>
+                <button style={styles.shareMenuItem} onClick={handleWhatsApp}>
+                  <WhatsAppIcon />
+                  WhatsApp
+                </button>
+                <button style={styles.shareMenuItem} onClick={handleCopy}>
+                  📋 {copied ? 'Copied!' : 'Copy Link'}
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
-            style={generating ? { ...styles.primaryBtn, opacity: 0.6 } : styles.primaryBtn}
+            style={generating ? { ...styles.generateBtn, opacity: 0.6 } : styles.generateBtn}
             onClick={handleGenerate}
             disabled={generating}
           >
-            {generating ? 'Generating...' : 'Generate Invite Link'}
+            {generating ? 'Generating...' : 'Generate New Link'}
           </button>
-        )}
-
-        {invites.length > 0 && (
-          <div style={styles.activeSection}>
-            <p style={styles.activeSectionTitle}>Active Link</p>
-            {invites.map((inv) => (
-              <div key={inv.token} style={styles.inviteRow}>
-                <span style={styles.inviteInfo}>
-                  Expires in {daysLeft(inv.created_at)} day{daysLeft(inv.created_at) !== 1 ? 's' : ''}
-                </span>
-                <button
-                  style={styles.revokeBtn}
-                  onClick={() => handleRevoke(inv.token)}
-                >
-                  Revoke
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        </>
+      ) : (
+        <button
+          style={generating ? { ...styles.primaryBtn, opacity: 0.6 } : styles.primaryBtn}
+          onClick={handleGenerate}
+          disabled={generating}
+        >
+          {generating ? 'Generating...' : 'Generate Invite Link'}
+        </button>
+      )}
     </div>
   );
 }
@@ -164,11 +125,9 @@ const styles = {
   card: {
     backgroundColor: '#fff',
     borderRadius: '16px',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
     padding: '36px 28px',
     maxWidth: '420px',
     width: '100%',
-    border: '1px solid #ede9fe',
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
@@ -275,44 +234,6 @@ const styles = {
     border: '1.5px solid #9333ea',
     borderRadius: '8px',
     fontSize: '14px',
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
-  activeSection: {
-    borderTop: '1px solid #f3f4f6',
-    paddingTop: '12px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  activeSectionTitle: {
-    fontSize: '12px',
-    fontWeight: 600,
-    color: '#9ca3af',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-    margin: 0,
-  },
-  inviteRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '8px 12px',
-    backgroundColor: '#faf5ff',
-    borderRadius: '8px',
-    border: '1px solid #ede9fe',
-  },
-  inviteInfo: {
-    fontSize: '13px',
-    color: '#6b7280',
-  },
-  revokeBtn: {
-    padding: '4px 10px',
-    backgroundColor: 'transparent',
-    color: '#ef4444',
-    border: '1px solid #fca5a5',
-    borderRadius: '6px',
-    fontSize: '12px',
     fontWeight: 600,
     cursor: 'pointer',
   },
