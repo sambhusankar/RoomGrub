@@ -5,7 +5,9 @@ import Image from 'next/image'
 import LoginBtn from './components/login_btn'
 
 
-export default async function Login() {
+export default async function Login({ searchParams }) {
+    const params = await searchParams;
+    const inviteToken = params?.invite_token || null;
     return (
         <Box
             display="flex"
@@ -76,7 +78,7 @@ export default async function Login() {
                     </span>
                 </Box>
                 <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mt: 2 }}>
-                    <LoginBtn />
+                    <LoginBtn inviteToken={inviteToken} />
                 </Box>
                 <span style={{ fontWeight: 500, fontSize: 15, color: '#706e6e', marginBottom: 4 }}>
                     Smart sharing, stress free living <span role="img" aria-label="money bag">💰</span>

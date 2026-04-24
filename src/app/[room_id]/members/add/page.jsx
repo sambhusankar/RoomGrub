@@ -1,101 +1,30 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/utils/supabase/server';
+import { getPendingInvites } from '@/app/invite/actions';
+import InvitePanel from '../_components/InvitePanel';
 
-import React, { useState } from 'react';
-import { TextField, Button } from '@mui/material';
-import { createClient } from '@/utils/supabase/client'
-import { useParams } from 'next/navigation'
-import NotificationService from '@/services/NotificationService'
+export default async function InvitePage({ params }) {
+  const { room_id } = await params;
+  const supabase = await createClient();
 
-export default function InvitePage() {
-  const param = useParams();
-  const supabase = createClient()
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
 
-  const handleInvite = async () => {
-    if (!email) {
-      setStatus('Please enter a valid email.');
-      return;
-    }
-    console.log(param.room_id)
-    const {data: existingUser, error: selectError } = await supabase
-    .from("Users")
-    .select("*")
-    .eq("email", email);
-    console.log(existingUser)
-    if(existingUser.length > 0){
-      if(existingUser[0].room){
-        setStatus("Your friend already in a room");
-      }else{
-        const {error: Error } = await supabase
-        .from("Users")
-        .update({
-          "room": param.room_id,
-          "role": "Member"
-        })
-        .eq("email", email)
-        setStatus("Your friend added in your room")
-        
-        // Send notification to room members about new member joining
-        try {
-          await NotificationService.notifyMemberJoined(
-            parseInt(param.room_id),
-            existingUser[0].id,
-            existingUser[0].name || email
-          );
-          console.log('Member join notification sent successfully');
-        } catch (notificationError) {
-          console.error('Failed to send member join notification:', notificationError);
-          // Don't show error to user as the main action succeeded
-        }
-      }
-    }else{
-    const {error: insertError} = await supabase
-    .from("Invite")
-    .insert({
-        email: email,
-        room: param.room_id
-    })
-    // TODO: Replace this with actual invite logic (e.g., API call)
-    console.log('Sending invite to:', email);
-    setStatus(`Invite sent to ${email}`);
-    setEmail('');
+  const { data: currentUser } = await supabase
+    .from('Users')
+    .select('role, room')
+    .eq('uid', user.id)
+    .single();
+
+  if (!currentUser || currentUser.room !== parseInt(room_id)) {
+    redirect(`/${room_id}/members`);
   }
-  };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm text-center border border-purple-100">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Invite a Member</h2>
+  if (currentUser.role !== 'Admin') {
+    redirect(`/${room_id}/members`);
+  }
 
-        <TextField
-          label="Email Address"
-          variant="outlined"
-          fullWidth
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="mb-4"
-        />
+  const { invites } = await getPendingInvites(room_id);
 
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth
-          onClick={handleInvite}
-          sx={{
-            fontWeight: 'bold',
-            paddingY: 1,
-            backgroundColor: '#9333ea',
-            '&:hover': { backgroundColor: '#7e22ce' },
-          }}
-        >
-          Send Invite
-        </Button>
-
-        {status && (
-          <p className="mt-4 text-sm text-brand font-medium">{status}</p>
-        )}
-      </div>
-    </div>
-  );
+  return <InvitePanel roomId={room_id} initialInvites={invites || []} />;
 }
