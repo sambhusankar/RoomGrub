@@ -1,22 +1,13 @@
 import dynamic from 'next/dynamic';
-import { LoginRequired } from '@/policies/LoginRequired';
-import { validRoom } from '@/policies/validRoom';
+import { auth, getUserRoom } from '@/auth';
 import { createClient } from '@/utils/supabase/server';
 
 // Lazy load the heavy splits dashboard
-const SplitsDashboard = dynamic(() => import('./_components/SplitsDashboard'), {
-  loading: () => (
-    <div className="p-4 animate-pulse">
-      <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-      <div className="h-48 bg-gray-200 rounded mb-4"></div>
-      <div className="h-32 bg-gray-200 rounded"></div>
-    </div>
-  )
-});
+const SplitsDashboard = dynamic(() => import('./_components/SplitsDashboard'));
 
 export default async function SplitsPage({ params }) {
-  await LoginRequired();
-  const userData = await validRoom({ params });
+  const session = await auth();
+  const { data: userData } = await getUserRoom(session.user.email);
 
   const supabase = await createClient();
   const roomId = (await params).room_id;
@@ -57,7 +48,7 @@ export default async function SplitsPage({ params }) {
       payments={paymentsResult.data || []}
       members={membersResult.data || []}
       roomId={roomId}
-      userRole={userData?.role}
+      userRole={userData?.role ?? null}
     />
   );
 }
