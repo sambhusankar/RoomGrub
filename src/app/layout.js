@@ -5,15 +5,43 @@ const geistSans = localFont({ src: "./fonts/GeistVF.woff", variable: "--font-gei
 const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font-geist-mono", weight: "100 900" });
 
 export const metadata = {
-  title: "Room Grub",
-  description: "Split bills not friendship",
+  title: {
+    default: "RoomGrub — Split Expenses",
+    template: "%s | RoomGrub",
+  },
+  description: "RoomGrub helps roommates and groups track shared expenses, split bills, and settle payments easily. No more awkward money conversations.",
   icons: {
     icon: '/logo.png'
   },
   generator: "Next.js",
-  keywords: "Room Grub, bill splitting, expense sharing, group expenses, financial management",
+  keywords: "RoomGrub, Room Grub, roomgrub, room grub, split bills, bill splitting, expense sharing, shared expenses, roommate expenses, group expenses, settle payments, financial management",
   authors: [{ name: "Sankar", url: "https://sankar.com" }],
   themeColor: "#9333ea",
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
+    title: "RoomGrub — Split Bills, Not Friendship",
+    description: "RoomGrub helps roommates and groups track shared expenses, split bills, and settle payments easily.",
+    url: process.env.NEXT_PUBLIC_SITE_URL,
+    siteName: "RoomGrub",
+    images: [
+      {
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/icons/logo-512.png`,
+        width: 512,
+        height: 512,
+        alt: "RoomGrub logo",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "RoomGrub — Split Bills, Not Friendship",
+    description: "RoomGrub helps roommates and groups track shared expenses, split bills, and settle payments easily.",
+    images: [`${process.env.NEXT_PUBLIC_SITE_URL}/icons/logo-512.png`],
+  },
 };
 
 export default function RootLayout({ children }) {
