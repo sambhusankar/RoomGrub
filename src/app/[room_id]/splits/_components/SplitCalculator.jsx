@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
     Box,
     Typography,
@@ -15,14 +15,18 @@ import {
     Calculate,
     CheckCircle,
     Payment,
-    Receipt
+    Receipt,
+    NearMe
 } from '@mui/icons-material';
 import { settleAllPending } from '../actions';
 import { useRouter } from 'next/navigation';
+import SplitsShareCard from './SplitsShareCard';
 
 export default function SplitCalculator({ expenses, payments, members, filters, roomId, userRole }) {
     const router = useRouter();
+    const shareRef = useRef(null);
     const [isSettling, setIsSettling] = useState(false);
+    const [isSharing, setIsSharing] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
@@ -147,6 +151,36 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
             setError(err.message || 'Failed to process settlement');
         } finally {
             setIsSettling(false);
+        }
+    };
+
+    const handleShare = async () => {
+        if (!shareRef.current) return;
+        setIsSharing(true);
+        try {
+            const html2canvas = (await import('html2canvas')).default;
+            const canvas = await html2canvas(shareRef.current, { useCORS: true, backgroundColor: '#faf5ff' });
+            canvas.toBlob(async (blob) => {
+                const file = new File([blob], 'splits-summary.png', { type: 'image/png' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'RoomGrub Splits',
+                        text: 'Check out our expense splits!',
+                    });
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'splits-summary.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+                setIsSharing(false);
+            }, 'image/png');
+        } catch (err) {
+            if (err.name !== 'AbortError') setError('Failed to share. Please try again.');
+            setIsSharing(false);
         }
     };
 
@@ -307,32 +341,64 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                 </Box>
             )}
 
-            {/* Settle All Button - Full Width at Bottom - Admin Only */}
-            {splitCalculation.pendingSettlements.length > 0 && userRole === 'Admin' && (
-                <Button
-                    fullWidth
-                    color="primary"
-                    size="lg"
-                    onClick={handleSettleAll}
-                    loading={isSettling}
-                    startDecorator={!isSettling && <Payment />}
-                    disabled={isSettling}
-                    sx={{
-                        py: 1.5,
-                        fontSize: '1rem',
-                        fontWeight: 600,
-                        borderRadius: 'md',
-                        textTransform: 'none',
-                        bgcolor: '#7e22ce',
-                        '&:hover': { bgcolor: '#6b21a8' },
-                    }}
-                >
-                    {isSettling
-                        ? 'Settling...'
-                        : `Settle All (${splitCalculation.pendingSettlements.length})`
-                    }
-                </Button>
+            {/* Action Buttons Row */}
+            {splitCalculation.pendingSettlements.length > 0 && (
+                <Box sx={{ display: 'flex', gap: 1.5 }}>
+                    {/* Share Icon Button */}
+                    <Button
+                        variant="outlined"
+                        color="primary"
+                        size="lg"
+                        onClick={handleShare}
+                        loading={isSharing}
+                        sx={{
+                            py: 1.5,
+                            px: 2,
+                            borderRadius: 'md',
+                            borderColor: '#7e22ce',
+                            color: '#7e22ce',
+                            flexShrink: 0,
+                            minWidth: 'unset',
+                            '&:hover': { bgcolor: '#f3e8ff' },
+                        }}
+                    >
+                        {!isSharing && (
+                            <NearMe sx={{ fontSize: 28 }} />
+                        )}
+                    </Button>
+
+                    {/* Settle All Button - Admin Only */}
+                    {userRole === 'Admin' && (
+                        <Button
+                            fullWidth
+                            color="primary"
+                            size="lg"
+                            onClick={handleSettleAll}
+                            loading={isSettling}
+                            startDecorator={!isSettling && <Payment />}
+                            disabled={isSettling}
+                            sx={{
+                                py: 1.5,
+                                fontSize: '1rem',
+                                fontWeight: 600,
+                                borderRadius: 'md',
+                                textTransform: 'none',
+                                bgcolor: '#7e22ce',
+                                '&:hover': { bgcolor: '#6b21a8' },
+                            }}
+                        >
+                            {isSettling ? 'Settling...' : `Settle All (${splitCalculation.pendingSettlements.length})`}
+                        </Button>
+                    )}
+                </Box>
             )}
+
+            {/* Hidden share snapshot — rendered off-screen for html2canvas capture */}
+            <SplitsShareCard
+                shareRef={shareRef}
+                splitCalculation={splitCalculation}
+                filters={filters}
+            />
         </Box>
     );
 }
