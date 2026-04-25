@@ -200,38 +200,30 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                 mb: 2
             }}>
                 {/* Total Pending */}
-                <Card
-                    variant="soft"
-                    color="primary"
-                    sx={{ p: 1.5 }}
-                >
+                <Box sx={{ p: 2, bgcolor: '#fdf3f3', borderRadius: 'xl', boxShadow: 'sm' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Calculate sx={{ fontSize: 18 }} />
-                        <Typography level="body-xs" sx={{ fontWeight: 500 }}>
+                        <Calculate sx={{ fontSize: 18, color: '#dc2626' }} />
+                        <Typography level="body-sm" sx={{ color: '#991b1b', fontWeight: 500 }}>
                             Total Pending
                         </Typography>
                     </Box>
-                    <Typography level="h4" sx={{ fontWeight: 'bold', fontSize: '1.25rem' }}>
+                    <Typography level="title-lg" sx={{ fontWeight: 700, color: '#dc2626' }}>
                         {formatAmount(splitCalculation.totalPendingExpenses)}
                     </Typography>
-                </Card>
+                </Box>
 
                 {/* Per Person */}
-                <Card
-                    variant="soft"
-                    color="success"
-                    sx={{ p: 1.5 }}
-                >
+                <Box sx={{ p: 2, bgcolor: '#f3fbf6', borderRadius: 'xl', boxShadow: 'sm' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                        <Receipt sx={{ fontSize: 18 }} />
-                        <Typography level="body-xs" sx={{ fontWeight: 500 }}>
+                        <Receipt sx={{ fontSize: 18, color: '#16a34a' }} />
+                        <Typography level="body-sm" sx={{ color: '#166534', fontWeight: 500 }}>
                             Per Person
                         </Typography>
                     </Box>
-                    <Typography level="h4" sx={{ fontWeight: 'bold', fontSize: '1.25rem' }}>
+                    <Typography level="title-lg" sx={{ fontWeight: 700, color: '#16a34a' }}>
                         {formatAmount(splitCalculation.equalShare)}
                     </Typography>
-                </Card>
+                </Box>
             </Box>
 
             {/* Success Message */}
@@ -299,24 +291,23 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                     {splitCalculation.memberBalances.map((memberBalance) => (
                         <Card
                             key={memberBalance.member.email}
-                            variant="soft"
-                            color={
-                                memberBalance.status === 'credit' ? 'success' :
-                                memberBalance.status === 'debit' ? 'danger' : 'neutral'
-                            }
                             sx={{
                                 borderRadius: 'md',
-                                p: 2
+                                p: 2,
+                                borderTop: `3px solid ${
+                                    memberBalance.status === 'credit' ? '#16a34a' :
+                                    memberBalance.status === 'debit' ? '#dc2626' : '#9333ea'
+                                }`,
                             }}
                         >
                             {/* Member Header */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 {getMemberAvatar(memberBalance.member)}
                                 <Box sx={{ flex: 1 }}>
-                                    <Typography level="title-md" sx={{ fontWeight: 600 }}>
+                                    <Typography level="title-md" sx={{ fontWeight: 600, color: '#1e1b4b' }}>
                                         {memberBalance.member.name || memberBalance.member.email}
                                     </Typography>
-                                    <Typography level="body-xs" color="neutral">
+                                    <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
                                         Pending: {formatAmount(memberBalance.pendingAmount)}
                                     </Typography>
                                 </Box>
@@ -324,18 +315,20 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                                 <Box sx={{ textAlign: 'right' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end', mb: 0.5 }}>
                                         {memberBalance.status === 'credit' ? (
-                                            <TrendingUp sx={{ fontSize: 20 }} />
+                                            <TrendingUp sx={{ fontSize: 20, color: '#16a34a' }} />
                                         ) : memberBalance.status === 'debit' ? (
-                                            <TrendingDown sx={{ fontSize: 20 }} />
+                                            <TrendingDown sx={{ fontSize: 20, color: '#dc2626' }} />
                                         ) : (
-                                            <CheckCircle sx={{ fontSize: 20 }} />
+                                            <CheckCircle sx={{ fontSize: 20, color: '#9333ea' }} />
                                         )}
                                     </Box>
                                     <Typography
                                         level="h4"
                                         sx={{
                                             fontWeight: 'bold',
-                                            fontSize: '1.25rem'
+                                            fontSize: '1.25rem',
+                                            color: memberBalance.status === 'credit' ? '#16a34a' :
+                                                   memberBalance.status === 'debit' ? '#dc2626' : '#9333ea'
                                         }}
                                     >
                                         {memberBalance.status === 'even' ? '₹0' : formatAmount(memberBalance.balance)}
