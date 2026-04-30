@@ -3,7 +3,7 @@
 import { createRoom } from '../action';
 import React from 'react';
 import {
-  Box, Typography, Sheet,
+  Box, Typography,
   Button,
   Divider,
   List,
@@ -35,13 +35,12 @@ export default function CreateRoom() {
   };
 
   return (
-    <Sheet
+    <Box
       sx={{
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        bgcolor: 'background.body',
         p: 2,
       }}
     >
@@ -148,6 +147,6 @@ export default function CreateRoom() {
           </CardContent>
         </Card>
       </Box>
-    </Sheet>
+    </Box>
   );
 }
