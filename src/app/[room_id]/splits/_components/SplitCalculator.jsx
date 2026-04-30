@@ -292,12 +292,16 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                         <Card
                             key={memberBalance.member.email}
                             sx={{
-                                borderRadius: 'md',
+                                borderRadius: 'xl',
                                 p: 2,
-                                borderTop: `3px solid ${
-                                    memberBalance.status === 'credit' ? '#16a34a' :
-                                    memberBalance.status === 'debit' ? '#dc2626' : '#9333ea'
+                                border: `1px solid ${
+                                    memberBalance.status === 'credit' ? '#86efac' :
+                                    memberBalance.status === 'debit' ? '#fca5a5' : '#d8b4fe'
                                 }`,
+                                bgcolor:
+                                    memberBalance.status === 'credit' ? '#f0fdf4' :
+                                    memberBalance.status === 'debit' ? '#fff5f5' : '#faf5ff',
+                                boxShadow: 'sm',
                             }}
                         >
                             {/* Member Header */}
@@ -313,16 +317,7 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                                 </Box>
                                 {/* Balance Amount - Prominent */}
                                 <Box sx={{ textAlign: 'right' }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end', mb: 0.5 }}>
-                                        {memberBalance.status === 'credit' ? (
-                                            <TrendingUp sx={{ fontSize: 20, color: '#16a34a' }} />
-                                        ) : memberBalance.status === 'debit' ? (
-                                            <TrendingDown sx={{ fontSize: 20, color: '#dc2626' }} />
-                                        ) : (
-                                            <CheckCircle sx={{ fontSize: 20, color: '#9333ea' }} />
-                                        )}
-                                    </Box>
-                                    <Typography
+                                        <Typography
                                         level="h4"
                                         sx={{
                                             fontWeight: 'bold',
