@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import { NearMe } from '@mui/icons-material';
 import { createInvite } from '@/app/invite/actions';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
@@ -11,7 +13,6 @@ export default function InvitePanel({ roomId }) {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const [showShareMenu, setShowShareMenu] = useState(false);
-
   const inviteLink = currentToken ? `${SITE_URL}/invite/${currentToken}` : null;
 
   const handleGenerate = async () => {
@@ -77,8 +78,30 @@ export default function InvitePanel({ roomId }) {
             </button>
           </div>
 
+          <div style={styles.qrSection}>
+            <p style={styles.qrLabel}>Or scan this QR code</p>
+            <div style={styles.qrWrapper}>
+              <QRCodeSVG
+                value={inviteLink}
+                size={176}
+                bgColor="#ffffff"
+                fgColor="#9333ea"
+                level="H"
+                imageSettings={{
+                  src: '/logo.png',
+                  x: undefined,
+                  y: undefined,
+                  height: 36,
+                  width: 36,
+                  excavate: true,
+                }}
+              />
+            </div>
+          </div>
+
           <div style={{ position: 'relative' }}>
             <button style={styles.shareBtn} onClick={handleShare}>
+              <NearMe sx={{ fontSize: 20, marginRight: '6px' }} />
               Share
             </button>
             {showShareMenu && (
@@ -94,13 +117,6 @@ export default function InvitePanel({ roomId }) {
             )}
           </div>
 
-          <button
-            style={generating ? { ...styles.generateBtn, opacity: 0.6 } : styles.generateBtn}
-            onClick={handleGenerate}
-            disabled={generating}
-          >
-            {generating ? 'Generating...' : 'Generate New Link'}
-          </button>
         </>
       ) : (
         <button
@@ -180,18 +196,21 @@ const styles = {
   },
   shareBtn: {
     width: '100%',
-    padding: '10px',
-    backgroundColor: '#f3f4f6',
-    color: '#374151',
-    border: '1.5px solid #e5e7eb',
+    padding: '12px',
+    backgroundColor: '#9333ea',
+    color: '#fff',
+    border: 'none',
     borderRadius: '8px',
-    fontSize: '14px',
-    fontWeight: 600,
+    fontSize: '15px',
+    fontWeight: 700,
     cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   shareMenu: {
     position: 'absolute',
-    top: '110%',
+    bottom: '110%',
     left: 0,
     right: 0,
     backgroundColor: '#fff',
@@ -224,6 +243,35 @@ const styles = {
     borderRadius: '8px',
     fontSize: '15px',
     fontWeight: 700,
+    cursor: 'pointer',
+  },
+  qrSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  qrLabel: {
+    fontSize: '13px',
+    color: '#6b7280',
+    margin: 0,
+  },
+  qrWrapper: {
+    padding: '12px',
+    border: '1.5px solid #e5e7eb',
+    borderRadius: '12px',
+    backgroundColor: '#fff',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+    lineHeight: 0,
+  },
+  downloadBtn: {
+    padding: '8px 20px',
+    backgroundColor: 'transparent',
+    color: '#6b7280',
+    border: '1.5px solid #e5e7eb',
+    borderRadius: '8px',
+    fontSize: '13px',
+    fontWeight: 600,
     cursor: 'pointer',
   },
   generateBtn: {

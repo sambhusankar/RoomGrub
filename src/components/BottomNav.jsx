@@ -14,7 +14,7 @@ const tabs = [
     { label: 'Expenses', icon: ReceiptLongRounded, path: '/expenses' },
     null, // FAB spacer
     { label: 'Splits', icon: AnalyticsRounded, path: '/splits' },
-    { label: 'Members', icon: GroupRounded, path: '/members' },
+    { label: 'Friends', icon: GroupRounded, path: '/members' },
 ];
 
 export default function BottomNav() {
