@@ -105,7 +105,7 @@ export default function ListMembers({ members, roomId, currentUserEmail }) {
                     textAlign: { xs: 'center', sm: 'left' },
                 }}
             >
-                Room Members
+                Friends
             </Typography>
             {(!members || members.length === 0) ? (
                 <Typography textAlign="center">No friends added in your room.</Typography>
@@ -161,7 +161,7 @@ export default function ListMembers({ members, roomId, currentUserEmail }) {
                                         />
                                         <Box sx={{ flex: 1 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                                                <Typography level="title-md">{member.name}</Typography>
+                                                <Typography level="title-lg">{member.name}</Typography>
                                                 <Chip
                                                     size="sm"
                                                     color={member.role === 'Admin' ? 'primary' : 'neutral'}
@@ -170,7 +170,6 @@ export default function ListMembers({ members, roomId, currentUserEmail }) {
                                                     {member.role}
                                                 </Chip>
                                             </Box>
-                                            <Typography level="body-sm">{member.email}</Typography>
                                         </Box>
                                     </Stack>
                                     {!loadings && role === 'Admin' && (

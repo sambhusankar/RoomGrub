@@ -18,8 +18,8 @@ import {
 
 const navItems = [
   {
-    label: 'Members',
-    subtext: 'Manage or view room members',
+    label: 'Friends',
+    subtext: 'Manage or view room friends',
     icon: Group,
     path: '/members',
   },
