@@ -5,37 +5,64 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
 const { createClient } = require('@/utils/supabase/server');
 
-function buildMockSupabase({ user, currentUser, expenses, insertError, settleError } = {}) {
-  const chainMock = {
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    in: jest.fn().mockReturnThis(),
-    or: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    single: jest.fn().mockResolvedValue({ data: currentUser, error: null }),
-    insert: jest.fn().mockResolvedValue({ error: insertError || null }),
-  };
+// The action does:
+//   1. auth.getUser()
+//   2. from('Users').eq('email').single()           → currentUser { id }
+//   3. from('UserRooms').eq('user_id').eq('room_id').single() → currentMembership { role }
+//   4. from('Spendings').eq().or()                  → expenses
+//   5. from('balance').insert(balanceRecords)
+//   6. from('Spendings').update().in(ids)
 
-  // Override update chain to end with a resolved value
-  const updateChain = {
-    in: jest.fn().mockResolvedValue({ error: settleError || null }),
-  };
-  chainMock.update.mockReturnValue(updateChain);
+function buildMockSupabase({
+  user,
+  currentUser = null,
+  currentMembership = null,
+  expenses,
+  insertError = null,
+  settleError = null,
+} = {}) {
+  const mockFrom = jest.fn().mockImplementation((table) => {
+    if (table === 'Users') {
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: currentUser, error: currentUser ? null : new Error('not found') }),
+      };
+    }
+    if (table === 'UserRooms') {
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: currentMembership, error: currentMembership ? null : new Error('not found') }),
+      };
+    }
+    if (table === 'Spendings') {
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        or: jest.fn().mockResolvedValue({ data: expenses, error: null }),
+        update: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({ error: settleError || null }),
+        }),
+      };
+    }
+    if (table === 'balance') {
+      return {
+        insert: jest.fn().mockResolvedValue({ error: insertError || null }),
+      };
+    }
+    return { select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: null, error: null }) };
+  });
 
-  // or() is the last call on the expenses query — resolve with expenses data
-  chainMock.or.mockResolvedValue({ data: expenses, error: null });
-
-  const mockSupabase = {
+  return {
     auth: {
       getUser: jest.fn().mockResolvedValue({
         data: { user },
         error: user ? null : new Error('no user'),
       }),
     },
-    from: jest.fn().mockReturnValue(chainMock),
+    from: mockFrom,
   };
-
-  return mockSupabase;
 }
 
 describe('settlePayment', () => {
@@ -48,30 +75,33 @@ describe('settlePayment', () => {
     expect(result.error).toMatch(/Unauthorized/);
   });
 
-  it('returns error when user is not Admin', async () => {
+  it('returns error when user is not a member of the room', async () => {
     createClient.mockResolvedValue(buildMockSupabase({
       user: { email: 'admin@test.com' },
-      currentUser: { role: 'Member', room: 1 },
-    }));
-    const result = await settlePayment('1', 'member@test.com');
-    expect(result.success).toBe(false);
-    expect(result.error).toMatch(/admin/i);
-  });
-
-  it("returns error when user's room doesn't match roomId", async () => {
-    createClient.mockResolvedValue(buildMockSupabase({
-      user: { email: 'admin@test.com' },
-      currentUser: { role: 'Admin', room: 99 },
+      currentUser: { id: 1 },
+      currentMembership: null,
     }));
     const result = await settlePayment('1', 'member@test.com');
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/not a member/i);
   });
 
+  it('returns error when user is not Admin', async () => {
+    createClient.mockResolvedValue(buildMockSupabase({
+      user: { email: 'user@test.com' },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Member' },
+    }));
+    const result = await settlePayment('1', 'member@test.com');
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/admin/i);
+  });
+
   it('returns error when member has no unsettled expenses', async () => {
     createClient.mockResolvedValue(buildMockSupabase({
       user: { email: 'admin@test.com' },
-      currentUser: { role: 'Admin', room: 1 },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Admin' },
       expenses: [],
     }));
     const result = await settlePayment('1', 'member@test.com');
@@ -82,25 +112,29 @@ describe('settlePayment', () => {
   it('builds balance records with negated amount and spending_id', async () => {
     const mockSupabase = buildMockSupabase({
       user: { email: 'admin@test.com' },
-      currentUser: { role: 'Admin', room: 1 },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Admin' },
       expenses: [{ id: 10, money: 300 }, { id: 11, money: 150 }],
     });
     createClient.mockResolvedValue(mockSupabase);
 
     const result = await settlePayment('1', 'member@test.com');
-
     expect(result.success).toBe(true);
     expect(result.expensesSettled).toBe(2);
 
-    const insertCall = mockSupabase.from().insert.mock.calls[0][0];
-    expect(insertCall[0]).toMatchObject({ amount: -300, status: 'debit', spending_id: 10 });
-    expect(insertCall[1]).toMatchObject({ amount: -150, status: 'debit', spending_id: 11 });
+    const balanceInsertCalls = mockSupabase.from.mock.results
+      .filter((_, i) => mockSupabase.from.mock.calls[i][0] === 'balance')
+      .map(r => r.value.insert.mock.calls)
+      .flat();
+    expect(balanceInsertCalls[0][0][0]).toMatchObject({ amount: -300, status: 'debit', spending_id: 10 });
+    expect(balanceInsertCalls[0][0][1]).toMatchObject({ amount: -150, status: 'debit', spending_id: 11 });
   });
 
   it('returns error when balance insert fails', async () => {
     createClient.mockResolvedValue(buildMockSupabase({
       user: { email: 'admin@test.com' },
-      currentUser: { role: 'Admin', room: 1 },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Admin' },
       expenses: [{ id: 10, money: 100 }],
       insertError: new Error('DB error'),
     }));
