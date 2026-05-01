@@ -7,14 +7,15 @@ export default async function MembersPage({ params }) {
     const session = await auth();
     const supabase = await createClient();
     const p = await params;
-    const { data: members, error } = await supabase
-        .from("Users")
-        .select("*")
-        .eq("room", params.room_id);
 
-    // Optionally handle error here
+    const { data: memberships, error } = await supabase
+        .from('UserRooms')
+        .select('role, Users(*)')
+        .eq('room_id', p.room_id);
+
+    const members = (memberships || []).map(m => ({ ...m.Users, role: m.role }));
 
     return (
-        <ListMembers members={members || []} roomId={params.room_id} currentUserEmail={session.user.email} />
+        <ListMembers members={members} roomId={p.room_id} currentUserEmail={session.user.email} />
     );
 }

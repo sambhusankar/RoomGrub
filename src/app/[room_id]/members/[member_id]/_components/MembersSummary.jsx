@@ -2,11 +2,13 @@
 import React from 'react';
 import { Button } from '@mui/joy';
 import useUserRole from '@/hooks/useUserRole';
+import { useParams } from 'next/navigation';
 import { Card, CardContent, Typography, Stack, Box } from '@mui/joy';
 import { formatCurrency } from '@/utils/format';
 
 export default function MembersSummary({ summary }) {
-    const { role, loadings } = useUserRole();
+    const { room_id } = useParams();
+    const { role, loadings } = useUserRole(room_id);
     
     return (
         <Card sx={{ mb: 3 }}>

@@ -17,8 +17,8 @@ export default function MemberDetail() {
     const [isSettling, setIsSettling] = useState(false);
     const [summary, setSummary] = useState({ pendingAmount: 0, totalPurchases: 0 });
     
-    const { role, loadings } = useUserRole();
     const params = useParams();
+    const { role, loadings } = useUserRole(params.room_id);
     const router = useRouter();
     const supabase = createClient();
 
