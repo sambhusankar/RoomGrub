@@ -26,7 +26,7 @@ export default function AuthCallback() {
 
       const { data: existingUser, error: fetchError } = await supabase
         .from("Users")
-        .select('*')
+        .select('id')
         .eq('uid', user.id)
 
       if (fetchError) {
@@ -34,8 +34,8 @@ export default function AuthCallback() {
       }
 
       if (existingUser.length === 0) {
-        // New user — create record first with no room
-        const { data: insertedUser, error: insertError } = await supabase
+        // New user — create record
+        const { error: insertError } = await supabase
           .from("Users")
           .insert({
             uid: user.id,
@@ -51,7 +51,6 @@ export default function AuthCallback() {
           return router.push('/login?message=DB error')
         }
 
-        // If invite token present, accept it
         if (inviteToken) {
           const result = await acceptInvite(inviteToken)
           if (result.success) {
@@ -59,22 +58,18 @@ export default function AuthCallback() {
           }
         }
 
-        return router.push('create_room')
+        return router.push('/')
       }
 
       // Existing user
-      const existingUserData = existingUser[0]
-
-      if (!existingUserData.room && inviteToken) {
+      if (inviteToken) {
         const result = await acceptInvite(inviteToken)
         if (result.success) {
           return router.push(`/${result.roomId}`)
         }
       }
 
-      existingUserData.room
-        ? router.push(`${existingUserData.room}`)
-        : router.push('create_room')
+      return router.push('/')
     }
 
     handleAuth()
