@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Box, Card, Input, Chip, Button, Typography } from '@mui/joy';
+import { Box, Card, Button, Typography, Avatar } from '@mui/joy';
 import { FilterAlt, Clear } from '@mui/icons-material';
+import DateRangePicker from './DateRangePicker';
 
 export default function FilterPanel({ filters, members, onFilterChange }) {
     const handleMemberToggle = (memberEmail) => {
@@ -14,13 +15,8 @@ export default function FilterPanel({ filters, members, onFilterChange }) {
         onFilterChange({ selectedMembers: newMembers });
     };
 
-    const handleDateChange = (field, value) => {
-        onFilterChange({
-            dateRange: {
-                ...filters.dateRange,
-                [field]: value
-            }
-        });
+    const handleDateRangeChange = ({ from, to }) => {
+        onFilterChange({ dateRange: { from, to } });
     };
 
     const clearFilters = () => {
@@ -64,37 +60,15 @@ export default function FilterPanel({ filters, members, onFilterChange }) {
             </Box>
 
             {/* Date Range */}
-            <Box
-                sx={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 1.5,
-                    mb: 2
-                }}
-            >
-                <Box>
-                    <Typography level="body-xs" sx={{ mb: 0.5, color: 'text.secondary' }}>
-                        Start Date
-                    </Typography>
-                    <Input
-                        type="date"
-                        value={filters.dateRange?.from || ''}
-                        onChange={(e) => handleDateChange('from', e.target.value)}
-                        size="sm"
-                    />
-                </Box>
-
-                <Box>
-                    <Typography level="body-xs" sx={{ mb: 0.5, color: 'text.secondary' }}>
-                        End Date
-                    </Typography>
-                    <Input
-                        type="date"
-                        value={filters.dateRange?.to || ''}
-                        onChange={(e) => handleDateChange('to', e.target.value)}
-                        size="sm"
-                    />
-                </Box>
+            <Box sx={{ mb: 2 }}>
+                <Typography level="body-xs" sx={{ mb: 0.5, color: 'text.secondary' }}>
+                    Date Range
+                </Typography>
+                <DateRangePicker
+                    from={filters.dateRange?.from || ''}
+                    to={filters.dateRange?.to || ''}
+                    onChange={handleDateRangeChange}
+                />
             </Box>
 
             {/* Member Filter */}
@@ -102,34 +76,51 @@ export default function FilterPanel({ filters, members, onFilterChange }) {
                 <Typography level="body-xs" sx={{ mb: 1, color: 'text.secondary' }}>
                     Filter by Members
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {members.map(member => (
-                        <Chip
-                            key={member.email}
-                            variant={
-                                filters.selectedMembers?.includes(member.email)
-                                    ? "solid"
-                                    : "outlined"
-                            }
-                            color={
-                                filters.selectedMembers?.includes(member.email)
-                                    ? "primary"
-                                    : "neutral"
-                            }
-                            onClick={() => handleMemberToggle(member.email)}
-                            sx={{
-                                cursor: 'pointer',
-                                fontSize: '0.75rem',
-                                '&:hover': {
-                                    bgcolor: filters.selectedMembers?.includes(member.email)
-                                        ? 'primary.600'
-                                        : 'background.level2'
-                                }
-                            }}
-                        >
-                            {member.name || member.email}
-                        </Chip>
-                    ))}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        overflowX: 'auto',
+                        gap: 1.5,
+                        pb: 0.5,
+                        '&::-webkit-scrollbar': { height: '4px' },
+                        '&::-webkit-scrollbar-thumb': { borderRadius: '4px', bgcolor: 'neutral.300' },
+                    }}
+                >
+                    {members.map(member => {
+                        const isSelected = filters.selectedMembers?.includes(member.email);
+                        const displayName = (member.name || member.email).split(' ')[0];
+                        return (
+                            <Box
+                                key={member.email}
+                                onClick={() => handleMemberToggle(member.email)}
+                                sx={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    gap: 0.5,
+                                    cursor: 'pointer',
+                                    flexShrink: 0,
+                                    p: 0.5,
+                                }}
+                            >
+                                <Avatar
+                                    {...(member.profile ? { src: member.profile } : {})}
+                                    size="md"
+                                    sx={{
+                                        border: '2.5px solid',
+                                        borderColor: isSelected ? 'primary.500' : 'neutral.300',
+                                        transition: 'border-color 0.15s',
+                                    }}
+                                >
+                                    {(member.name || member.email).charAt(0).toUpperCase()}
+                                </Avatar>
+                                <Typography level="body-xs" sx={{ fontSize: '0.7rem', textAlign: 'center' }}>
+                                    {displayName}
+                                </Typography>
+                            </Box>
+                        );
+                    })}
                 </Box>
             </Box>
         </Card>
