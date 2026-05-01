@@ -8,7 +8,7 @@ import { deleteRoom } from '../actions';
 
 export default function DangerZone({ roomId }) {
     const router = useRouter();
-    const { role, loadings } = useUserRole();
+    const { role, loadings } = useUserRole(roomId);
     const [deleting, setDeleting] = useState(false);
     const [error, setError] = useState(null);
     const [pendingExists, setPendingExists] = useState(false);

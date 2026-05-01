@@ -27,7 +27,8 @@ export default function DeleteConfirmDialog({ open, onClose, activity, roomId })
         result = await deleteGroceryActivity(
           activity.id,
           activity.description,
-          activity.amount
+          activity.amount,
+          roomId
         );
       } else {
         result = await deletePaymentActivity(

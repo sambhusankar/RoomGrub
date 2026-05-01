@@ -24,7 +24,7 @@ export default function EditActivityDialog({ open, onClose, activity, roomId }) 
     const formData = new FormData(e.target);
 
     startTransition(async () => {
-      const result = await editGroceryActivity(activity.id, formData);
+      const result = await editGroceryActivity(activity.id, formData, roomId);
 
       if (result?.error) {
         setError(result.error);

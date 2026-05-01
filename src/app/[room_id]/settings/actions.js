@@ -17,16 +17,25 @@ export async function deleteRoom(roomId) {
         // SECURITY CHECK 2: Verify current user is admin and belongs to this room
         const { data: currentUser } = await supabase
             .from('Users')
-            .select('role, room, email')
+            .select('id')
             .eq('email', user.email)
             .single();
 
-        if (currentUser?.role !== 'Admin') {
-            return { success: false, error: 'Unauthorized: Only admins can delete the room' };
+        if (!currentUser) return { success: false, error: 'Unauthorized' };
+
+        const { data: membership } = await supabase
+            .from('UserRooms')
+            .select('role')
+            .eq('user_id', currentUser.id)
+            .eq('room_id', rid)
+            .single();
+
+        if (!membership) {
+            return { success: false, error: 'Unauthorized: User not a member of this room' };
         }
 
-        if (currentUser?.room !== rid) {
-            return { success: false, error: 'Unauthorized: User not a member of this room' };
+        if (membership.role !== 'Admin') {
+            return { success: false, error: 'Unauthorized: Only admins can delete the room' };
         }
 
         // PRE-CONDITION: Block if any expenses are unsettled
@@ -60,42 +69,18 @@ export async function deleteRoom(roomId) {
         }
 
         // DELETION SEQUENCE via direct DB connection (bypasses RLS)
-        // Delete dependent rows first, then members, then the room itself
+        // Wrapped in a transaction so a mid-sequence failure rolls back all deletes atomically
+        await DB.sequelize.transaction(async (t) => {
+            const opts = { replacements: { roomId: rid }, transaction: t };
 
-        await DB.sequelize.query(
-            'DELETE FROM "public"."balance" WHERE room = :roomId',
-            { replacements: { roomId: rid } }
-        );
-
-        await DB.sequelize.query(
-            'DELETE FROM "public"."Spendings" WHERE room = :roomId',
-            { replacements: { roomId: rid } }
-        );
-
-        await DB.sequelize.query(
-            'DELETE FROM "public"."Invite" WHERE room = :roomId',
-            { replacements: { roomId: rid } }
-        );
-
-        await DB.sequelize.query(
-            'DELETE FROM "public"."push_subscriptions" WHERE room_id = :roomId',
-            { replacements: { roomId: rid } }
-        );
-
-        await DB.sequelize.query(
-            'DELETE FROM "public"."notifications" WHERE room_id = :roomId',
-            { replacements: { roomId: rid } }
-        );
-
-        await DB.sequelize.query(
-            'UPDATE "public"."Users" SET room = NULL, role = NULL WHERE room = :roomId',
-            { replacements: { roomId: rid } }
-        );
-
-        await DB.sequelize.query(
-            'DELETE FROM "public"."Rooms" WHERE id = :roomId',
-            { replacements: { roomId: rid } }
-        );
+            await DB.sequelize.query('DELETE FROM "public"."balance" WHERE room = :roomId', opts);
+            await DB.sequelize.query('DELETE FROM "public"."Spendings" WHERE room = :roomId', opts);
+            await DB.sequelize.query('DELETE FROM "public"."Invite" WHERE room = :roomId', opts);
+            await DB.sequelize.query('DELETE FROM "public"."push_subscriptions" WHERE room_id = :roomId', opts);
+            await DB.sequelize.query('DELETE FROM "public"."notifications" WHERE room_id = :roomId', opts);
+            await DB.sequelize.query('DELETE FROM "public"."UserRooms" WHERE room_id = :roomId', opts);
+            await DB.sequelize.query('DELETE FROM "public"."Rooms" WHERE id = :roomId', opts);
+        });
 
         return { success: true };
 

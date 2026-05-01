@@ -4,29 +4,36 @@ import { createClient } from '@/utils/supabase/server';
 import { LoginRequired } from '@/policies/LoginRequired';
 import { revalidatePath } from 'next/cache';
 
-export async function editGroceryActivity(activityId, formData) {
+export async function editGroceryActivity(activityId, formData, roomId) {
   const session = await LoginRequired();
   const supabase = await createClient();
 
   const { data: currentUser } = await supabase
     .from('Users')
-    .select('role, room, id')
+    .select('id')
     .eq('email', session.user.email)
     .single();
 
-  if (currentUser?.role !== 'Admin') {
+  const { data: membership } = await supabase
+    .from('UserRooms')
+    .select('role')
+    .eq('user_id', currentUser?.id)
+    .eq('room_id', parseInt(roomId))
+    .single();
+
+  if (membership?.role !== 'Admin') {
     return { error: 'Only admins can edit activities' };
   }
 
   const material = formData.get('material');
   const money = parseFloat(formData.get('money'));
   const created_at = formData.get('created_at');
-  const roomId = currentUser.room;
 
   const { error: updateError } = await supabase
     .from('Spendings')
     .update({ material, money, created_at })
-    .eq('id', activityId);
+    .eq('id', activityId)
+    .eq('room', parseInt(roomId));
 
   if (updateError) {
     console.error('Error updating grocery:', updateError);
@@ -36,7 +43,7 @@ export async function editGroceryActivity(activityId, formData) {
   await supabase
     .from('Notifications')
     .insert({
-      room_id: roomId,
+      room_id: parseInt(roomId),
       triggered_by: currentUser.id,
       activity_type: 'grocery',
       title: 'Expense Edited',
@@ -48,26 +55,32 @@ export async function editGroceryActivity(activityId, formData) {
   return { success: true };
 }
 
-export async function deleteGroceryActivity(activityId, material, money) {
+export async function deleteGroceryActivity(activityId, material, money, roomId) {
   const session = await LoginRequired();
   const supabase = await createClient();
 
   const { data: currentUser } = await supabase
     .from('Users')
-    .select('role, room, id')
+    .select('id')
     .eq('email', session.user.email)
     .single();
 
-  if (currentUser?.role !== 'Admin') {
+  const { data: membership } = await supabase
+    .from('UserRooms')
+    .select('role')
+    .eq('user_id', currentUser?.id)
+    .eq('room_id', parseInt(roomId))
+    .single();
+
+  if (membership?.role !== 'Admin') {
     return { error: 'Only admins can delete activities' };
   }
-
-  const roomId = currentUser.room;
 
   const { error: deleteError } = await supabase
     .from('Spendings')
     .delete()
-    .eq('id', activityId);
+    .eq('id', activityId)
+    .eq('room', parseInt(roomId));
 
   if (deleteError) {
     console.error('Error deleting grocery:', deleteError);
@@ -77,7 +90,7 @@ export async function deleteGroceryActivity(activityId, material, money) {
   await supabase
     .from('Notifications')
     .insert({
-      room_id: roomId,
+      room_id: parseInt(roomId),
       triggered_by: currentUser.id,
       activity_type: 'grocery',
       title: 'Expense Deleted',
