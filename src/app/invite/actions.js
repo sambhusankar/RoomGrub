@@ -55,11 +55,20 @@ export async function createInvite(roomId) {
 
         const { data: currentUser } = await supabase
             .from('Users')
-            .select('id, role, room')
-            .eq('uid', user.id)
+            .select('id')
+            .eq('email', user.email)
             .single();
 
-        if (currentUser?.role !== 'Admin' || currentUser?.room !== parseInt(roomId)) {
+        if (!currentUser) return { success: false, error: 'User not found' };
+
+        const { data: membership } = await supabase
+            .from('UserRooms')
+            .select('role')
+            .eq('user_id', currentUser.id)
+            .eq('room_id', parseInt(roomId))
+            .single();
+
+        if (membership?.role !== 'Admin') {
             return { success: false, error: 'Only room admins can create invite links' };
         }
 
@@ -84,7 +93,6 @@ export async function acceptInvite(token) {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         if (authError || !user) return { success: false, error: 'Unauthorized' };
 
-        // Fetch invite directly to avoid join aliasing issues
         const { data: invite, error: inviteError } = await supabase
             .from('Invite')
             .select('id, room, status, created_at')
@@ -105,21 +113,29 @@ export async function acceptInvite(token) {
 
         const { data: currentUser } = await supabase
             .from('Users')
-            .select('id, room')
-            .eq('uid', user.id)
+            .select('id')
+            .eq('email', user.email)
             .single();
 
         if (!currentUser) return { success: false, error: 'User not found' };
-        if (currentUser.room) return { success: false, error: 'Already in a room' };
 
         const roomId = invite.room;
 
-        const { error: userUpdateError } = await supabase
-            .from('Users')
-            .update({ room: roomId, role: 'Member' })
-            .eq('id', currentUser.id);
+        // Idempotency: if already a member of this room, return success silently
+        const { data: existing } = await supabase
+            .from('UserRooms')
+            .select('id')
+            .eq('user_id', currentUser.id)
+            .eq('room_id', roomId)
+            .single();
 
-        if (userUpdateError) throw new Error('Failed to join room');
+        if (existing) return { success: true, roomId };
+
+        const { error: membershipError } = await supabase
+            .from('UserRooms')
+            .insert({ user_id: currentUser.id, room_id: roomId, role: 'Member' });
+
+        if (membershipError) throw new Error('Failed to join room');
 
         const { data: room } = await supabase
             .from('Rooms')
@@ -132,14 +148,10 @@ export async function acceptInvite(token) {
             .update({ members: (room?.members || 0) + 1 })
             .eq('id', roomId);
 
-        const { error: inviteUpdateError } = await supabase
+        await supabase
             .from('Invite')
             .update({ status: 'accepted', updated_at: new Date().toISOString() })
             .eq('id', invite.id);
-
-        if (inviteUpdateError) {
-            console.error('Failed to update invite status:', inviteUpdateError);
-        }
 
         revalidatePath(`/${roomId}`, 'layout');
         return { success: true, roomId };
