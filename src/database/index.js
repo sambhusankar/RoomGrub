@@ -4,6 +4,7 @@ import Room from './models/Room.model'
 import Balance from './models/Balance.model'
 import Spendings from './models/Spendings.model'
 import Invite from './models/Invite.model'
+import UserRoom from './models/UserRoom.model'
 import pg from 'pg'
 
 const sequelize = new Sequelize(process.env.SUPABASE_DB_URL, {
@@ -23,7 +24,8 @@ const Models = {
     Room: Room(sequelize),
     Balance: Balance(sequelize),
     Spendings: Spendings(sequelize),
-    Invite: Invite(sequelize)
+    Invite: Invite(sequelize),
+    UserRoom: UserRoom(sequelize),
 }
 
 const DB = {
