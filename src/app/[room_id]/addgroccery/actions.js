@@ -14,26 +14,36 @@ export async function addGroceryForFriend(roomId, friendEmail, grocery, price, d
             return { success: false, error: 'Unauthorized: User not authenticated' };
         }
 
-        // SECURITY CHECK 2: Verify current user is admin
+        // SECURITY CHECK 2: Verify current user is admin and member of this room
         const { data: currentUser } = await supabase
             .from('Users')
-            .select('role, room, id, name')
+            .select('id, name')
             .eq('email', user.email)
             .single();
 
-        if (currentUser?.role !== 'Admin') {
-            return { success: false, error: 'Unauthorized: Only admins can add groceries for others' };
+        if (!currentUser) {
+            return { success: false, error: 'Unauthorized: User not found' };
         }
 
-        // SECURITY CHECK 3: Verify current user belongs to this room
-        if (currentUser?.room !== parseInt(roomId)) {
+        const { data: currentMembership } = await supabase
+            .from('UserRooms')
+            .select('role')
+            .eq('user_id', currentUser.id)
+            .eq('room_id', parseInt(roomId))
+            .single();
+
+        if (!currentMembership) {
             return { success: false, error: 'Unauthorized: User not a member of this room' };
+        }
+
+        if (currentMembership.role !== 'Admin') {
+            return { success: false, error: 'Unauthorized: Only admins can add groceries for others' };
         }
 
         // VALIDATION 1: Verify friend exists and belongs to the same room
         const { data: friendUser, error: friendError } = await supabase
             .from('Users')
-            .select('email, room, id, name')
+            .select('id, email, name')
             .eq('email', friendEmail)
             .single();
 
@@ -41,7 +51,14 @@ export async function addGroceryForFriend(roomId, friendEmail, grocery, price, d
             return { success: false, error: 'Friend not found' };
         }
 
-        if (friendUser.room !== parseInt(roomId)) {
+        const { data: friendMembership } = await supabase
+            .from('UserRooms')
+            .select('id')
+            .eq('user_id', friendUser.id)
+            .eq('room_id', parseInt(roomId))
+            .single();
+
+        if (!friendMembership) {
             return { success: false, error: 'Friend does not belong to this room' };
         }
 
