@@ -1,5 +1,6 @@
 // Custom Service Worker for RoomGrub with Push Notifications
 // This file is the source for the service worker and won't be auto-formatted
+// v2 — clears start-url cache, home page is now NetworkOnly
 
 // Import Workbox libraries
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/7.0.0/workbox-sw.js');
@@ -317,26 +318,10 @@ if (workbox) {
     // START URL - NetworkFirst with redirect handling
     // =========================================
 
+    // Home page (My Rooms dashboard) — never cache, always fetch fresh
     workbox.routing.registerRoute(
         '/',
-        new workbox.strategies.NetworkFirst({
-            cacheName: 'start-url',
-            networkTimeoutSeconds: 3,
-            plugins: [
-                {
-                    cacheWillUpdate: async ({ response }) => {
-                        if (response && response.type === 'opaqueredirect') {
-                            return new Response(response.body, {
-                                status: 200,
-                                statusText: 'OK',
-                                headers: response.headers
-                            });
-                        }
-                        return response;
-                    }
-                }
-            ]
-        }),
+        new workbox.strategies.NetworkOnly(),
         'GET'
     );
 

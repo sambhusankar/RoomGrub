@@ -5,36 +5,76 @@ jest.mock('next/cache', () => ({ revalidatePath: jest.fn() }));
 
 const { createClient } = require('@/utils/supabase/server');
 
-function buildMockSupabase({ user, currentUser, expenses = [], payments = [], insertError, settleError, deleteError } = {}) {
-  const queryChain = {
+// The action does:
+//   1. auth.getUser()
+//   2. from('Users').eq('email').single()                     → currentUser { id }
+//   3. from('UserRooms').eq('user_id').eq('room_id').single() → currentMembership { role }
+//   4. Promise.all([
+//        from('Spendings').select().in().eq().or()...         → expenses
+//        from('balance').select().in().eq().eq().is()...      → payments (legacy debits)
+//      ])
+//   5. from('balance').insert(settlements)
+//   6. from('Spendings').update().in(ids)
+//   7. from('balance').delete()...                            → delete legacy debits
+
+function buildMockSupabase({
+  user,
+  currentUser = null,
+  currentMembership = null,
+  expenses = [],
+  payments = [],
+  insertError = null,
+  settleError = null,
+  deleteError = null,
+} = {}) {
+  // Helper: make an object thenable so Promise.all() can await it
+  const thenable = (data, error) => ({
+    then: jest.fn((cb) => Promise.resolve(cb({ data, error: error || null }))),
+  });
+
+  // Spendings query chain ending in a thenable (for Promise.all)
+  const spendingsChain = {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     in: jest.fn().mockReturnThis(),
     or: jest.fn().mockReturnThis(),
+    gte: jest.fn().mockReturnThis(),
+    lte: jest.fn().mockReturnThis(),
+    ...thenable(expenses, null),
+  };
+
+  // balance query chain for the parallel payments fetch (thenable)
+  const paymentsChain = {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    in: jest.fn().mockReturnThis(),
     is: jest.fn().mockReturnThis(),
     gte: jest.fn().mockReturnThis(),
     lte: jest.fn().mockReturnThis(),
-    status: 'debit',
+    ...thenable(payments, null),
   };
 
-  // Promise.all([expensesQuery, paymentsQuery]) — both need to resolve
-  // The chain ends at lte/is/or, so make the whole chain thenable
-  let expensesResolved = false;
-  const thenableMixin = (data, error) => ({
-    then: jest.fn((cb) => Promise.resolve(cb({ data, error: error || null }))),
-  });
-
-  // We need two separate query objects for the two parallel queries
-  const expensesChain = { ...queryChain, ...thenableMixin(expenses, null) };
-  const paymentsChain = { ...queryChain, ...thenableMixin(payments, null) };
-
-  let fromCallCount = 0;
   const mockFrom = jest.fn().mockImplementation((table) => {
     if (table === 'Users') {
       return {
         select: jest.fn().mockReturnThis(),
         eq: jest.fn().mockReturnThis(),
-        single: jest.fn().mockResolvedValue({ data: currentUser, error: null }),
+        single: jest.fn().mockResolvedValue({ data: currentUser, error: currentUser ? null : new Error('not found') }),
+      };
+    }
+    if (table === 'UserRooms') {
+      return {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: currentMembership, error: currentMembership ? null : new Error('not found') }),
+      };
+    }
+    if (table === 'Spendings') {
+      return {
+        ...spendingsChain,
+        update: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({ error: settleError || null }),
+        }),
       };
     }
     if (table === 'balance') {
@@ -46,18 +86,12 @@ function buildMockSupabase({ user, currentUser, expenses = [], payments = [], in
           eq: jest.fn().mockReturnThis(),
           is: jest.fn().mockReturnThis(),
           gte: jest.fn().mockReturnThis(),
-          lte: jest.fn().mockResolvedValue({ error: deleteError || null }),
-          then: jest.fn((cb) => Promise.resolve(cb({ error: deleteError || null }))),
+          lte: jest.fn().mockReturnValue(thenable(null, deleteError)),
+          ...thenable(null, deleteError),
         }),
       };
     }
-    // Spendings
-    return {
-      ...expensesChain,
-      update: jest.fn().mockReturnValue({
-        in: jest.fn().mockResolvedValue({ error: settleError || null }),
-      }),
-    };
+    return { select: jest.fn().mockReturnThis(), eq: jest.fn().mockReturnThis(), single: jest.fn().mockResolvedValue({ data: null, error: null }) };
   });
 
   return {
@@ -89,10 +123,22 @@ describe('settleAllPending', () => {
     expect(result.error).toMatch(/Unauthorized/);
   });
 
+  it('returns error when caller is not a member of the room', async () => {
+    createClient.mockResolvedValue(buildMockSupabase({
+      user: { email: 'user@test.com' },
+      currentUser: { id: 1 },
+      currentMembership: null,
+    }));
+    const result = await settleAllPending('1', memberBalances);
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/not a member/i);
+  });
+
   it('returns error when caller is not Admin', async () => {
     createClient.mockResolvedValue(buildMockSupabase({
       user: { email: 'user@test.com' },
-      currentUser: { role: 'Member', room: 1 },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Member' },
     }));
     const result = await settleAllPending('1', memberBalances);
     expect(result.success).toBe(false);
@@ -102,7 +148,8 @@ describe('settleAllPending', () => {
   it('returns error when no members have balance > 0.01', async () => {
     createClient.mockResolvedValue(buildMockSupabase({
       user: { email: 'admin@test.com' },
-      currentUser: { role: 'Admin', room: 1 },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Admin' },
     }));
     const zeroBalances = [{ member: { email: 'member@test.com', name: 'Member' }, balance: 0, pendingAmount: 0 }];
     const result = await settleAllPending('1', zeroBalances);
@@ -113,7 +160,8 @@ describe('settleAllPending', () => {
   it('returns mismatch error when amounts differ by more than 0.01', async () => {
     createClient.mockResolvedValue(buildMockSupabase({
       user: { email: 'admin@test.com' },
-      currentUser: { role: 'Admin', room: 1 },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Admin' },
       expenses: [{ id: 1, money: '500', user: 'member@test.com' }],
       payments: [],
     }));
@@ -130,7 +178,8 @@ describe('settleAllPending', () => {
   it('accepts amount within 0.01 rounding tolerance', async () => {
     createClient.mockResolvedValue(buildMockSupabase({
       user: { email: 'admin@test.com' },
-      currentUser: { role: 'Admin', room: 1 },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Admin' },
       expenses: [{ id: 1, money: '300.005', user: 'member@test.com' }],
       payments: [],
     }));
@@ -144,17 +193,16 @@ describe('settleAllPending', () => {
   });
 
   it('creates one balance record per expense', async () => {
-    const mockSupabase = buildMockSupabase({
+    createClient.mockResolvedValue(buildMockSupabase({
       user: { email: 'admin@test.com' },
-      currentUser: { role: 'Admin', room: 1 },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Admin' },
       expenses: [
         { id: 10, money: '100', user: 'member@test.com' },
         { id: 11, money: '200', user: 'member@test.com' },
       ],
       payments: [],
-    });
-    createClient.mockResolvedValue(mockSupabase);
-
+    }));
     const balances = [{
       member: { email: 'member@test.com', name: 'Member' },
       balance: 300,
@@ -163,5 +211,23 @@ describe('settleAllPending', () => {
     const result = await settleAllPending('1', balances);
     expect(result.success).toBe(true);
     expect(result.expensesSettled).toBe(2);
+  });
+
+  it('accounts for legacy debit payments in pending calculation', async () => {
+    // expenses = 400, legacy payments = -100 → actualPending = 300
+    createClient.mockResolvedValue(buildMockSupabase({
+      user: { email: 'admin@test.com' },
+      currentUser: { id: 1 },
+      currentMembership: { role: 'Admin' },
+      expenses: [{ id: 1, money: '400', user: 'member@test.com' }],
+      payments: [{ amount: '-100', user: 'member@test.com' }],
+    }));
+    const balances = [{
+      member: { email: 'member@test.com', name: 'Member' },
+      balance: 300,
+      pendingAmount: 300,
+    }];
+    const result = await settleAllPending('1', balances);
+    expect(result.success).toBe(true);
   });
 });

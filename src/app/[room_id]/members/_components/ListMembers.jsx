@@ -9,7 +9,7 @@ import InvitePanel from './InvitePanel';
 
 export default function ListMembers({ members, roomId, currentUserEmail }) {
     const router = useRouter();
-    const { role, loadings } = useUserRole();
+    const { role, loadings } = useUserRole(roomId);
     const [updating, setUpdating] = useState({});
     const [editModal, setEditModal] = useState({ open: false, member: null });
     const [inviteModal, setInviteModal] = useState(false);

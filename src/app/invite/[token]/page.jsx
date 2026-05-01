@@ -27,7 +27,6 @@ export default function InvitePage() {
   const [tokenValid, setTokenValid] = useState(false);
   const [invalidReason, setInvalidReason] = useState('');
   const [session, setSession] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -50,16 +49,6 @@ export default function InvitePage() {
 
       setTokenValid(true);
       setInvite(validation.invite);
-
-      if (sess?.user) {
-        const { data: user } = await supabase
-          .from('Users')
-          .select('id, room')
-          .eq('uid', sess.user.id)
-          .single();
-        setCurrentUser(user);
-      }
-
       setLoading(false);
     };
 
@@ -93,7 +82,7 @@ export default function InvitePage() {
     setError('');
     const result = await rejectInvite(token);
     if (result.success) {
-      router.push('/create_room');
+      router.push('/');
     } else {
       setError(result.error || 'Failed to decline invite');
       setActionLoading(false);
@@ -134,24 +123,6 @@ export default function InvitePage() {
 
   const roomLabel = invite.room?.name ? invite.room.name : `Room #${invite.room?.id}`;
   const inviterName = invite.invitedBy?.name || invite.invitedBy?.email || 'Someone';
-
-  // Scenario 3: user is signed in and already has a room
-  if (session && currentUser?.room) {
-    return (
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <div style={styles.iconCircle}>🏠</div>
-          <h2 style={styles.title}>Already in a Room</h2>
-          <p style={styles.subtitle}>
-            You're already a member of a room. You can't join another room while in one.
-          </p>
-          <button style={styles.primaryBtn} onClick={() => router.push(`/${currentUser.room}`)}>
-            Go to My Room
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   // Scenario 1: not signed in
   if (!session) {
