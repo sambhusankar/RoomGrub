@@ -13,20 +13,28 @@ export async function settlePayment(roomId, memberEmail) {
             return { success: false, error: 'Unauthorized: User not authenticated' };
         }
 
-        // SECURITY CHECK 2: Verify user is admin
+        // SECURITY CHECK 2: Verify user is admin and member of this room
         const { data: currentUser } = await supabase
             .from('Users')
-            .select('role, room')
+            .select('id')
             .eq('email', user.email)
             .single();
 
-        if (currentUser?.role !== 'Admin') {
-            return { success: false, error: 'Unauthorized: Only admins can settle payments' };
+        if (!currentUser) return { success: false, error: 'Unauthorized' };
+
+        const { data: currentMembership } = await supabase
+            .from('UserRooms')
+            .select('role')
+            .eq('user_id', currentUser.id)
+            .eq('room_id', parseInt(roomId))
+            .single();
+
+        if (!currentMembership) {
+            return { success: false, error: 'Unauthorized: User not a member of this room' };
         }
 
-        // SECURITY CHECK 3: Verify user belongs to this room
-        if (currentUser?.room !== parseInt(roomId)) {
-            return { success: false, error: 'Unauthorized: User not a member of this room' };
+        if (currentMembership.role !== 'Admin') {
+            return { success: false, error: 'Unauthorized: Only admins can settle payments' };
         }
 
         // Fetch unsettled expenses for this member
@@ -95,20 +103,28 @@ export async function settleAllPending(roomId, memberBalances, filters = {}) {
             return { success: false, error: 'Unauthorized: User not authenticated' };
         }
 
-        // SECURITY CHECK 2: Verify user is admin
+        // SECURITY CHECK 2: Verify user is admin and member of this room
         const { data: currentUser } = await supabase
             .from('Users')
-            .select('role, room')
+            .select('id')
             .eq('email', user.email)
             .single();
 
-        if (currentUser?.role !== 'Admin') {
-            return { success: false, error: 'Unauthorized: Only admins can settle payments' };
+        if (!currentUser) return { success: false, error: 'Unauthorized' };
+
+        const { data: currentMembership } = await supabase
+            .from('UserRooms')
+            .select('role')
+            .eq('user_id', currentUser.id)
+            .eq('room_id', parseInt(roomId))
+            .single();
+
+        if (!currentMembership) {
+            return { success: false, error: 'Unauthorized: User not a member of this room' };
         }
 
-        // SECURITY CHECK 3: Verify user belongs to this room
-        if (currentUser?.room !== parseInt(roomId)) {
-            return { success: false, error: 'Unauthorized: User not a member of this room' };
+        if (currentMembership.role !== 'Admin') {
+            return { success: false, error: 'Unauthorized: Only admins can settle payments' };
         }
 
         // Filter members with pending balances

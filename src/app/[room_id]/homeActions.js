@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
-import { auth, getUserRoom } from '@/auth';
+import { auth, getUserRoomForRoom } from '@/auth';
 
 export async function fetchHomeSummary(roomId) {
     try {
@@ -10,8 +10,8 @@ export async function fetchHomeSummary(roomId) {
             return { totalPurchases: 0, pendingAmount: 0, recentExpenses: [] };
         }
 
-        const { data: userRoom, error: roomError } = await getUserRoom(session.user.email);
-        if (roomError || !userRoom || userRoom.room != roomId) {
+        const { data: userRoom, error: roomError } = await getUserRoomForRoom(session.user.email, roomId);
+        if (roomError || !userRoom) {
             return { totalPurchases: 0, pendingAmount: 0, recentExpenses: [] };
         }
 
@@ -106,19 +106,22 @@ export async function fetchRoomDashboard(roomId) {
         const session = await auth();
         if (!session) return { totalRoomStats: null, memberStats: [] };
 
-        const { data: userRoom, error: roomError } = await getUserRoom(session.user.email);
-        if (roomError || !userRoom || userRoom.room != roomId) {
+        const { data: userRoom, error: roomError } = await getUserRoomForRoom(session.user.email, roomId);
+        if (roomError || !userRoom) {
             return { totalRoomStats: null, memberStats: [] };
         }
 
         const supabase = await createClient();
 
-        const { data: membersData, error: membersError } = await supabase
-            .from('Users')
-            .select('*')
-            .eq('room', roomId);
+        const { data: membershipsData, error: membersError } = await supabase
+            .from('UserRooms')
+            .select('role, Users(*)')
+            .eq('room_id', parseInt(roomId));
+
+        const membersData = (membershipsData || []).map(m => ({ ...m.Users, role: m.role }));
 
         if (membersError) throw membersError;
+        // membersData is already mapped above
 
         const [purchasesResult, paymentsResult] = await Promise.all([
             supabase.from('Spendings').select('*').eq('room', roomId),

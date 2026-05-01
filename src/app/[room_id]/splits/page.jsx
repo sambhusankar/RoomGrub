@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { auth, getUserRoom } from '@/auth';
+import { auth, getUserRoomForRoom } from '@/auth';
 import { createClient } from '@/utils/supabase/server';
 
 // Lazy load the heavy splits dashboard
@@ -7,48 +7,50 @@ const SplitsDashboard = dynamic(() => import('./_components/SplitsDashboard'));
 
 export default async function SplitsPage({ params }) {
   const session = await auth();
-  const { data: userData } = await getUserRoom(session.user.email);
+  const roomId = (await params).room_id;
+  const { data: membership } = await getUserRoomForRoom(session.user.email, roomId);
 
   const supabase = await createClient();
-  const roomId = (await params).room_id;
 
   // Run all queries in parallel for better performance
-  const [expensesResult, paymentsResult, membersResult] = await Promise.all([
+  const [expensesResult, paymentsResult, membershipsResult] = await Promise.all([
     supabase
       .from('Spendings')
       .select(`*, Users(name, email, profile)`)
       .eq('room', roomId)
-      .or('settled.is.null,settled.eq.false') // unsettled: NULL (legacy) or explicitly false
+      .or('settled.is.null,settled.eq.false')
       .order('created_at', { ascending: false }),
     supabase
       .from('balance')
       .select('user, amount, status, spending_id')
       .eq('room', roomId)
       .eq('status', 'debit')
-      .is('spending_id', null) // legacy lump-sum records only — new per-expense debits excluded
+      .is('spending_id', null)
       .order('created_at', { ascending: false }),
     supabase
-      .from('Users')
-      .select('*')
-      .eq('room', roomId)
+      .from('UserRooms')
+      .select('role, Users(*)')
+      .eq('room_id', roomId)
   ]);
 
-  if (expensesResult.error || paymentsResult.error || membersResult.error) {
+  if (expensesResult.error || paymentsResult.error || membershipsResult.error) {
     console.error('Error fetching splits data:', {
       expensesError: expensesResult.error,
       paymentsError: paymentsResult.error,
-      membersError: membersResult.error
+      membersError: membershipsResult.error
     });
     return <div className="p-4 text-red-500">Error loading splits data</div>;
   }
+
+  const members = (membershipsResult.data || []).map(m => ({ ...m.Users, role: m.role }));
 
   return (
     <SplitsDashboard
       expenses={expensesResult.data || []}
       payments={paymentsResult.data || []}
-      members={membersResult.data || []}
+      members={members}
       roomId={roomId}
-      userRole={userData?.role ?? null}
+      userRole={membership?.role ?? null}
     />
   );
 }

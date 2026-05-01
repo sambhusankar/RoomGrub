@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
-import { auth, getUserRoom } from '@/auth';
+import { auth, getUserRoomForRoom } from '@/auth';
 
 export async function fetchPaginatedExpenses({ roomId, cursor = null, limit = 20, filters = {} }) {
     try {
@@ -10,8 +10,8 @@ export async function fetchPaginatedExpenses({ roomId, cursor = null, limit = 20
             return { success: false, error: 'Unauthorized', expenses: [], nextCursor: null, hasMore: false };
         }
 
-        const { data: userRoom, error: roomError } = await getUserRoom(session.user.email);
-        if (roomError || !userRoom || userRoom.room != roomId) {
+        const { data: userRoom, error: roomError } = await getUserRoomForRoom(session.user.email, roomId);
+        if (roomError || !userRoom) {
             return { success: false, error: 'Unauthorized: Not a member of this room', expenses: [], nextCursor: null, hasMore: false };
         }
 
