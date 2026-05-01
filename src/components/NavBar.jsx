@@ -29,7 +29,7 @@ export default function NavBar({ user, signOut }) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
-  const { role } = useUserRole();
+  const { role } = useUserRole(room_id);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -51,7 +51,7 @@ export default function NavBar({ user, signOut }) {
     setMenuOpen(false);
     const result = await exitRoom(room_id);
     if (result.success) {
-      router.push('/create_room');
+      router.push('/');
     } else {
       alert(`Error: ${result.error}`);
     }
@@ -60,7 +60,24 @@ export default function NavBar({ user, signOut }) {
   if (!user) return null;
 
   return (
-    <div className="flex justify-end px-4 pt-4 relative" ref={menuRef}>
+    <div className="flex justify-between items-center px-4 pt-4 relative" ref={menuRef}>
+      {room_id ? (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => router.push('/')}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-purple-600 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-1.5 bg-purple-100 text-purple-700 text-xs font-semibold px-3 py-1 rounded-full">
+            Room <span className="bg-purple-200 px-1.5 py-0.5 rounded-full">#{room_id}</span>
+          </div>
+        </div>
+      ) : (
+        <div />
+      )}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
         className="w-10 h-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-300"
@@ -91,15 +108,17 @@ export default function NavBar({ user, signOut }) {
           >
             <LogoutIcon /> Logout
           </button>
-          <button
-            onClick={() => {
-              router.push(`/${room_id}/settings`);
-              setMenuOpen(false);
-            }}
-            className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-brand-light flex items-center gap-2"
-          >
-            <SettingsIcon /> Settings
-          </button>
+          {room_id && (
+            <button
+              onClick={() => {
+                router.push(`/${room_id}/settings`);
+                setMenuOpen(false);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-brand-light flex items-center gap-2"
+            >
+              <SettingsIcon /> Settings
+            </button>
+          )}
           {room_id && role && role !== 'Admin' && (
             <button
               onClick={handleExitRoom}
