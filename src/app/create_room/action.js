@@ -9,9 +9,6 @@ export const createRoom = async () => {
   const session = await LoginRequired();
   const supabase = await createClient();
 
-  console.log("Creating a room ....");
-  console.log(session);
-
   if (!session) {
     console.error('Auth error: No session');
     return;
@@ -30,41 +27,44 @@ export const createRoom = async () => {
 
       if (roomError) {
         console.error("Room creation failed:", roomError);
-        throw roomError; // ❗Stop workflow if room creation fails
+        throw roomError;
       }
-
-      console.log("New Room created:", newRoom);
-      return newRoom; // ✅ Return the created room
+      return newRoom;
     },
 
-    updateUser: ['createRoom', async (results) => {
-      const newRoom = results.createRoom;
-
-      const { data: updatedUser, error: userError } = await supabase
+    getUser: async () => {
+      const { data: user, error } = await supabase
         .from('Users')
-        .update({
-          room: newRoom.id,
-          role: 'Admin',
-        })
+        .select('id')
         .eq('email', session.user.email)
         .single();
 
-      if (userError) {
-        console.error("User update failed:", userError);
-        throw userError;
-      }
+      if (error || !user) throw new Error('User not found');
+      return user;
+    },
 
-      console.log("User updated successfully:", updatedUser);
-      return updatedUser;
+    addMembership: ['createRoom', 'getUser', async (results) => {
+      const { error } = await supabase
+        .from('UserRooms')
+        .insert({
+          user_id: results.getUser.id,
+          room_id: results.createRoom.id,
+          role: 'Admin',
+        });
+
+      if (error) {
+        console.error("Membership creation failed:", error);
+        throw error;
+      }
     }],
   };
 
-    const results = await async.auto(workflow);
-    const newRoom = results.createRoom;
+  const results = await async.auto(workflow);
+  const newRoom = results.createRoom;
 
-    if (!newRoom) {
-      console.error("Room creation returned null/undefined. Aborting redirect.");
-      return;
-    }
-    redirect(`/${newRoom.id}`);
+  if (!newRoom) {
+    console.error("Room creation returned null/undefined. Aborting redirect.");
+    return;
+  }
+  redirect(`/${newRoom.id}`);
 };
