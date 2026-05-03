@@ -7,14 +7,6 @@ module.exports = function(sequelize){
             primaryKey: true,
             autoIncrement: true
         },
-        role: {
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        room: {
-            type: DataTypes.INTEGER,
-            allowNull: true
-        },
         uid: {
             type: DataTypes.UUID,
             allowNull: true
