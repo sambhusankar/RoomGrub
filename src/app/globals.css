@@ -13,6 +13,13 @@
   --brand-mid: #c084fc;
 }
 
+/* Hide number input spinners globally */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 body {
   color: var(--foreground);
   background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
