@@ -41,8 +41,6 @@ export default function AuthCallback() {
             uid: user.id,
             email: user.email,
             name: user.user_metadata.full_name || user.user_metadata.name || '',
-            room: null,
-            role: null,
             profile: user.user_metadata.avatar_url
           }).select()
 

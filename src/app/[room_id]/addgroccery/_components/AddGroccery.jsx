@@ -196,8 +196,9 @@ export default function AddGrocery({ userRole }) {
         const init = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.user?.email) return;
-            const { data: members } = await supabase.from('Users').select('*').eq('room', params.room_id);
-            if (members) {
+            const { data: memberRows } = await supabase.from('UserRooms').select('Users(*)').eq('room_id', params.room_id);
+            const members = memberRows?.map(r => r.Users) ?? [];
+            if (members.length > 0) {
                 setRoomMembers(members);
                 const me = members.find(m => m.email === session.user.email);
                 if (me) { setCurrentUser(me); setSelectedFriend(me); }

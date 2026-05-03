@@ -12,14 +12,21 @@ export default async function ActivitiesPage({ params }) {
   const supabase = await createClient();
   const { room_id } = await params;
 
-  // Get current user's role
-  const { data: currentUser } = await supabase
+  // Get current user's role via UserRooms
+  const { data: currentUserData } = await supabase
     .from('Users')
-    .select('role, id')
+    .select('id')
     .eq('email', session.user.email)
     .single();
 
-  const isAdmin = currentUser?.role === 'Admin';
+  const { data: userRoom } = await supabase
+    .from('UserRooms')
+    .select('role')
+    .eq('user_id', currentUserData?.id)
+    .eq('room_id', room_id)
+    .single();
+
+  const isAdmin = userRoom?.role === 'Admin';
 
   // Fetch only unsettled groceries (Spendings)
   const { data: groceries } = await supabase
@@ -29,11 +36,13 @@ export default async function ActivitiesPage({ params }) {
     .or('settled.is.null,settled.eq.false')
     .order('created_at', { ascending: false });
 
-  // Fetch all users in the room to get their names
-  const { data: roomUsers } = await supabase
-    .from('Users')
-    .select('id, email, name')
-    .eq('room', room_id);
+  // Fetch all users in the room via UserRooms join
+  const { data: roomUserRows } = await supabase
+    .from('UserRooms')
+    .select('Users(id, email, name)')
+    .eq('room_id', room_id);
+
+  const roomUsers = roomUserRows?.map(r => r.Users) ?? [];
 
   // Create a map for quick user lookup
   const userMap = {};
