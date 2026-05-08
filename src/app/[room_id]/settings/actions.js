@@ -1,7 +1,6 @@
 'use server';
 
 import { createClient } from '@/utils/supabase/server';
-import DB from '@/database';
 
 export async function deleteRoom(roomId) {
     try {
@@ -57,7 +56,7 @@ export async function deleteRoom(roomId) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     roomId: rid,
-                    triggeredBy: user.email,
+                    triggeredBy: currentUser.id,
                     activityType: 'room_deleted',
                     title: 'Room Deleted',
                     message: 'This room has been deleted by the admin.',
@@ -68,19 +67,13 @@ export async function deleteRoom(roomId) {
             console.error('Failed to send room deletion notification:', notifyError);
         }
 
-        // DELETION SEQUENCE via direct DB connection (bypasses RLS)
-        // Wrapped in a transaction so a mid-sequence failure rolls back all deletes atomically
-        await DB.sequelize.transaction(async (t) => {
-            const opts = { replacements: { roomId: rid }, transaction: t };
-
-            await DB.sequelize.query('DELETE FROM "public"."balance" WHERE room = :roomId', opts);
-            await DB.sequelize.query('DELETE FROM "public"."Spendings" WHERE room = :roomId', opts);
-            await DB.sequelize.query('DELETE FROM "public"."Invite" WHERE room = :roomId', opts);
-            await DB.sequelize.query('DELETE FROM "public"."push_subscriptions" WHERE room_id = :roomId', opts);
-            await DB.sequelize.query('DELETE FROM "public"."notifications" WHERE room_id = :roomId', opts);
-            await DB.sequelize.query('DELETE FROM "public"."UserRooms" WHERE room_id = :roomId', opts);
-            await DB.sequelize.query('DELETE FROM "public"."Rooms" WHERE id = :roomId', opts);
-        });
+        await supabase.from('balance').delete().eq('room', rid);
+        await supabase.from('Spendings').delete().eq('room', rid);
+        await supabase.from('Invite').delete().eq('room', rid);
+        await supabase.from('push_subscriptions').delete().eq('room_id', rid);
+        await supabase.from('notifications').delete().eq('room_id', rid);
+        await supabase.from('UserRooms').delete().eq('room_id', rid);
+        await supabase.from('Rooms').delete().eq('id', rid);
 
         return { success: true };
 
