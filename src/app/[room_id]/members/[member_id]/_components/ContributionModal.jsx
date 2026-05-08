@@ -1,85 +1,48 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-    Modal, 
-    ModalDialog, 
-    ModalClose, 
-    DialogTitle, 
-    DialogContent, 
-    DialogActions, 
-    Button, 
-    Input, 
-    Typography 
+import {
+    Modal, ModalDialog, ModalClose, DialogTitle, DialogContent,
+    DialogActions, Button, Input, Typography
 } from '@mui/joy';
-import { createClient } from '@/utils/supabase/client';
 import { useParams } from 'next/navigation';
+import { recordContribution } from '../actions';
 import NotificationService from '@/services/NotificationService';
 
-export default function ContributionModal({ 
-    showContributionForm, 
-    setShowContributionForm, 
-    member, 
-    onDataRefresh 
+export default function ContributionModal({
+    showContributionForm,
+    setShowContributionForm,
+    member,
+    onDataRefresh
 }) {
     const [contributionAmount, setContributionAmount] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const params = useParams();
-    const supabase = createClient();
 
     const handleMonthlyContribution = async () => {
         if (!contributionAmount || parseFloat(contributionAmount) <= 0) return;
 
         setIsSubmitting(true);
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) return;
+        const result = await recordContribution(params.room_id, member.email, contributionAmount);
 
-            // Record monthly contribution as debit
-            const { error } = await supabase
-                .from('balance')
-                .insert([{
-                    room: params.room_id,
-                    user: member.email,
-                    amount: parseFloat(contributionAmount),
-                    status: 'credit'
-                }]);
-
-            if (error) throw error;
-
+        if (result.success) {
             alert('Contribution recorded successfully!');
             setContributionAmount('');
             setShowContributionForm(false);
-            onDataRefresh(); // Refresh data
+            onDataRefresh();
 
-            // Send notification to room members
             try {
-                // Get user data for the member
-                const { data: userData } = await supabase
-                    .from("Users")
-                    .select("id, name")
-                    .eq("email", member.email)
-                    .single();
-
-                if (userData) {
-                    await NotificationService.notifyContributionMade(
-                        parseInt(params.room_id),
-                        userData.id,
-                        userData.name || member.name || member.email,
-                        parseFloat(contributionAmount)
-                    );
-                    console.log('Contribution notification sent successfully');
-                }
-            } catch (notificationError) {
-                console.error('Failed to send contribution notification:', notificationError);
-                // Don't show error to user as the main action succeeded
-            }
-        } catch (error) {
-            console.error('Error recording contribution:', error);
+                await NotificationService.notifyContributionMade(
+                    parseInt(params.room_id),
+                    member.id,
+                    member.name || member.email,
+                    parseFloat(contributionAmount)
+                );
+            } catch (_) {}
+        } else {
             alert('Error recording contribution');
-        } finally {
-            setIsSubmitting(false);
         }
+        setIsSubmitting(false);
     };
 
     const handleClose = () => {
@@ -106,20 +69,16 @@ export default function ContributionModal({
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button 
-                        variant="solid" 
-                        color="primary" 
+                    <Button
+                        variant="solid"
+                        color="primary"
                         onClick={handleMonthlyContribution}
                         disabled={!contributionAmount || parseFloat(contributionAmount) <= 0}
                         loading={isSubmitting}
                     >
                         Contribute
                     </Button>
-                    <Button 
-                        variant="plain" 
-                        color="neutral" 
-                        onClick={handleClose}
-                    >
+                    <Button variant="plain" color="neutral" onClick={handleClose}>
                         Cancel
                     </Button>
                 </DialogActions>

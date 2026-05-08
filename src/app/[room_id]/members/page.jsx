@@ -1,21 +1,13 @@
-'use server'
-import { createClient } from '@/utils/supabase/server';
-import ListMembers from './_components/ListMembers';
 import { auth } from '@/auth';
+import { getMembers } from './actions';
+import ListMembers from './_components/ListMembers';
 
 export default async function MembersPage({ params }) {
     const session = await auth();
-    const supabase = await createClient();
-    const p = await params;
-
-    const { data: memberships, error } = await supabase
-        .from('UserRooms')
-        .select('role, Users(*)')
-        .eq('room_id', p.room_id);
-
-    const members = (memberships || []).map(m => ({ ...m.Users, role: m.role }));
+    const { room_id } = await params;
+    const members = await getMembers(room_id);
 
     return (
-        <ListMembers members={members} roomId={p.room_id} currentUserEmail={session.user.email} />
+        <ListMembers members={members} roomId={room_id} currentUserEmail={session.user.email} />
     );
 }
