@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { validateToken, acceptInvite, rejectInvite } from '@/app/invite/actions';
+import { validateToken, acceptInvite, rejectInvite } from './actions';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 
