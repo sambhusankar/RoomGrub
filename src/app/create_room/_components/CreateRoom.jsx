@@ -1,6 +1,6 @@
 'use client';
 
-import { createRoom } from '../action';
+import { createRoom } from '../actions';
 import React from 'react';
 import {
   Box, Typography,

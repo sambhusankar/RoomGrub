@@ -4,6 +4,48 @@ import { createClient } from '@/utils/supabase/server';
 import { LoginRequired } from '@/policies/LoginRequired';
 import { revalidatePath } from 'next/cache';
 
+export async function getActivitiesData(roomId, userEmail) {
+    const supabase = await createClient();
+
+    const { data: currentUserData } = await supabase
+        .from('Users').select('id').eq('email', userEmail).single();
+
+    const { data: userRoom } = await supabase
+        .from('UserRooms').select('role')
+        .eq('user_id', currentUserData?.id).eq('room_id', roomId).single();
+
+    const isAdmin = userRoom?.role === 'Admin';
+
+    const [{ data: groceries }, { data: roomUserRows }] = await Promise.all([
+        supabase.from('Spendings')
+            .select('id, user, material, money, created_at, settled')
+            .eq('room', roomId).or('settled.is.null,settled.eq.false')
+            .order('created_at', { ascending: false }),
+        supabase.from('UserRooms').select('Users(id, email, name)').eq('room_id', roomId),
+    ]);
+
+    const roomUsers = roomUserRows?.map(r => r.Users) ?? [];
+    const userMap = {};
+    const emailToName = {};
+    roomUsers.forEach(user => {
+        userMap[user.id] = user.name || user.email;
+        userMap[user.email] = user.name || user.email;
+        emailToName[user.email] = user.name || user.email;
+    });
+
+    const activities = (groceries || []).map(g => ({
+        id: g.id,
+        type: 'grocery',
+        user: userMap[g.user] || g.user,
+        userEmail: g.user,
+        amount: g.money,
+        description: g.material,
+        createdAt: g.created_at,
+    }));
+
+    return { activities, isAdmin, emailToName };
+}
+
 export async function editGroceryActivity(activityId, formData, roomId) {
   const session = await LoginRequired();
   const supabase = await createClient();

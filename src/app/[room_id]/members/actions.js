@@ -3,6 +3,16 @@
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 
+export async function getMembers(roomId) {
+    const supabase = await createClient();
+    const { data: memberships, error } = await supabase
+        .from('UserRooms')
+        .select('role, Users(*)')
+        .eq('room_id', roomId);
+    if (error) throw error;
+    return (memberships || []).map(m => ({ ...m.Users, role: m.role }));
+}
+
 async function getCurrentMembership(supabase, userEmail, roomId) {
     const { data: currentUser } = await supabase
         .from('Users')

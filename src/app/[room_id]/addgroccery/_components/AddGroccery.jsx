@@ -1,25 +1,18 @@
 'use client'
 import React, { useState, useEffect, useRef } from "react";
 import { Avatar, Input } from "@mui/joy";
-import { createClient } from "@/utils/supabase/client";
 import { useParams } from 'next/navigation'
-import NotificationService from '@/services/NotificationService'
-import { addGroceryForFriend } from '../actions';
+import { getRoomMembersForRoom, addExpense, addGroceryForFriend } from '../actions';
 
-// Parse raw input, enforce max 5 integer digits, return clean numeric string
 function parseAmountInput(raw) {
-    // strip everything except digits and one decimal point
     let clean = raw.replace(/[^0-9.]/g, '');
-    // only one decimal point
     const parts = clean.split('.');
     if (parts.length > 2) clean = parts[0] + '.' + parts.slice(1).join('');
-    // max 5 integer digits
-    const [intPart, decPart] = clean.split('.');
-    if (intPart && intPart.length > 5) return null; // reject
+    const [intPart] = clean.split('.');
+    if (intPart && intPart.length > 5) return null;
     return clean;
 }
 
-// Format stored numeric string with commas for display
 function formatAmount(raw) {
     if (!raw) return '';
     const [intPart, decPart] = raw.split('.');
@@ -27,39 +20,22 @@ function formatAmount(raw) {
     return decPart !== undefined ? `${formatted}.${decPart}` : formatted;
 }
 
-// Shared expense entry screen — flows inside the normal page layout
 function ExpenseScreen({
-    title,
-    amount,
-    description,
-    date,
-    loading,
-    msg,
-    onAmountChange,
-    onAmountKeyDown,
-    onDescriptionChange,
-    onDescriptionKeyDown,
-    onSubmit,
-    onDatePick,
-    formattedDate,
-    amountInputRef,
-    descriptionInputRef,
-    dateInputRef,
-    friendSlot,
-    submitLabel = 'Add Expense',
+    title, amount, description, date, loading, msg,
+    onAmountChange, onAmountKeyDown, onDescriptionChange, onDescriptionKeyDown,
+    onSubmit, onDatePick, formattedDate,
+    amountInputRef, descriptionInputRef, dateInputRef,
+    friendSlot, submitLabel = 'Add Expense',
 }) {
     const canSubmit = description.trim().length > 0 && parseFloat(amount) > 0;
 
     return (
         <div className="flex flex-col" style={{ minHeight: 'calc(100dvh - 120px)' }}>
-            {/* Header label */}
             <div className="flex items-center justify-center pt-4 pb-1">
                 <p className="text-purple-500 text-xs font-semibold tracking-widest uppercase">{title}</p>
             </div>
 
-            {/* Zone 1: Amount + description inputs */}
             <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0 gap-10">
-                {/* Amount — MUI Joy Input with ₹ decorator, comma formatting, 5-digit cap */}
                 <Input
                     slotProps={{ input: { ref: amountInputRef, inputMode: 'decimal', autoFocus: true } }}
                     value={formatAmount(amount)}
@@ -69,31 +45,18 @@ function ExpenseScreen({
                     startDecorator={<span style={{ fontSize: 'clamp(1.5rem, 8vw, 3rem)', fontWeight: 300, color: '#a855f7' }}>₹</span>}
                     variant="plain"
                     sx={{
-                        background: 'transparent',
-                        boxShadow: 'none !important',
-                        border: 'none !important',
-                        outline: 'none',
-                        '&:before': { display: 'none' },
-                        '&:after': { display: 'none' },
-                        '--Input-focusedHighlight': 'transparent',
-                        '--Input-focusedThickness': '0px',
-                        '--Input-radius': '0px',
-                        gap: 0,
-                        p: 0,
+                        background: 'transparent', boxShadow: 'none !important', border: 'none !important',
+                        outline: 'none', '&:before': { display: 'none' }, '&:after': { display: 'none' },
+                        '--Input-focusedHighlight': 'transparent', '--Input-focusedThickness': '0px',
+                        '--Input-radius': '0px', gap: 0, p: 0,
                         '& input': {
-                            fontSize: 'clamp(3.5rem, 18vw, 7rem)',
-                            fontWeight: 700,
-                            color: '#1f2937',
-                            caretColor: '#9333ea',
-                            textAlign: 'left',
-                            p: 0,
-                            width: `${Math.max(1, (formatAmount(amount) || '0').length)}ch`,
-                            minWidth: '1ch',
+                            fontSize: 'clamp(3.5rem, 18vw, 7rem)', fontWeight: 700, color: '#1f2937',
+                            caretColor: '#9333ea', textAlign: 'left', p: 0,
+                            width: `${Math.max(1, (formatAmount(amount) || '0').length)}ch`, minWidth: '1ch',
                         },
                     }}
                 />
 
-                {/* Description — disabled (and dimmed) until amount is entered */}
                 <div className="w-full max-w-xs text-center">
                     <input
                         ref={descriptionInputRef}
@@ -104,17 +67,14 @@ function ExpenseScreen({
                         onChange={onDescriptionChange}
                         onKeyDown={onDescriptionKeyDown}
                         disabled={!(parseFloat(amount) > 0)}
-                        className="w-full bg-transparent border-b-2 text-gray-800 text-xl font-medium outline-none pb-2 text-center transition-colors
-                            disabled:opacity-30 disabled:cursor-not-allowed
-                            border-purple-200 focus:border-purple-400 placeholder-purple-200"
+                        className="w-full bg-transparent border-b-2 text-gray-800 text-xl font-medium outline-none pb-2 text-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed border-purple-200 focus:border-purple-400 placeholder-purple-200"
                         style={{ caretColor: '#9333ea' }}
                     />
                 </div>
 
                 {msg && (
                     <div className={`mt-6 text-sm font-medium px-5 py-2.5 rounded-xl ${
-                        msg.startsWith('✅')
-                            ? 'text-green-700 bg-green-50 border border-green-200'
+                        msg.startsWith('✅') ? 'text-green-700 bg-green-50 border border-green-200'
                             : 'text-red-700 bg-red-50 border border-red-200'
                     }`}>
                         {msg}
@@ -122,7 +82,6 @@ function ExpenseScreen({
                 )}
             </div>
 
-            {/* Zone 2: Toolbar */}
             <div className="flex items-center px-5 py-3 gap-3 border-t border-purple-100">
                 {friendSlot}
                 <div className="flex-1" />
@@ -142,7 +101,6 @@ function ExpenseScreen({
                 </button>
             </div>
 
-            {/* Zone 3: Submit button — always visible, disabled until both fields filled */}
             <div className="px-5 pb-4 pt-2">
                 <button
                     onClick={onSubmit}
@@ -173,6 +131,7 @@ export default function AddGrocery({ userRole }) {
 
     const [roomMembers, setRoomMembers] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
+    const [currentUserEmail, setCurrentUserEmail] = useState(null);
     const [selectedFriend, setSelectedFriend] = useState(null);
     const [showMemberPicker, setShowMemberPicker] = useState(false);
 
@@ -184,7 +143,6 @@ export default function AddGrocery({ userRole }) {
     const friendDateInputRef = useRef(null);
 
     const params = useParams();
-    const supabase = createClient();
 
     useEffect(() => {
         if (showFriendScreen) {
@@ -193,18 +151,13 @@ export default function AddGrocery({ userRole }) {
     }, [showFriendScreen]);
 
     useEffect(() => {
-        const init = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.user?.email) return;
-            const { data: memberRows } = await supabase.from('UserRooms').select('Users(*)').eq('room_id', params.room_id);
-            const members = memberRows?.map(r => r.Users) ?? [];
+        getRoomMembersForRoom(params.room_id).then(({ members, currentUser: me, currentUserEmail: email }) => {
             if (members.length > 0) {
                 setRoomMembers(members);
-                const me = members.find(m => m.email === session.user.email);
+                setCurrentUserEmail(email);
                 if (me) { setCurrentUser(me); setSelectedFriend(me); }
             }
-        };
-        init();
+        });
     }, [params.room_id]);
 
     const formattedDate = (d) => d
@@ -215,31 +168,19 @@ export default function AddGrocery({ userRole }) {
         setMsg('');
         if (!description || parseFloat(amount) <= 0) { setMsg('Please enter amount and description.'); return; }
         setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        const userEmail = session?.user?.email;
-        if (!userEmail) { setMsg('Unable to get session.'); setLoading(false); return; }
-        const { data: userData } = await supabase.from('Users').select('id, name').eq('email', userEmail).single();
-        const insertData = { room: params.room_id, material: description, money: parseFloat(amount), user: userEmail };
-        if (date) insertData.created_at = new Date(date).toISOString();
-        const { error } = await supabase.from('Spendings').insert([insertData]);
-        if (error) {
-            setMsg('❌ Error adding expense.');
-        } else {
+        const result = await addExpense(params.room_id, description, amount, date, currentUserEmail);
+        if (result.success) {
             setMsg('✅ Expense added!');
             setAmount(''); setDescription(''); setDate('');
             setTimeout(() => { setMsg(''); amountInputRef.current?.focus(); }, 1500);
-            try {
-                if (userData) await NotificationService.notifyGroceryAdded(parseInt(params.room_id), userData.id, userData.name || userEmail, 1);
-            } catch (_) {}
+        } else {
+            setMsg('❌ ' + (result.error || 'Error adding expense.'));
         }
         setLoading(false);
     };
 
     const openFriendScreen = () => {
-        setFriendAmount('');
-        setFriendDescription('');
-        setFriendDate('');
-        setFriendMsg('');
+        setFriendAmount(''); setFriendDescription(''); setFriendDate(''); setFriendMsg('');
         setShowFriendScreen(true);
     };
 
@@ -248,18 +189,20 @@ export default function AddGrocery({ userRole }) {
         if (!friendDescription || parseFloat(friendAmount) <= 0) { setFriendMsg('Please enter amount and description.'); return; }
         if (!selectedFriend) { setFriendMsg('Please select a friend.'); return; }
         setFriendLoading(true);
-        if (selectedFriend.email === currentUser?.email) {
-            const { data: { session } } = await supabase.auth.getSession();
-            const userEmail = session?.user?.email;
-            const insertData = { room: params.room_id, material: friendDescription, money: parseFloat(friendAmount), user: userEmail };
-            if (friendDate) insertData.created_at = new Date(friendDate).toISOString();
-            const { error } = await supabase.from('Spendings').insert([insertData]);
-            if (error) { setFriendMsg('❌ Error adding expense.'); }
-            else { setFriendMsg('✅ Expense added!'); setTimeout(() => setShowFriendScreen(false), 1200); }
+
+        const targetEmail = selectedFriend.email === currentUserEmail
+            ? currentUserEmail
+            : selectedFriend.email;
+
+        const result = selectedFriend.email === currentUserEmail
+            ? await addExpense(params.room_id, friendDescription, friendAmount, friendDate, currentUserEmail)
+            : await addGroceryForFriend(params.room_id, selectedFriend.email, friendDescription, friendAmount, friendDate);
+
+        if (result.success) {
+            setFriendMsg('✅ ' + (result.message || 'Expense added!'));
+            setTimeout(() => setShowFriendScreen(false), 1200);
         } else {
-            const result = await addGroceryForFriend(params.room_id, selectedFriend.email, friendDescription, friendAmount, friendDate);
-            if (result.success) { setFriendMsg('✅ ' + result.message); setTimeout(() => setShowFriendScreen(false), 1200); }
-            else { setFriendMsg('❌ ' + result.error); }
+            setFriendMsg('❌ ' + result.error);
         }
         setFriendLoading(false);
     };
@@ -276,7 +219,7 @@ export default function AddGrocery({ userRole }) {
                     size="sm"
                     sx={{ width: 26, height: 26 }}
                 />
-                <span>{selectedFriend?.id === currentUser?.id ? 'Me' : (selectedFriend?.name || 'Select')}</span>
+                <span>{selectedFriend?.email === currentUserEmail ? 'Me' : (selectedFriend?.name || 'Select')}</span>
                 {userRole === 'Admin' && <span className="text-purple-400 text-xs">▾</span>}
             </button>
             {showMemberPicker && (
@@ -290,7 +233,7 @@ export default function AddGrocery({ userRole }) {
                             <Avatar src={member.profile || '/default-profile.png'} alt={member.name} size="sm" sx={{ width: 28, height: 28 }} />
                             <div>
                                 <div className="text-sm font-medium text-gray-800">
-                                    {member.id === currentUser?.id ? `${member.name} (Me)` : member.name}
+                                    {member.email === currentUserEmail ? `${member.name} (Me)` : member.name}
                                 </div>
                                 <div className="text-xs text-gray-400">{member.email}</div>
                             </div>
@@ -313,14 +256,14 @@ export default function AddGrocery({ userRole }) {
                 onAmountChange={e => { const v = parseAmountInput(e.target.value); if (v !== null) setFriendAmount(v); }}
                 onAmountKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); friendDescriptionInputRef.current?.focus(); } }}
                 onDescriptionChange={e => setFriendDescription(e.target.value)}
-                onDescriptionKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); document.activeElement?.blur(); } }}
+                onDescriptionKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }}
                 onSubmit={handleFriendAdd}
                 onDatePick={setFriendDate}
                 formattedDate={formattedDate(friendDate)}
                 amountInputRef={friendAmountInputRef}
                 descriptionInputRef={friendDescriptionInputRef}
                 dateInputRef={friendDateInputRef}
-                submitLabel={`Add for ${selectedFriend?.id === currentUser?.id ? 'Me' : (selectedFriend?.name || 'Friend')}`}
+                submitLabel={`Add for ${selectedFriend?.email === currentUserEmail ? 'Me' : (selectedFriend?.name || 'Friend')}`}
                 friendSlot={friendSelectorSlot}
             />
         );
@@ -337,7 +280,7 @@ export default function AddGrocery({ userRole }) {
             onAmountChange={e => { const v = parseAmountInput(e.target.value); if (v !== null) setAmount(v); }}
             onAmountKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); descriptionInputRef.current?.focus(); } }}
             onDescriptionChange={e => setDescription(e.target.value)}
-            onDescriptionKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); document.activeElement?.blur(); } }}
+            onDescriptionKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }}
             onSubmit={handleAdd}
             onDatePick={setDate}
             formattedDate={formattedDate(date)}

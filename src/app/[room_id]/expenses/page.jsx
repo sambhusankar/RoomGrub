@@ -1,38 +1,20 @@
 import ExpenseHistory from './_components/ExpenseHistory';
-import { createClient } from '@/utils/supabase/client';
-import { fetchPaginatedExpenses } from './actions';
+import { fetchPaginatedExpenses, getRoomMembers } from './actions';
 
 export default async function ExpensesPage({ params }) {
-    const param = await params;
-    const supabase = createClient();
+    const { room_id } = await params;
 
-    // Fetch first page of expenses
-    const initialData = await fetchPaginatedExpenses({
-        roomId: param.room_id,
-        cursor: null,
-        limit: 20,
-        filters: { settled: false },
-    });
-
-    // Fetch all room members for the user filter dropdown
-    const { data: roomMembers } = await supabase
-        .from('Users')
-        .select('email, name')
-        .eq('room', param.room_id);
-
-    const userMap = {};
-    (roomMembers || []).forEach(m => {
-        if (m.email && !userMap[m.email]) {
-            userMap[m.email] = m.name || m.email;
-        }
-    });
+    const [initialData, userMap] = await Promise.all([
+        fetchPaginatedExpenses({ roomId: room_id, cursor: null, limit: 20, filters: { settled: false } }),
+        getRoomMembers(room_id),
+    ]);
 
     return (
         <ExpenseHistory
             initialExpenses={initialData.expenses || []}
             initialCursor={initialData.nextCursor}
             initialHasMore={initialData.hasMore}
-            roomId={param.room_id}
+            roomId={room_id}
             userMap={userMap}
         />
     );

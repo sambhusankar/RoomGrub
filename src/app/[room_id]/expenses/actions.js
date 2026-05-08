@@ -3,6 +3,20 @@
 import { createClient } from '@/utils/supabase/server';
 import { auth, getUserRoomForRoom } from '@/auth';
 
+export async function getRoomMembers(roomId) {
+    const supabase = await createClient();
+    const { data: roomMembers } = await supabase
+        .from('UserRooms')
+        .select('Users(email, name)')
+        .eq('room_id', roomId);
+    const userMap = {};
+    (roomMembers || []).forEach(m => {
+        const u = m.Users;
+        if (u?.email && !userMap[u.email]) userMap[u.email] = u.name || u.email;
+    });
+    return userMap;
+}
+
 export async function fetchPaginatedExpenses({ roomId, cursor = null, limit = 20, filters = {} }) {
     try {
         const session = await auth();

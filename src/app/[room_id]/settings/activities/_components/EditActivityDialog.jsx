@@ -11,7 +11,7 @@ import {
   Button,
   Box,
 } from '@mui/joy';
-import { editGroceryActivity } from '../action';
+import { editGroceryActivity } from '../actions';
 
 export default function EditActivityDialog({ open, onClose, activity, roomId }) {
   const [isPending, startTransition] = useTransition();

@@ -9,7 +9,7 @@ import {
   Box,
 } from '@mui/joy';
 import WarningIcon from '@mui/icons-material/Warning';
-import { deleteGroceryActivity, deletePaymentActivity } from '../action';
+import { deleteGroceryActivity, deletePaymentActivity } from '../actions';
 
 export default function DeleteConfirmDialog({ open, onClose, activity, roomId }) {
   const [isPending, startTransition] = useTransition();

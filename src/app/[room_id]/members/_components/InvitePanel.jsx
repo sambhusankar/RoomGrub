@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { NearMe } from '@mui/icons-material';
-import { createInvite } from '@/app/invite/actions';
+import { createInvite } from '@/app/invite/[token]/actions';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 

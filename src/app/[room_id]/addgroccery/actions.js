@@ -4,6 +4,47 @@ import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import NotificationService from '@/services/NotificationService';
 
+export async function getRoomMembersForRoom(roomId) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: memberRows } = await supabase
+        .from('UserRooms').select('Users(*)').eq('room_id', roomId);
+    const members = memberRows?.map(r => r.Users) ?? [];
+    const currentUser = members.find(m => m.email === user?.email) ?? null;
+    return { members, currentUserEmail: user?.email ?? null, currentUser };
+}
+
+export async function addExpense(roomId, description, amount, date, userEmail) {
+    const supabase = await createClient();
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) return { success: false, error: 'Unauthorized' };
+
+    const insertData = {
+        room: roomId,
+        material: description,
+        money: parseFloat(amount),
+        user: userEmail,
+    };
+    if (date) insertData.created_at = new Date(date).toISOString();
+
+    const { error } = await supabase.from('Spendings').insert([insertData]);
+    if (error) return { success: false, error: error.message };
+
+    try {
+        const { data: userData } = await supabase
+            .from('Users').select('id, name').eq('email', userEmail).single();
+        if (userData) {
+            await NotificationService.notifyGroceryAdded(
+                parseInt(roomId), userData.id, userData.name || userEmail, 1
+            );
+        }
+    } catch (_) {}
+
+    revalidatePath(`/${roomId}`, 'layout');
+    return { success: true };
+}
+
 export async function addGroceryForFriend(roomId, friendEmail, grocery, price, date) {
     try {
         const supabase = await createClient();
