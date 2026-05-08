@@ -3,6 +3,22 @@
 import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 
+export async function getSplitsData(roomId) {
+    const supabase = await createClient();
+    const [expensesResult, paymentsResult, membershipsResult] = await Promise.all([
+        supabase.from('Spendings').select('*, Users(name, email, profile)').eq('room', roomId)
+            .or('settled.is.null,settled.eq.false').order('created_at', { ascending: false }),
+        supabase.from('balance').select('user, amount, status, spending_id').eq('room', roomId)
+            .eq('status', 'debit').is('spending_id', null).order('created_at', { ascending: false }),
+        supabase.from('UserRooms').select('role, Users(*)').eq('room_id', roomId),
+    ]);
+    return {
+        expenses: expensesResult.data || [],
+        payments: paymentsResult.data || [],
+        members: (membershipsResult.data || []).map(m => ({ ...m.Users, role: m.role })),
+    };
+}
+
 export async function settlePayment(roomId, memberEmail) {
     try {
         const supabase = await createClient();
