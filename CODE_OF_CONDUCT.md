@@ -32,10 +32,6 @@ Maintainers have the right to remove, edit, or reject comments, commits, code, i
 
 This Code of Conduct applies within all project spaces — including GitHub issues, pull requests, commit messages, and any other project-related communication — and also applies when an individual is representing the project in public spaces.
 
-## Enforcement
-
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project maintainer at **sankar.s@imgearsindia.com**. All complaints will be reviewed and investigated promptly and fairly. Maintainers are obligated to maintain confidentiality with regard to the reporter of an incident.
-
 ## Attribution
 
 This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.
