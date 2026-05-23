@@ -25,7 +25,7 @@ export default function DangerZone({ roomId }) {
         try {
             const result = await deleteRoom(roomId);
             if (result.success) {
-                router.push('/create_room');
+                router.push('/');
             } else {
                 setError(result.error);
                 if (result.pendingExists) setPendingExists(true);
