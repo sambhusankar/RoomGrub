@@ -1,14 +1,14 @@
 [
   {
     "relation": [
-      "delegate_permission/common.handle_all_urls"
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
     ],
     "target": {
       "namespace": "android_app",
-      "package_name": "in.broccly.roomgrub.twa",
+      "package_name": "broccly.roomgrub.twa",
       "sha256_cert_fingerprints": [
-        "8A:7C:44:87:BC:22:E7:C3:53:F3:81:65:DC:4E:18:F0:70:64:15:B9:84:C6:E2:C1:06:E3:5D:20:28:3A:B5:7F",
-        "17:0E:18:8A:07:2A:C9:41:C6:5C:E4:37:0B:A0:88:8D:28:AF:0A:AA:0E:37:28:CD:7D:D0:BF:6A:A5:C4:AA:B9"
+        "E8:9E:33:E7:B8:17:ED:B2:9D:15:EF:C8:73:09:70:2E:E8:CB:C1:8C:15:40:C5:19:CA:FC:32:B0:11:76:C3:8F"
       ]
     }
   }
