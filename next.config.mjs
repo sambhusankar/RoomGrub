@@ -39,7 +39,6 @@ export default withPWA({
     dest: 'public',
     register: true,
     disable: false,
-    skipWaiting: true,
     buildExcludes: [/app-build-manifest\.json$/],
     exclude: [
       // Exclude problematic Next.js internal files

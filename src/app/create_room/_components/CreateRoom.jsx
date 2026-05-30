@@ -1,7 +1,7 @@
 'use client';
 
 import { createRoom } from '../actions';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box, Typography,
   Button,
@@ -10,6 +10,7 @@ import {
   ListItem,
   Card,
   CardContent,
+  CircularProgress,
 } from '@mui/joy';
 import {
   Home,
@@ -20,6 +21,8 @@ import {
 } from '@mui/icons-material';
 
 export default function CreateRoom() {
+  const [loading, setLoading] = useState(false);
+
   const features = [
     'Split expenses easily',
     'Track who owes what',
@@ -27,6 +30,8 @@ export default function CreateRoom() {
   ];
 
   const handleCreateRoom = async () => {
+    if (loading) return;
+    setLoading(true);
     await createRoom();
   };
 
@@ -88,15 +93,16 @@ export default function CreateRoom() {
                 fullWidth
                 variant="solid"
                 color="primary"
-                startDecorator={<Add />}
+                startDecorator={loading ? <CircularProgress size="sm" /> : <Add />}
                 onClick={handleCreateRoom}
+                disabled={loading}
                 sx={{
                   fontSize: '1rem',
                   fontWeight: 'lg',
                   py: 1.5,
                 }}
               >
-                Create New Room
+                {loading ? 'Creating...' : 'Create New Room'}
               </Button>
               <Typography level="body-sm" textColor="text.secondary" mt={1}>
                 Set up a room and invite your friends
