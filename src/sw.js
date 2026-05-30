@@ -127,6 +127,27 @@ self.addEventListener('message', (event) => {
     }
 });
 
+// Clean up stale caches from previous SW versions on activation
+self.addEventListener('activate', (event) => {
+    const expectedCaches = [
+        'google-fonts-stylesheets',
+        'google-fonts-webfonts',
+        'static-images',
+        'static-pages',
+        'room-dashboard',
+        'workbox-precache-v2',
+    ];
+    event.waitUntil(
+        caches.keys().then((cacheNames) =>
+            Promise.all(
+                cacheNames
+                    .filter((name) => !expectedCaches.some((e) => name.startsWith(e)))
+                    .map((name) => caches.delete(name))
+            )
+        )
+    );
+});
+
 console.log('Push notification handlers registered');
 
 // ===================================================================
@@ -277,22 +298,23 @@ if (workbox) {
     );
 
     // =========================================
-    // ADD GROCERY PAGE - CacheFirst (static form, offline after first visit)
+    // ADD GROCERY PAGE - NetworkFirst (HTML embeds hashed chunk refs; must stay fresh)
     // =========================================
     workbox.routing.registerRoute(
         ({ url }) => {
             const segments = url.pathname.split('/').filter(Boolean);
             return segments.length === 2 && segments[1] === 'addgroccery';
         },
-        new workbox.strategies.CacheFirst({
+        new workbox.strategies.NetworkFirst({
             cacheName: 'addgroccery-page',
+            networkTimeoutSeconds: 3,
             plugins: [
                 new workbox.cacheableResponse.CacheableResponsePlugin({
                     statuses: [0, 200],
                 }),
                 new workbox.expiration.ExpirationPlugin({
                     maxEntries: 10,
-                    maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                    maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days offline fallback only
                 }),
             ],
         }),
@@ -325,23 +347,8 @@ if (workbox) {
         'GET'
     );
 
-    // =========================================
-    // NEXT.JS STATIC CHUNKS - CacheFirst
-    // =========================================
-
-    // Cache Next.js static chunks for offline support
-    workbox.routing.registerRoute(
-        /\/_next\/static\/.*/,
-        new workbox.strategies.CacheFirst({
-            cacheName: 'next-static',
-            plugins: [
-                new workbox.expiration.ExpirationPlugin({
-                    maxEntries: 200,
-                    maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-                }),
-            ],
-        })
-    );
+    // NOTE: /_next/static/* chunks are handled by precacheAndRoute above (revision-aware).
+    // A separate explicit CacheFirst route here would create a stale second cache.
 
     console.log('Workbox routes registered with offline support');
 } else {
