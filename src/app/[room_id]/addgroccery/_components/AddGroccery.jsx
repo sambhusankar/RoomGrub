@@ -89,6 +89,7 @@ function ExpenseScreen({
                     ref={dateInputRef}
                     type="date"
                     value={date}
+                    max={new Date().toISOString().split('T')[0]}
                     onChange={e => onDatePick(e.target.value)}
                     className="sr-only"
                     aria-hidden="true"
