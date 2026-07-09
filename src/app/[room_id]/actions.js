@@ -1,102 +1,24 @@
 'use server';
 
-import { createClient } from '@/utils/supabase/server';
-import { auth, getUserRoomForRoom } from '@/auth';
+import { auth } from '@/auth';
+import { backendJson } from '@/utils/backend';
 
 export async function fetchHomeSummary(roomId) {
     try {
         const session = await auth();
-        if (!session) {
-            return { totalPurchases: 0, pendingAmount: 0, recentExpenses: [] };
-        }
+        if (!session) return { totalPurchases: 0, pendingAmount: 0, recentExpenses: [] };
 
-        const { data: userRoom, error: roomError } = await getUserRoomForRoom(session.user.email, roomId);
-        if (roomError || !userRoom) {
-            return { totalPurchases: 0, pendingAmount: 0, recentExpenses: [] };
-        }
-
-        const supabase = await createClient();
-
-        // Total purchases for current user in this room (unsettled only)
-        const { data: spendingsData } = await supabase
-            .from('Spendings')
-            .select('money')
-            .eq('user', session.user.email)
-            .eq('room', roomId)
-            .or('settled.is.null,settled.eq.false');
-
-        const totalPurchases = (spendingsData || []).reduce(
-            (sum, s) => sum + parseFloat(s.money || 0),
-            0
-        );
-
-        // Legacy lump-sum debit records only (spending_id IS NULL)
-        // Per-expense debits (spending_id IS NOT NULL) are already handled by filtering settled spendings out above
-        const { data: balanceData } = await supabase
-            .from('balance')
-            .select('amount')
-            .eq('user', session.user.email)
-            .eq('room', roomId)
-            .eq('status', 'debit')
-            .is('spending_id', null);
-
-        const totalReceived = (balanceData || []).reduce(
-            (sum, b) => sum + parseFloat(b.amount || 0),
-            0
-        );
-
-        const pendingAmount = Math.max(0, totalPurchases + totalReceived);
-
-        // Recent 5 expenses for the whole room (all members)
-        const { data: recentData } = await supabase
-            .from('Spendings')
-            .select('*')
-            .eq('room', roomId)
-            .order('created_at', { ascending: false })
-            .limit(5);
-
-        const recentExpenses = recentData || [];
-
-        // Enrich with user data
-        const uniqueEmails = [...new Set(recentExpenses.map(e => e.user))].filter(Boolean);
-        let userMap = new Map();
-
-        if (uniqueEmails.length > 0) {
-            const { data: usersData } = await supabase
-                .from('Users')
-                .select('email, name, profile')
-                .in('email', uniqueEmails);
-
-            userMap = new Map((usersData || []).map(u => [u.email, u]));
-        }
-
-        // Enrich settled expenses with settlement date
-        const settledIds = recentExpenses.filter(e => e.settled).map(e => e.id);
-        let settlementDateMap = new Map();
-
-        if (settledIds.length > 0) {
-            const { data: settlementData } = await supabase
-                .from('balance')
-                .select('spending_id, created_at')
-                .in('spending_id', settledIds)
-                .eq('status', 'debit');
-
-            (settlementData || []).forEach(r => {
-                if (!settlementDateMap.has(r.spending_id)) {
-                    settlementDateMap.set(r.spending_id, r.created_at);
-                }
-            });
-        }
-
-        const enrichedExpenses = recentExpenses.map(e => ({
-            ...e,
-            Users: userMap.get(e.user),
-            settledAt: settlementDateMap.get(e.id) || null,
-        }));
-
-        return { totalPurchases, pendingAmount, recentExpenses: enrichedExpenses };
-    } catch (error) {
-        console.error('Error fetching home summary:', error);
+        const data = await backendJson(`/api/v1/rooms/${roomId}`);
+        return {
+            totalPurchases: data.total_spent ?? 0,
+            pendingAmount: data.pending_amount ?? 0,
+            recentExpenses: (data.recent_expenses || []).map(e => ({
+                ...e,
+                Users: null,
+                settledAt: null,
+            })),
+        };
+    } catch {
         return { totalPurchases: 0, pendingAmount: 0, recentExpenses: [] };
     }
 }
@@ -106,73 +28,32 @@ export async function fetchRoomDashboard(roomId) {
         const session = await auth();
         if (!session) return { totalRoomStats: null, memberStats: [] };
 
-        const { data: userRoom, error: roomError } = await getUserRoomForRoom(session.user.email, roomId);
-        if (roomError || !userRoom) {
-            return { totalRoomStats: null, memberStats: [] };
-        }
+        const data = await backendJson(`/api/v1/rooms/${roomId}/dashboard`);
+        const members = data.members || [];
 
-        const supabase = await createClient();
+        const memberStats = members.map(m => ({
+            member: {
+                id: m.user_id,
+                email: m.email,
+                name: m.name || '',
+                profile: m.profile || null,
+                role: m.role,
+            },
+            totalPurchases: m.total_spent ?? 0,
+            pendingAmount: m.pending_amount ?? 0,
+            status: (m.pending_amount ?? 0) > 0 ? 'pending' : 'settled',
+        }));
 
-        const { data: membershipsData, error: membersError } = await supabase
-            .from('UserRooms')
-            .select('role, Users(*)')
-            .eq('room_id', parseInt(roomId));
-
-        const membersData = (membershipsData || []).map(m => ({ ...m.Users, role: m.role }));
-
-        if (membersError) throw membersError;
-        // membersData is already mapped above
-
-        const [purchasesResult, paymentsResult] = await Promise.all([
-            supabase.from('Spendings').select('*').eq('room', roomId),
-            supabase.from('balance').select('*').eq('room', roomId).is('spending_id', null),
-        ]);
-
-        const allPurchases = purchasesResult.data || [];
-        const allPayments = paymentsResult.data || [];
-
-        const purchasesByUser = new Map();
-        const paymentsByUser = new Map();
-
-        allPurchases.forEach(purchase => {
-            if (!purchasesByUser.has(purchase.user)) purchasesByUser.set(purchase.user, []);
-            purchasesByUser.get(purchase.user).push(purchase);
-        });
-
-        allPayments.forEach(payment => {
-            if (!paymentsByUser.has(payment.user)) paymentsByUser.set(payment.user, []);
-            paymentsByUser.get(payment.user).push(payment);
-        });
-
-        const memberStats = (membersData || []).map((member) => {
-            const purchases = purchasesByUser.get(member.email) || [];
-            const payments = paymentsByUser.get(member.email) || [];
-
-            const totalPurchases = purchases.reduce((sum, p) => sum + parseFloat(p.money), 0);
-            const unsettledPurchases = purchases
-                .filter(p => p.settled == null || p.settled === false)
-                .reduce((sum, p) => sum + parseFloat(p.money), 0);
-            const totalReceived = payments
-                .filter(p => p.status === 'debit')
-                .reduce((sum, p) => sum + parseFloat(p.amount), 0);
-            const pendingAmount = Math.max(0, unsettledPurchases + totalReceived);
-
-            return {
-                member,
-                totalPurchases,
-                pendingAmount,
-                status: pendingAmount > 0 ? 'pending' : 'settled',
-            };
-        });
-
-        const totalRoomStats = memberStats.reduce((acc, stat) => ({
-            totalPurchases: acc.totalPurchases + stat.totalPurchases,
-            pendingPayments: acc.pendingPayments + stat.pendingAmount,
-        }), { totalPurchases: 0, pendingPayments: 0 });
+        const totalRoomStats = memberStats.reduce(
+            (acc, s) => ({
+                totalPurchases: acc.totalPurchases + s.totalPurchases,
+                pendingPayments: acc.pendingPayments + s.pendingAmount,
+            }),
+            { totalPurchases: 0, pendingPayments: 0 }
+        );
 
         return { totalRoomStats, memberStats };
-    } catch (error) {
-        console.error('Error fetching room dashboard:', error);
+    } catch {
         return { totalRoomStats: null, memberStats: [] };
     }
 }

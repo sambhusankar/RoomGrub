@@ -1,64 +1,59 @@
 'server-only'
 import { cache } from 'react'
-import { createClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
+import { backendJson } from '@/utils/backend'
 
-// React's cache() ensures this only runs once per request
+function decodeJWT(token) {
+    try {
+        const payload = token.split('.')[1]
+        return JSON.parse(Buffer.from(payload, 'base64url').toString())
+    } catch {
+        return null
+    }
+}
+
 export const auth = cache(async () => {
-    const supabase = await createClient()
-    const { data: { session }, error } = await supabase.auth.getSession()
-    if (error) {
-        console.error("Error fetching session:", error)
-        return null
-    }
-    if (!session) {
-        return null
-    }
+    const cookieStore = await cookies()
+    const token = cookieStore.get('rg_token')?.value
+    if (!token) return null
 
-    return session
+    const payload = decodeJWT(token)
+    if (!payload || payload.exp * 1000 < Date.now()) return null
+
+    let userInfo = {}
+    try {
+        const raw = cookieStore.get('rg_user')?.value
+        if (raw) userInfo = JSON.parse(raw)
+    } catch { /* ignore */ }
+
+    return {
+        user: {
+            id: payload.sub,
+            email: payload.email,
+            name: userInfo.name || '',
+            profile: userInfo.profile || null,
+        }
+    }
 })
 
-// Returns all room memberships for a user — used by the My Rooms dashboard
-export const getUserRooms = cache(async (email) => {
-    const supabase = await createClient()
-    const { data: userRecord, error: userError } = await supabase
-        .from('Users')
-        .select('id')
-        .eq('email', email)
-        .single()
-    if (userError || !userRecord) return { data: null, error: userError || 'User not found' }
-
-    const { data, error } = await supabase
-        .from('UserRooms')
-        .select('room_id, role, joined_at, Rooms(id, admin, members, budget)')
-        .eq('user_id', userRecord.id)
-    return { data, error }
-})
-
-// Returns membership for a specific room — used by validRoom policy
 export const getUserRoomForRoom = cache(async (email, roomId) => {
-    const supabase = await createClient()
-    const { data: userRecord, error: userError } = await supabase
-        .from('Users')
-        .select('id')
-        .eq('email', email)
-        .single()
-    if (userError || !userRecord) return { data: null, error: userError || 'User not found' }
-
-    const { data, error } = await supabase
-        .from('UserRooms')
-        .select('room_id, role')
-        .eq('user_id', userRecord.id)
-        .eq('room_id', parseInt(roomId))
-        .single()
-    return { data, error }
+    try {
+        const members = await backendJson(`/api/v1/rooms/${roomId}/members`)
+        const membership = members.find(m => m.email === email)
+        if (!membership) return { data: null, error: 'Not a member' }
+        return { data: { room_id: parseInt(roomId), role: membership.role }, error: null }
+    } catch (err) {
+        return { data: null, error: err.detail || 'Failed to fetch membership' }
+    }
 })
 
 export const signOut = async () => {
-    const supabase = await createClient()
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-        console.error("Error signing out:", error)
+    try {
+        const cookieStore = await cookies()
+        cookieStore.delete('rg_token')
+        cookieStore.delete('rg_user')
+        return true
+    } catch {
         return false
     }
-    return true
 }

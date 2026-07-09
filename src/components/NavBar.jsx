@@ -82,9 +82,9 @@ export default function NavBar({ user, signOut }) {
         onClick={() => setMenuOpen(!menuOpen)}
         className="w-10 h-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-300"
       >
-        {user?.user_metadata?.picture ? (
+        {user?.profile ? (
           <Image
-            src={user.user_metadata.picture}
+            src={user.profile}
             alt="Profile"
             width={40}
             height={40}
@@ -92,7 +92,7 @@ export default function NavBar({ user, signOut }) {
           />
         ) : (
           <div className="w-full h-full bg-brand flex items-center justify-center text-white text-sm font-medium rounded-full">
-            {user?.user_metadata?.name?.[0] || '?'}
+            {user?.name?.[0] || '?'}
           </div>
         )}
       </button>
@@ -100,7 +100,7 @@ export default function NavBar({ user, signOut }) {
       {menuOpen && (
         <div className="absolute top-14 right-4 w-48 bg-white rounded-lg shadow-lg py-1 z-50 border border-purple-100">
           <div className="px-4 py-2 text-sm text-gray-600 border-b border-purple-100 truncate">
-            {user?.user_metadata?.name}
+            {user?.name}
           </div>
           <button
             onClick={handleSignOut}

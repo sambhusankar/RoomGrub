@@ -23,7 +23,7 @@ export default function ContributionModal({
         if (!contributionAmount || parseFloat(contributionAmount) <= 0) return;
 
         setIsSubmitting(true);
-        const result = await recordContribution(params.room_id, member.email, contributionAmount);
+        const result = await recordContribution(params.room_id, params.member_id, contributionAmount);
 
         if (result.success) {
             alert('Contribution recorded successfully!');

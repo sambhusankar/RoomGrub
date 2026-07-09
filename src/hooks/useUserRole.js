@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { apiCall } from '@/utils/api';
 
 export default function useUserRole(roomId) {
   const [role, setRole] = useState(null);
   const [loadings, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
     if (!roomId) {
@@ -13,38 +12,20 @@ export default function useUserRole(roomId) {
     }
 
     const fetchUserRole = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-      if (userError || !user) {
+      try {
+        const members = await apiCall(`/api/rooms/${roomId}/members`);
+        const userCookie = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('rg_user='));
+        if (!userCookie) { setLoading(false); return; }
+        const userInfo = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
+        const me = (members || []).find(m => m.email === userInfo.email);
+        setRole(me?.role || null);
+      } catch {
+        setRole(null);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      const { data: userRecord } = await supabase
-        .from('Users')
-        .select('id')
-        .eq('email', user.email)
-        .single();
-
-      if (!userRecord) {
-        setLoading(false);
-        return;
-      }
-
-      const { data: membership, error } = await supabase
-        .from('UserRooms')
-        .select('role')
-        .eq('user_id', userRecord.id)
-        .eq('room_id', parseInt(roomId))
-        .single();
-
-      if (error) {
-        console.error('Error fetching role:', error.message);
-      } else {
-        setRole(membership?.role || null);
-      }
-
-      setLoading(false);
     };
 
     fetchUserRole();

@@ -291,12 +291,6 @@ if (workbox) {
         'GET'
     );
 
-    // Supabase API calls - always need network
-    workbox.routing.registerRoute(
-        /supabase/,
-        new workbox.strategies.NetworkOnly()
-    );
-
     // =========================================
     // ADD GROCERY PAGE - NetworkFirst (HTML embeds hashed chunk refs; must stay fresh)
     // =========================================

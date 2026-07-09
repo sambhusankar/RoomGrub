@@ -1,163 +1,64 @@
 'use server';
 
-import { createClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
-import NotificationService from '@/services/NotificationService';
+import { auth } from '@/auth';
+import { backendJson } from '@/utils/backend';
 
 export async function getRoomMembersForRoom(roomId) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: memberRows } = await supabase
-        .from('UserRooms').select('Users(*)').eq('room_id', roomId);
-    const members = memberRows?.map(r => r.Users) ?? [];
-    const currentUser = members.find(m => m.email === user?.email) ?? null;
-    return { members, currentUserEmail: user?.email ?? null, currentUser };
+    try {
+        const session = await auth();
+        const members = await backendJson(`/api/v1/rooms/${roomId}/members`);
+        const currentUserEmail = session?.user?.email ?? null;
+        const currentUser = (members || []).find(m => m.email === currentUserEmail) ?? null;
+        return { members: members || [], currentUserEmail, currentUser };
+    } catch {
+        return { members: [], currentUserEmail: null, currentUser: null };
+    }
 }
 
 export async function addExpense(roomId, description, amount, date, userEmail) {
-    const supabase = await createClient();
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) return { success: false, error: 'Unauthorized' };
-
-    const insertData = {
-        room: roomId,
-        material: description,
-        money: parseFloat(amount),
-        user: userEmail,
-    };
-    if (date) insertData.created_at = new Date(date).toISOString();
-
-    const { error } = await supabase.from('Spendings').insert([insertData]);
-    if (error) return { success: false, error: error.message };
-
     try {
-        const { data: userData } = await supabase
-            .from('Users').select('id, name').eq('email', userEmail).single();
-        if (userData) {
-            await NotificationService.notifyGroceryAdded(
-                parseInt(roomId), userData.id, userData.name || userEmail, 1
-            );
-        }
-    } catch (_) {}
+        const session = await auth();
+        if (!session) return { success: false, error: 'Unauthorized' };
 
-    revalidatePath(`/${roomId}`, 'layout');
-    return { success: true };
+        const body = {
+            material: description,
+            money: parseFloat(amount),
+        };
+        if (date) body.created_at = new Date(date).toISOString();
+
+        await backendJson(`/api/v1/rooms/${roomId}/expenses`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+
+        revalidatePath(`/${roomId}`, 'layout');
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.detail };
+    }
 }
 
 export async function addGroceryForFriend(roomId, friendEmail, grocery, price, date) {
     try {
-        const supabase = await createClient();
+        const session = await auth();
+        if (!session) return { success: false, error: 'Unauthorized' };
 
-        // SECURITY CHECK 1: Verify user is authenticated
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-            return { success: false, error: 'Unauthorized: User not authenticated' };
-        }
-
-        // SECURITY CHECK 2: Verify current user is admin and member of this room
-        const { data: currentUser } = await supabase
-            .from('Users')
-            .select('id, name')
-            .eq('email', user.email)
-            .single();
-
-        if (!currentUser) {
-            return { success: false, error: 'Unauthorized: User not found' };
-        }
-
-        const { data: currentMembership } = await supabase
-            .from('UserRooms')
-            .select('role')
-            .eq('user_id', currentUser.id)
-            .eq('room_id', parseInt(roomId))
-            .single();
-
-        if (!currentMembership) {
-            return { success: false, error: 'Unauthorized: User not a member of this room' };
-        }
-
-        if (currentMembership.role !== 'Admin') {
-            return { success: false, error: 'Unauthorized: Only admins can add groceries for others' };
-        }
-
-        // VALIDATION 1: Verify friend exists and belongs to the same room
-        const { data: friendUser, error: friendError } = await supabase
-            .from('Users')
-            .select('id, email, name')
-            .eq('email', friendEmail)
-            .single();
-
-        if (friendError || !friendUser) {
-            return { success: false, error: 'Friend not found' };
-        }
-
-        const { data: friendMembership } = await supabase
-            .from('UserRooms')
-            .select('id')
-            .eq('user_id', friendUser.id)
-            .eq('room_id', parseInt(roomId))
-            .single();
-
-        if (!friendMembership) {
-            return { success: false, error: 'Friend does not belong to this room' };
-        }
-
-        // VALIDATION 2: Validate input data
-        if (!grocery || grocery.trim().length === 0) {
-            return { success: false, error: 'Grocery item is required' };
-        }
-
-        if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
-            return { success: false, error: 'Valid price is required' };
-        }
-
-        // Prepare insert data
-        const insertData = {
-            room: parseInt(roomId),
+        const body = {
             material: grocery.trim(),
             money: parseFloat(price),
-            user: friendEmail
+            user_email: friendEmail,
         };
+        if (date) body.created_at = new Date(date).toISOString();
 
-        // If date provided, use it; otherwise database will use default (current timestamp)
-        if (date) {
-            insertData.created_at = new Date(date).toISOString();
-        }
-
-        // Insert grocery spending
-        const { error: insertError } = await supabase
-            .from('Spendings')
-            .insert([insertData]);
-
-        if (insertError) {
-            console.error('Error adding grocery for friend:', insertError);
-            throw new Error('Failed to add grocery');
-        }
-
-        // Send notification to room members
-        try {
-            await NotificationService.notifyGroceryAdded(
-                parseInt(roomId),
-                friendUser.id,
-                friendUser.name || friendEmail,
-                1 // item count
-            );
-            console.log('Grocery notification sent successfully');
-        } catch (notificationError) {
-            console.error('Failed to send grocery notification:', notificationError);
-            // Don't fail the operation if notification fails
-        }
+        await backendJson(`/api/v1/rooms/${roomId}/expenses/for-member`, {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
 
         revalidatePath(`/${roomId}`, 'layout');
-
-        return {
-            success: true,
-            message: `Successfully added grocery for ${friendUser.name || friendEmail}`
-        };
-
+        return { success: true };
     } catch (error) {
-        console.error('Add grocery for friend error:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: error.detail };
     }
 }

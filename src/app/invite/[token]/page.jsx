@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { GoogleLogin } from '@react-oauth/google';
 import { validateToken, acceptInvite, rejectInvite } from './actions';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+import { apiCall } from '@/utils/api';
 
 // Google icon for the login button
 const GoogleIcon = () => (
@@ -31,12 +30,10 @@ export default function InvitePage() {
 
   useEffect(() => {
     const init = async () => {
-      const supabase = createClient();
+      const userCookie = document.cookie.split('; ').find(r => r.startsWith('rg_user='));
+      const sess = userCookie ? JSON.parse(decodeURIComponent(userCookie.split('=')[1])) : null;
 
-      const [{ data: { session: sess } }, validation] = await Promise.all([
-        supabase.auth.getSession(),
-        validateToken(token),
-      ]);
+      const [validation] = await Promise.all([validateToken(token)]);
 
       setSession(sess);
 
@@ -55,14 +52,23 @@ export default function InvitePage() {
     init();
   }, [token]);
 
-  const handleLoginWithGoogle = async () => {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${SITE_URL}/callback?invite_token=${token}`,
-      },
-    });
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      await apiCall('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ provider: 'google', token: credentialResponse.credential }),
+      });
+      // Re-check session and auto-accept
+      const result = await acceptInvite(token);
+      if (result.success) {
+        router.push(`/${result.roomId}`);
+      } else {
+        const userCookie = document.cookie.split('; ').find(r => r.startsWith('rg_user='));
+        setSession(userCookie ? JSON.parse(decodeURIComponent(userCookie.split('=')[1])) : null);
+      }
+    } catch {
+      setError('Login failed. Please try again.');
+    }
   };
 
   const handleAccept = async () => {
@@ -135,10 +141,13 @@ export default function InvitePage() {
             <strong>{inviterName}</strong> invited you to join <strong>{roomLabel}</strong> on RoomGrub.
           </p>
           <p style={styles.expiry}>Link expires in {invite.daysLeft} day{invite.daysLeft !== 1 ? 's' : ''}</p>
-          <button style={styles.googleBtn} onClick={handleLoginWithGoogle}>
-            <GoogleIcon />
-            Sign in with Google to Join
-          </button>
+          <GoogleLogin
+            onSuccess={handleGoogleLogin}
+            onError={() => setError('Google login failed')}
+            theme="outline"
+            shape="pill"
+            size="large"
+          />
         </div>
       </div>
     );

@@ -1,145 +1,66 @@
 'use server';
 
-import { createClient } from '@/utils/supabase/server';
-import { LoginRequired } from '@/policies/LoginRequired';
 import { revalidatePath } from 'next/cache';
+import { auth } from '@/auth';
+import { backendJson } from '@/utils/backend';
 
-export async function getActivitiesData(roomId, userEmail) {
-    const supabase = await createClient();
+export async function getActivitiesData(roomId) {
+    try {
+        const session = await auth();
+        if (!session) return { activities: [], isAdmin: false, emailToName: {} };
 
-    const { data: currentUserData } = await supabase
-        .from('Users').select('id').eq('email', userEmail).single();
+        const [expensesData, membersData] = await Promise.all([
+            backendJson(`/api/v1/rooms/${roomId}/expenses?settled=false&limit=100`),
+            backendJson(`/api/v1/rooms/${roomId}/members`),
+        ]);
 
-    const { data: userRoom } = await supabase
-        .from('UserRooms').select('role')
-        .eq('user_id', currentUserData?.id).eq('room_id', roomId).single();
+        const members = membersData || [];
+        const isAdmin = members.find(m => m.email === session.user.email)?.role === 'Admin';
 
-    const isAdmin = userRoom?.role === 'Admin';
+        const emailToName = {};
+        members.forEach(m => { if (m.email) emailToName[m.email] = m.name || m.email; });
 
-    const [{ data: groceries }, { data: roomUserRows }] = await Promise.all([
-        supabase.from('Spendings')
-            .select('id, user, material, money, created_at, settled')
-            .eq('room', roomId).or('settled.is.null,settled.eq.false')
-            .order('created_at', { ascending: false }),
-        supabase.from('UserRooms').select('Users(id, email, name)').eq('room_id', roomId),
-    ]);
+        const activities = (expensesData?.items || []).map(e => ({
+            id: e.id,
+            type: 'grocery',
+            user: emailToName[e.user] || e.user,
+            userEmail: e.user,
+            amount: e.money,
+            description: e.material,
+            createdAt: e.created_at,
+        }));
 
-    const roomUsers = roomUserRows?.map(r => r.Users) ?? [];
-    const userMap = {};
-    const emailToName = {};
-    roomUsers.forEach(user => {
-        userMap[user.id] = user.name || user.email;
-        userMap[user.email] = user.name || user.email;
-        emailToName[user.email] = user.name || user.email;
-    });
-
-    const activities = (groceries || []).map(g => ({
-        id: g.id,
-        type: 'grocery',
-        user: userMap[g.user] || g.user,
-        userEmail: g.user,
-        amount: g.money,
-        description: g.material,
-        createdAt: g.created_at,
-    }));
-
-    return { activities, isAdmin, emailToName };
+        return { activities, isAdmin, emailToName };
+    } catch {
+        return { activities: [], isAdmin: false, emailToName: {} };
+    }
 }
 
 export async function editGroceryActivity(activityId, formData, roomId) {
-  const session = await LoginRequired();
-  const supabase = await createClient();
+    try {
+        const material = formData.get('material');
+        const money = parseFloat(formData.get('money'));
+        const created_at = formData.get('created_at');
 
-  const { data: currentUser } = await supabase
-    .from('Users')
-    .select('id')
-    .eq('email', session.user.email)
-    .single();
+        await backendJson(`/api/v1/rooms/${roomId}/expenses/${activityId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ material, money, created_at }),
+        });
 
-  const { data: membership } = await supabase
-    .from('UserRooms')
-    .select('role')
-    .eq('user_id', currentUser?.id)
-    .eq('room_id', parseInt(roomId))
-    .single();
-
-  if (membership?.role !== 'Admin') {
-    return { error: 'Only admins can edit activities' };
-  }
-
-  const material = formData.get('material');
-  const money = parseFloat(formData.get('money'));
-  const created_at = formData.get('created_at');
-
-  const { error: updateError } = await supabase
-    .from('Spendings')
-    .update({ material, money, created_at })
-    .eq('id', activityId)
-    .eq('room', parseInt(roomId));
-
-  if (updateError) {
-    console.error('Error updating grocery:', updateError);
-    return { error: 'Failed to update expense' };
-  }
-
-  await supabase
-    .from('Notifications')
-    .insert({
-      room_id: parseInt(roomId),
-      triggered_by: currentUser.id,
-      activity_type: 'grocery',
-      title: 'Expense Edited',
-      message: `Admin edited an expense: ${material} - ₹${money}`,
-      data: { activityId, type: 'edit' }
-    });
-
-  revalidatePath(`/${roomId}`, 'layout');
-  return { success: true };
+        revalidatePath(`/${roomId}`, 'layout');
+        return { success: true };
+    } catch (error) {
+        return { error: error.detail || 'Failed to update expense' };
+    }
 }
 
 export async function deleteGroceryActivity(activityId, material, money, roomId) {
-  const session = await LoginRequired();
-  const supabase = await createClient();
+    try {
+        await backendJson(`/api/v1/rooms/${roomId}/expenses/${activityId}`, { method: 'DELETE' });
 
-  const { data: currentUser } = await supabase
-    .from('Users')
-    .select('id')
-    .eq('email', session.user.email)
-    .single();
-
-  const { data: membership } = await supabase
-    .from('UserRooms')
-    .select('role')
-    .eq('user_id', currentUser?.id)
-    .eq('room_id', parseInt(roomId))
-    .single();
-
-  if (membership?.role !== 'Admin') {
-    return { error: 'Only admins can delete activities' };
-  }
-
-  const { error: deleteError } = await supabase
-    .from('Spendings')
-    .delete()
-    .eq('id', activityId)
-    .eq('room', parseInt(roomId));
-
-  if (deleteError) {
-    console.error('Error deleting grocery:', deleteError);
-    return { error: 'Failed to delete expense' };
-  }
-
-  await supabase
-    .from('Notifications')
-    .insert({
-      room_id: parseInt(roomId),
-      triggered_by: currentUser.id,
-      activity_type: 'grocery',
-      title: 'Expense Deleted',
-      message: `Admin deleted an expense: ${material} - ₹${money}`,
-      data: { activityId, type: 'delete' }
-    });
-
-  revalidatePath(`/${roomId}`, 'layout');
-  return { success: true };
+        revalidatePath(`/${roomId}`, 'layout');
+        return { success: true };
+    } catch (error) {
+        return { error: error.detail || 'Failed to delete expense' };
+    }
 }
