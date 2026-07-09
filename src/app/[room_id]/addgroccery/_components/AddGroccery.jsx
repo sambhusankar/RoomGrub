@@ -123,13 +123,6 @@ export default function AddGrocery({ userRole }) {
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState('');
 
-    const [showFriendScreen, setShowFriendScreen] = useState(false);
-    const [friendAmount, setFriendAmount] = useState('');
-    const [friendDescription, setFriendDescription] = useState('');
-    const [friendDate, setFriendDate] = useState('');
-    const [friendLoading, setFriendLoading] = useState(false);
-    const [friendMsg, setFriendMsg] = useState('');
-
     const [roomMembers, setRoomMembers] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [currentUserEmail, setCurrentUserEmail] = useState(null);
@@ -139,17 +132,8 @@ export default function AddGrocery({ userRole }) {
     const amountInputRef = useRef(null);
     const descriptionInputRef = useRef(null);
     const dateInputRef = useRef(null);
-    const friendAmountInputRef = useRef(null);
-    const friendDescriptionInputRef = useRef(null);
-    const friendDateInputRef = useRef(null);
 
     const params = useParams();
-
-    useEffect(() => {
-        if (showFriendScreen) {
-            setTimeout(() => friendAmountInputRef.current?.focus(), 100);
-        }
-    }, [showFriendScreen]);
 
     useEffect(() => {
         getRoomMembersForRoom(params.room_id).then(({ members, currentUser: me, currentUserEmail: email }) => {
@@ -169,9 +153,13 @@ export default function AddGrocery({ userRole }) {
         setMsg('');
         if (!description || parseFloat(amount) <= 0) { setMsg('Please enter amount and description.'); return; }
         setLoading(true);
-        const result = await addExpense(params.room_id, description, amount, date, currentUserEmail);
+
+        const result = selectedFriend && selectedFriend.email !== currentUserEmail
+            ? await addGroceryForFriend(params.room_id, selectedFriend.email, description, amount, date)
+            : await addExpense(params.room_id, description, amount, date, currentUserEmail);
+
         if (result.success) {
-            setMsg('✅ Expense added!');
+            setMsg('✅ ' + (result.message || 'Expense added!'));
             setAmount(''); setDescription(''); setDate('');
             setTimeout(() => { setMsg(''); amountInputRef.current?.focus(); }, 1500);
         } else {
@@ -180,38 +168,10 @@ export default function AddGrocery({ userRole }) {
         setLoading(false);
     };
 
-    const openFriendScreen = () => {
-        setFriendAmount(''); setFriendDescription(''); setFriendDate(''); setFriendMsg('');
-        setShowFriendScreen(true);
-    };
-
-    const handleFriendAdd = async () => {
-        setFriendMsg('');
-        if (!friendDescription || parseFloat(friendAmount) <= 0) { setFriendMsg('Please enter amount and description.'); return; }
-        if (!selectedFriend) { setFriendMsg('Please select a friend.'); return; }
-        setFriendLoading(true);
-
-        const targetEmail = selectedFriend.email === currentUserEmail
-            ? currentUserEmail
-            : selectedFriend.email;
-
-        const result = selectedFriend.email === currentUserEmail
-            ? await addExpense(params.room_id, friendDescription, friendAmount, friendDate, currentUserEmail)
-            : await addGroceryForFriend(params.room_id, selectedFriend.email, friendDescription, friendAmount, friendDate);
-
-        if (result.success) {
-            setFriendMsg('✅ ' + (result.message || 'Expense added!'));
-            setTimeout(() => setShowFriendScreen(false), 1200);
-        } else {
-            setFriendMsg('❌ ' + result.error);
-        }
-        setFriendLoading(false);
-    };
-
     const friendSelectorSlot = (
         <div className="relative">
             <button
-                onClick={() => userRole === 'Admin' && setShowMemberPicker(p => !p)}
+                onClick={() => setShowMemberPicker(p => !p)}
                 className="flex items-center gap-2 text-sm text-purple-600 bg-purple-50 border border-purple-200 rounded-full pl-1 pr-3 py-1 active:bg-purple-100 select-none font-medium"
             >
                 <Avatar
@@ -221,7 +181,7 @@ export default function AddGrocery({ userRole }) {
                     sx={{ width: 26, height: 26 }}
                 />
                 <span>{selectedFriend?.email === currentUserEmail ? 'Me' : (selectedFriend?.name || 'Select')}</span>
-                {userRole === 'Admin' && <span className="text-purple-400 text-xs">▾</span>}
+                <span className="text-purple-400 text-xs">▾</span>
             </button>
             {showMemberPicker && (
                 <div className="absolute bottom-full mb-2 left-0 bg-white rounded-2xl shadow-xl border border-purple-100 py-2 min-w-[180px] z-10">
@@ -245,31 +205,6 @@ export default function AddGrocery({ userRole }) {
         </div>
     );
 
-    if (showFriendScreen) {
-        return (
-            <ExpenseScreen
-                title="Add Expense for Friend"
-                amount={friendAmount}
-                description={friendDescription}
-                date={friendDate}
-                loading={friendLoading}
-                msg={friendMsg}
-                onAmountChange={e => { const v = parseAmountInput(e.target.value); if (v !== null) setFriendAmount(v); }}
-                onAmountKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); friendDescriptionInputRef.current?.focus(); } }}
-                onDescriptionChange={e => setFriendDescription(e.target.value)}
-                onDescriptionKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } }}
-                onSubmit={handleFriendAdd}
-                onDatePick={setFriendDate}
-                formattedDate={formattedDate(friendDate)}
-                amountInputRef={friendAmountInputRef}
-                descriptionInputRef={friendDescriptionInputRef}
-                dateInputRef={friendDateInputRef}
-                submitLabel={`Add for ${selectedFriend?.email === currentUserEmail ? 'Me' : (selectedFriend?.name || 'Friend')}`}
-                friendSlot={friendSelectorSlot}
-            />
-        );
-    }
-
     return (
         <ExpenseScreen
             title="Add Expense"
@@ -288,15 +223,11 @@ export default function AddGrocery({ userRole }) {
             amountInputRef={amountInputRef}
             descriptionInputRef={descriptionInputRef}
             dateInputRef={dateInputRef}
-            friendSlot={
-                userRole === 'Admin' ? (
-                    <button
-                        onClick={openFriendScreen}
-                        className="flex items-center gap-1.5 text-sm text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-4 py-2 active:bg-purple-100 select-none font-medium"
-                    >
-                        👥 Friend
-                    </button>
-                ) : null
+            friendSlot={userRole === 'Admin' ? friendSelectorSlot : null}
+            submitLabel={
+                userRole === 'Admin' && selectedFriend?.email !== currentUserEmail
+                    ? `Add for ${selectedFriend?.name || 'Friend'}`
+                    : 'Add Expense'
             }
         />
     );
