@@ -137,7 +137,7 @@ export default function ListMembers({ members, roomId, currentUserEmail }) {
                                     transition: 'all 0.2s',
                                 },
                             }}
-                            onClick={() => router.push(`/${roomId}/members/${member.id}`)}
+                            onClick={() => router.push(`/${roomId}/members/${member.user_id}`)}
                         >
                             <CardContent>
                                 <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
