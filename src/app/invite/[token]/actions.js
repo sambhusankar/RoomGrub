@@ -12,7 +12,7 @@ export async function validateToken(token) {
                 id: data.token,
                 token: data.token,
                 room: { id: data.room_id },
-                invitedBy: { email: data.invited_by_email, name: data.invited_by_email },
+                invitedBy: { email: data.invited_by_email, name: data.invited_by_name },
                 daysLeft: data.days_left,
             }
         };
