@@ -230,7 +230,7 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
                                 {group.expenses.map((expense, index) => (
                                     <Box key={expense.id}>
                                         <ExpenseCard
-                                            user={expense.Users?.name || expense.user || 'Unknown User'}
+                                            user={expense.Users?.name || userMap?.[expense.user] || expense.user || 'Unknown User'}
                                             amount={parseFloat(expense.money)}
                                             date={expense.created_at}
                                             material={expense.material}
