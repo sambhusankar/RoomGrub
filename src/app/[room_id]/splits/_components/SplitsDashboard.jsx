@@ -44,7 +44,10 @@ export default function SplitsDashboard({ expenses, payments, members, roomId, u
         }
 
         if (filters.dateRange.to) {
+            // "to" is a date-only string; treat it as inclusive of the whole day,
+            // otherwise it parses as midnight and excludes same-day expenses.
             const toDate = new Date(filters.dateRange.to);
+            toDate.setHours(23, 59, 59, 999);
             filteredExpenses = filteredExpenses.filter(exp =>
                 new Date(exp.created_at) <= toDate
             );

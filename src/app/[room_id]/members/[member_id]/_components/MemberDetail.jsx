@@ -37,7 +37,7 @@ export default function MemberDetail() {
     const handleSettlePayment = async () => {
         if (summary.pendingAmount <= 0 || (!loadings && role !== 'Admin')) return;
         setIsSettling(true);
-        const result = await settleMember(params.room_id, member.email, summary.pendingAmount);
+        const result = await settleMember(params.room_id, params.member_id);
         if (result.success) {
             alert('Payment settled successfully!');
             fetchMemberData();

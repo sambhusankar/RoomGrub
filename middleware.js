@@ -1,32 +1,39 @@
 import { NextResponse } from 'next/server'
 
+const PUBLIC_PATHS = ['/login', '/callback', '/invite']
+
+function decodeJWT(token) {
+  try {
+    const payload = token.split('.')[1]
+    return JSON.parse(Buffer.from(payload, 'base64url').toString())
+  } catch {
+    return null
+  }
+}
+
+function isAuthenticated(request) {
+  const token = request.cookies.get('rg_token')?.value
+  if (!token) return false
+  const payload = decodeJWT(token)
+  return !!payload && payload.exp * 1000 > Date.now()
+}
+
 export function middleware(request) {
   const { pathname } = request.nextUrl
 
-  // Skip middleware for Next.js internal routes, static files, and service worker files
-  if (
-    pathname.startsWith('/_next/') ||
-    pathname.startsWith('/api/') ||
-    pathname.startsWith('/static/') ||
-    pathname.includes('.') // Skip all files with extensions (images, fonts, etc.)
-  ) {
+  if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return NextResponse.next()
   }
 
-  // Continue with your existing auth logic here if needed
+  if (!isAuthenticated(request)) {
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public folder)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|manifest.json|workbox-.*\\.js|sw.js|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

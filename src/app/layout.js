@@ -1,6 +1,7 @@
 import "./globals.css";
 import localFont from 'next/font/local';
 import BottomNav from '@/components/BottomNav';
+import Providers from './providers';
 
 const geistSans = localFont({ src: "./fonts/GeistVF.woff", variable: "--font-geist-sans", weight: "100 900" });
 const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font-geist-mono", weight: "100 900" });
@@ -60,7 +61,9 @@ export default function RootLayout({ children }) {
           minHeight: "100vh"
         }}
       >
-        {children}
+        <Providers>
+          {children}
+        </Providers>
         <BottomNav />
       </body>
     </html>

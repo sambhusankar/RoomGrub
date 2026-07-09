@@ -10,7 +10,8 @@
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
@@ -19,8 +20,7 @@
     "@mui/icons-material": "^7.1.1",
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^7.1.1",
-    "@supabase/ssr": "^0.5.2",
-    "@supabase/supabase-js": "^2.47.16",
+    "@react-oauth/google": "^0.13.5",
     "async": "^3.2.6",
     "autoprefixer": "^10.4.20",
     "date-fns": "^4.1.0",
@@ -36,6 +36,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/jest": "^30.0.0",
     "@types/node": "22.10.5",
