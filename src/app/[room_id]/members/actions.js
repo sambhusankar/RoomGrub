@@ -16,7 +16,7 @@ export async function getMembers(roomId) {
 async function findMemberIdByEmail(roomId, email) {
     const members = await backendJson(`/api/v1/rooms/${roomId}/members`);
     const member = (members || []).find(m => m.email === email);
-    return member?.id ?? null;
+    return member?.user_id ?? null;
 }
 
 export async function updateMemberRole(roomId, memberEmail, newRole) {
