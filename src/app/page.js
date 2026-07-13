@@ -1,13 +1,5 @@
-import { LoginRequired } from '@/policies/LoginRequired';
-import NavBarContainer from '@/components/NavBarContainer';
-import RoomsPage from './_components/RoomsPage';
+import { redirect } from 'next/navigation';
 
-export default async function Home() {
-  await LoginRequired();
-
-  return (
-    <NavBarContainer>
-      <RoomsPage />
-    </NavBarContainer>
-  );
+export default function Home() {
+  redirect('/rooms');
 }

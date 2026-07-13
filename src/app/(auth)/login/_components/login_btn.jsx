@@ -1,11 +1,9 @@
 'use client'
 import { GoogleLogin } from '@react-oauth/google'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { apiCall } from '@/utils/api'
 
 export default function LoginBtn({ inviteToken }) {
-    const router = useRouter()
     const [error, setError] = useState(null)
 
     const handleSuccess = async (credentialResponse) => {
@@ -20,8 +18,7 @@ export default function LoginBtn({ inviteToken }) {
                 try {
                     const invite = await apiCall(`/api/invites/${inviteToken}/accept`, { method: 'POST' })
                     if (invite?.room_id) {
-                        router.refresh()
-                        router.push(`/${invite.room_id}`)
+                        window.location.href = `/${invite.room_id}`
                         return
                     }
                 } catch {
@@ -29,8 +26,7 @@ export default function LoginBtn({ inviteToken }) {
                 }
             }
 
-            router.refresh()
-            router.push('/')
+            window.location.href = '/rooms'
         } catch {
             setError('Login failed. Please try again.')
         }

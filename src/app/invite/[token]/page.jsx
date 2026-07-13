@@ -88,7 +88,7 @@ export default function InvitePage() {
     setError('');
     const result = await rejectInvite(token);
     if (result.success) {
-      router.push('/');
+      router.push('/rooms');
     } else {
       setError(result.error || 'Failed to decline invite');
       setActionLoading(false);

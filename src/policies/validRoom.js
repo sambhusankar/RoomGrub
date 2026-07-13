@@ -21,7 +21,7 @@ export const validRoom = async ({ params }) => {
     const { data: membership, error } = await getUserRoomForRoom(session.user.email, roomId)
 
     if (error || !membership) {
-      redirect('/')
+      redirect('/rooms')
     }
 
     return { room: membership.room_id, role: membership.role }

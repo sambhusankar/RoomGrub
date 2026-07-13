@@ -51,7 +51,7 @@ export default function NavBar({ user, signOut }) {
     setMenuOpen(false);
     const result = await exitRoom(room_id);
     if (result.success) {
-      router.push('/');
+      router.push('/rooms');
     } else {
       alert(`Error: ${result.error}`);
     }
@@ -64,7 +64,7 @@ export default function NavBar({ user, signOut }) {
       {room_id ? (
         <div className="flex items-center gap-2">
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/rooms')}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-purple-100 text-purple-600 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
