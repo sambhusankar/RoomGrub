@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { GoogleLogin } from '@react-oauth/google';
+import GoogleLoginButton from '@/components/GoogleLoginButton';
 import { validateToken, acceptInvite, rejectInvite } from './actions';
 import { apiCall } from '@/utils/api';
 
@@ -150,18 +150,9 @@ export default function InvitePage() {
           {signingIn ? (
             <p style={styles.subtitle}>Signing you in…</p>
           ) : (
-            <GoogleLogin
+            <GoogleLoginButton
               onSuccess={handleGoogleLogin}
               onError={() => setError('Google login failed')}
-              useOneTap
-              use_fedcm_for_prompt
-              use_fedcm_for_button
-              itp_support
-              auto_select={false}
-              cancel_on_tap_outside={false}
-              theme="outline"
-              shape="pill"
-              size="large"
             />
           )}
         </div>
