@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
+import { googleLogout } from '@react-oauth/google';
 import useUserRole from '@/hooks/useUserRole';
 import { exitRoom } from '@/app/[room_id]/members/actions';
 
@@ -43,6 +44,7 @@ export default function NavBar({ user, signOut }) {
 
   function handleSignOut() {
     setMenuOpen(false);
+    googleLogout();
     signOut();
   }
 
