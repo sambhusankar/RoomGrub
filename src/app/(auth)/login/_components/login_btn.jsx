@@ -1,7 +1,7 @@
 'use client'
-import { GoogleLogin } from '@react-oauth/google'
 import { useState } from 'react'
 import CircularProgress from '@mui/joy/CircularProgress'
+import GoogleLoginButton from '@/components/GoogleLoginButton'
 import { apiCall } from '@/utils/api'
 
 export default function LoginBtn({ inviteToken }) {
@@ -47,19 +47,9 @@ export default function LoginBtn({ inviteToken }) {
 
     return (
         <div className="flex flex-col items-center gap-2">
-            <GoogleLogin
+            <GoogleLoginButton
                 onSuccess={handleSuccess}
                 onError={() => setError('Google login failed. Please try again.')}
-                useOneTap
-                use_fedcm_for_prompt
-                use_fedcm_for_button
-                itp_support
-                auto_select={false}
-                cancel_on_tap_outside={false}
-                theme="outline"
-                shape="pill"
-                size="large"
-                text="signin_with"
             />
             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
         </div>
