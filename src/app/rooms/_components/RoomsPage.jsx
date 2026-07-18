@@ -12,13 +12,19 @@ import CardContent from '@mui/joy/CardContent';
 
 const ROOMS_CACHE_KEY = 'roomgrub_user_rooms';
 
-export default function RoomsPage() {
+export default function RoomsPage({ initialData }) {
   const router = useRouter();
-  const [rooms, setRooms] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [firstName, setFirstName] = useState('');
+  const hasInitial = Boolean(initialData && !initialData.error);
+  const [rooms, setRooms] = useState(hasInitial ? initialData.rooms : null);
+  const [loading, setLoading] = useState(!hasInitial);
+  const [firstName, setFirstName] = useState(initialData?.firstName || '');
 
   useEffect(() => {
+    if (hasInitial) {
+      localStorage.setItem(ROOMS_CACHE_KEY, JSON.stringify(initialData.rooms));
+      return;
+    }
+
     const loadRooms = async () => {
       const cachedRaw = typeof localStorage !== 'undefined' ? localStorage.getItem(ROOMS_CACHE_KEY) : null;
       const cached = cachedRaw ? JSON.parse(cachedRaw) : null;
@@ -30,10 +36,14 @@ export default function RoomsPage() {
       }
 
       try {
-        const { rooms: roomList, firstName: name } = await getUserRooms();
-        setFirstName(name);
-        localStorage.setItem(ROOMS_CACHE_KEY, JSON.stringify(roomList));
-        setRooms(roomList);
+        const { rooms: roomList, firstName: name, error: fetchError } = await getUserRooms();
+        if (fetchError) {
+          setRooms(cached || []);
+        } else {
+          setFirstName(name);
+          localStorage.setItem(ROOMS_CACHE_KEY, JSON.stringify(roomList));
+          setRooms(roomList);
+        }
       } catch {
         setRooms(cached || []);
       }
@@ -41,7 +51,7 @@ export default function RoomsPage() {
     };
 
     loadRooms();
-  }, []);
+  }, [hasInitial, initialData]);
 
   if (loading || rooms === null) {
     return (

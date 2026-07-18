@@ -13,6 +13,6 @@ export async function getUserRooms() {
         const rooms = await backendJson('/api/v1/rooms');
         return { rooms: rooms || [], firstName };
     } catch {
-        return { rooms: [], firstName };
+        return { rooms: [], firstName, error: true };
     }
 }

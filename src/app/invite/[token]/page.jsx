@@ -27,6 +27,7 @@ export default function InvitePage() {
   const [invalidReason, setInvalidReason] = useState('');
   const [session, setSession] = useState(null);
   const [error, setError] = useState('');
+  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -54,6 +55,8 @@ export default function InvitePage() {
 
   const handleGoogleLogin = async (credentialResponse) => {
     try {
+      setError('');
+      setSigningIn(true);
       await apiCall('/api/auth/login', {
         method: 'POST',
         body: JSON.stringify({ provider: 'google', token: credentialResponse.credential }),
@@ -65,8 +68,10 @@ export default function InvitePage() {
       } else {
         const userCookie = document.cookie.split('; ').find(r => r.startsWith('rg_user='));
         setSession(userCookie ? JSON.parse(decodeURIComponent(userCookie.split('=')[1])) : null);
+        setSigningIn(false);
       }
     } catch {
+      setSigningIn(false);
       setError('Login failed. Please try again.');
     }
   };
@@ -141,13 +146,24 @@ export default function InvitePage() {
             <strong>{inviterName}</strong> invited you to join <strong>{roomLabel}</strong> on RoomGrub.
           </p>
           <p style={styles.expiry}>Link expires in {invite.daysLeft} day{invite.daysLeft !== 1 ? 's' : ''}</p>
-          <GoogleLogin
-            onSuccess={handleGoogleLogin}
-            onError={() => setError('Google login failed')}
-            theme="outline"
-            shape="pill"
-            size="large"
-          />
+          {error && <p style={styles.errorText}>{error}</p>}
+          {signingIn ? (
+            <p style={styles.subtitle}>Signing you in…</p>
+          ) : (
+            <GoogleLogin
+              onSuccess={handleGoogleLogin}
+              onError={() => setError('Google login failed')}
+              useOneTap
+              use_fedcm_for_prompt
+              use_fedcm_for_button
+              itp_support
+              auto_select={false}
+              cancel_on_tap_outside={false}
+              theme="outline"
+              shape="pill"
+              size="large"
+            />
+          )}
         </div>
       </div>
     );
