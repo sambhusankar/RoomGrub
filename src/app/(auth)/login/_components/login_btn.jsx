@@ -1,14 +1,17 @@
 'use client'
-import { GoogleLogin } from '@react-oauth/google'
 import { useState } from 'react'
+import CircularProgress from '@mui/joy/CircularProgress'
+import GoogleLoginButton from '@/components/GoogleLoginButton'
 import { apiCall } from '@/utils/api'
 
 export default function LoginBtn({ inviteToken }) {
     const [error, setError] = useState(null)
+    const [loading, setLoading] = useState(false)
 
     const handleSuccess = async (credentialResponse) => {
         try {
             setError(null)
+            setLoading(true)
             await apiCall('/api/auth/login', {
                 method: 'POST',
                 body: JSON.stringify({ provider: 'google', token: credentialResponse.credential }),
@@ -28,19 +31,25 @@ export default function LoginBtn({ inviteToken }) {
 
             window.location.href = '/rooms'
         } catch {
+            setLoading(false)
             setError('Login failed. Please try again.')
         }
     }
 
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center gap-3">
+                <CircularProgress size="md" />
+                <p className="text-sm text-gray-500">Signing you in…</p>
+            </div>
+        )
+    }
+
     return (
         <div className="flex flex-col items-center gap-2">
-            <GoogleLogin
+            <GoogleLoginButton
                 onSuccess={handleSuccess}
                 onError={() => setError('Google login failed. Please try again.')}
-                theme="outline"
-                shape="pill"
-                size="large"
-                text="signin_with"
             />
             {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
         </div>
