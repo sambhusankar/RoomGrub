@@ -39,7 +39,7 @@ export async function addExpense(roomId, description, amount, date, userEmail) {
     }
 }
 
-export async function addGroceryForFriend(roomId, friendEmail, grocery, price, date) {
+export async function addGroceryForFriend(roomId, friendUserId, grocery, price, date) {
     try {
         const session = await auth();
         if (!session) return { success: false, error: 'Unauthorized' };
@@ -47,7 +47,7 @@ export async function addGroceryForFriend(roomId, friendEmail, grocery, price, d
         const body = {
             material: grocery.trim(),
             money: parseFloat(price),
-            user_email: friendEmail,
+            user_id: friendUserId,
         };
         if (date) body.created_at = new Date(date).toISOString();
 
