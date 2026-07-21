@@ -4,5 +4,6 @@ const createJestConfig = nextJest({ dir: './' });
 module.exports = createJestConfig({
   testEnvironment: 'node',
   moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
-  testMatch: ['**/__tests__/**/*.test.js'],
+  testMatch: ['<rootDir>/test/**/*.test.js'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
 });

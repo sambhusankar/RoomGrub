@@ -155,7 +155,7 @@ export default function AddGrocery({ userRole }) {
         setLoading(true);
 
         const result = selectedFriend && selectedFriend.email !== currentUserEmail
-            ? await addGroceryForFriend(params.room_id, selectedFriend.email, description, amount, date)
+            ? await addGroceryForFriend(params.room_id, selectedFriend.user_id, description, amount, date)
             : await addExpense(params.room_id, description, amount, date, currentUserEmail);
 
         if (result.success) {
