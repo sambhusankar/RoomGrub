@@ -1,6 +1,5 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { backendJson } from '@/utils/backend';
 
 export async function getMemberData(roomId, memberId) {
@@ -25,28 +24,5 @@ export async function getMemberData(roomId, memberId) {
         };
     } catch {
         return { member: null, purchases: [], summary: { pendingAmount: 0, totalPurchases: 0 } };
-    }
-}
-
-export async function settleMember(roomId, memberId) {
-    try {
-        await backendJson(`/api/v1/rooms/${roomId}/members/${memberId}/settle`, { method: 'POST' });
-        revalidatePath(`/${roomId}`, 'layout');
-        return { success: true };
-    } catch (error) {
-        return { success: false, error: error.detail };
-    }
-}
-
-export async function recordContribution(roomId, memberId, amount) {
-    try {
-        await backendJson(`/api/v1/rooms/${roomId}/members/${memberId}/contribute`, {
-            method: 'POST',
-            body: JSON.stringify({ amount: parseFloat(amount) }),
-        });
-        revalidatePath(`/${roomId}`, 'layout');
-        return { success: true };
-    } catch (error) {
-        return { success: false, error: error.detail };
     }
 }

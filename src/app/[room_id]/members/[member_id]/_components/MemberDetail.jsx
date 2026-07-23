@@ -2,23 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button } from '@mui/joy';
-import { useParams, useRouter } from 'next/navigation';
-import useUserRole from '@/hooks/useUserRole';
-import { getMemberData, settleMember } from '../actions';
+import { useRouter, useParams } from 'next/navigation';
+import { getMemberData } from '../actions';
 import AccountOverview from './AccountOverview';
 import PurchaseHistory from './PurchaseHistory';
-import ContributionModal from './ContributionModal';
 
 export default function MemberDetail() {
     const [member, setMember] = useState(null);
     const [purchases, setPurchases] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [showContributionForm, setShowContributionForm] = useState(false);
-    const [isSettling, setIsSettling] = useState(false);
     const [summary, setSummary] = useState({ pendingAmount: 0, totalPurchases: 0 });
 
     const params = useParams();
-    const { role, loadings } = useUserRole(params.room_id);
     const router = useRouter();
 
     useEffect(() => {
@@ -32,19 +27,6 @@ export default function MemberDetail() {
         setPurchases(data.purchases);
         setSummary(data.summary);
         setLoading(false);
-    };
-
-    const handleSettlePayment = async () => {
-        if (summary.pendingAmount <= 0 || (!loadings && role !== 'Admin')) return;
-        setIsSettling(true);
-        const result = await settleMember(params.room_id, params.member_id);
-        if (result.success) {
-            alert('Payment settled successfully!');
-            fetchMemberData();
-        } else {
-            alert('Error settling payment');
-        }
-        setIsSettling(false);
     };
 
     if (loading) {
@@ -74,13 +56,6 @@ export default function MemberDetail() {
 
             <AccountOverview summary={summary} member={member} />
             <PurchaseHistory purchases={purchases} />
-
-            <ContributionModal
-                showContributionForm={showContributionForm}
-                setShowContributionForm={setShowContributionForm}
-                member={member}
-                onDataRefresh={fetchMemberData}
-            />
         </Box>
     );
 }
