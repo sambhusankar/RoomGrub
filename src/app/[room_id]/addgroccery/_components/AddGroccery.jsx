@@ -25,7 +25,7 @@ function ExpenseScreen({
     onAmountChange, onAmountKeyDown, onDescriptionChange, onDescriptionKeyDown,
     onSubmit, onDatePick, formattedDate,
     amountInputRef, descriptionInputRef, dateInputRef,
-    friendSlot, submitLabel = 'Add Expense',
+    friendSlot, participantSlot, submitLabel = 'Add Expense',
 }) {
     const canSubmit = description.trim().length > 0 && parseFloat(amount) > 0;
 
@@ -84,6 +84,7 @@ function ExpenseScreen({
 
             <div className="flex items-center px-5 py-3 gap-3 border-t border-purple-100">
                 {friendSlot}
+                {participantSlot}
                 <div className="flex-1" />
                 <input
                     ref={dateInputRef}
@@ -128,6 +129,8 @@ export default function AddGrocery({ userRole }) {
     const [currentUserEmail, setCurrentUserEmail] = useState(null);
     const [selectedFriend, setSelectedFriend] = useState(null);
     const [showMemberPicker, setShowMemberPicker] = useState(false);
+    const [participantIds, setParticipantIds] = useState([]);
+    const [showParticipantPicker, setShowParticipantPicker] = useState(false);
 
     const amountInputRef = useRef(null);
     const descriptionInputRef = useRef(null);
@@ -140,6 +143,7 @@ export default function AddGrocery({ userRole }) {
             if (members.length > 0) {
                 setRoomMembers(members);
                 setCurrentUserEmail(email);
+                setParticipantIds(members.map(m => m.user_id));
                 if (me) { setCurrentUser(me); setSelectedFriend(me); }
             }
         });
@@ -149,14 +153,22 @@ export default function AddGrocery({ userRole }) {
         ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
         : null;
 
+    const toggleParticipant = (userId) => {
+        if (userId === selectedFriend?.user_id) return;
+        setParticipantIds(prev => prev.includes(userId)
+            ? prev.filter(id => id !== userId)
+            : [...prev, userId]);
+    };
+
     const handleAdd = async () => {
         setMsg('');
         if (!description || parseFloat(amount) <= 0) { setMsg('Please enter amount and description.'); return; }
+        if (participantIds.length === 0) { setMsg('Select at least one participant.'); return; }
         setLoading(true);
 
         const result = selectedFriend && selectedFriend.email !== currentUserEmail
-            ? await addGroceryForFriend(params.room_id, selectedFriend.user_id, description, amount, date)
-            : await addExpense(params.room_id, description, amount, date, currentUserEmail);
+            ? await addGroceryForFriend(params.room_id, selectedFriend.user_id, description, amount, date, participantIds)
+            : await addExpense(params.room_id, description, amount, date, participantIds);
 
         if (result.success) {
             setMsg('✅ ' + (result.message || 'Expense added!'));
@@ -188,9 +200,50 @@ export default function AddGrocery({ userRole }) {
                     {roomMembers.map(member => (
                         <button
                             key={member.id}
-                            onClick={() => { setSelectedFriend(member); setShowMemberPicker(false); }}
+                            onClick={() => {
+                                setSelectedFriend(member);
+                                setParticipantIds(prev => prev.includes(member.user_id) ? prev : [...prev, member.user_id]);
+                                setShowMemberPicker(false);
+                            }}
                             className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-purple-50 transition-colors ${selectedFriend?.id === member.id ? 'bg-purple-50' : ''}`}
                         >
+                            <Avatar src={member.profile || '/default-profile.png'} alt={member.name} size="sm" sx={{ width: 28, height: 28 }} />
+                            <div>
+                                <div className="text-sm font-medium text-gray-800">
+                                    {member.email === currentUserEmail ? `${member.name} (Me)` : member.name}
+                                </div>
+                                <div className="text-xs text-gray-400">{member.email}</div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+
+    const participantSlot = roomMembers.length > 0 && (
+        <div className="relative">
+            <button
+                onClick={() => setShowParticipantPicker(p => !p)}
+                className="flex items-center gap-1.5 text-sm text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5 active:bg-purple-100 select-none font-medium"
+            >
+                <span>{participantIds.length === roomMembers.length ? 'Everyone' : `${participantIds.length} people`}</span>
+                <span className="text-purple-400 text-xs">▾</span>
+            </button>
+            {showParticipantPicker && (
+                <div className="absolute bottom-full mb-2 left-0 bg-white rounded-2xl shadow-xl border border-purple-100 py-2 min-w-[200px] z-10">
+                    {roomMembers.map(member => (
+                        <button
+                            key={member.id}
+                            onClick={() => toggleParticipant(member.user_id)}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-purple-50 transition-colors"
+                        >
+                            <input
+                                type="checkbox"
+                                checked={participantIds.includes(member.user_id)}
+                                readOnly
+                                className="accent-purple-500"
+                            />
                             <Avatar src={member.profile || '/default-profile.png'} alt={member.name} size="sm" sx={{ width: 28, height: 28 }} />
                             <div>
                                 <div className="text-sm font-medium text-gray-800">
@@ -224,6 +277,7 @@ export default function AddGrocery({ userRole }) {
             descriptionInputRef={descriptionInputRef}
             dateInputRef={dateInputRef}
             friendSlot={userRole === 'Admin' ? friendSelectorSlot : null}
+            participantSlot={participantSlot}
             submitLabel={
                 userRole === 'Admin' && selectedFriend?.email !== currentUserEmail
                     ? `Add for ${selectedFriend?.name || 'Friend'}`

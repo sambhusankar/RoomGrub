@@ -16,7 +16,7 @@ export async function getRoomMembersForRoom(roomId) {
     }
 }
 
-export async function addExpense(roomId, description, amount, date, userEmail) {
+export async function addExpense(roomId, description, amount, date, participantUserIds) {
     try {
         const session = await auth();
         if (!session) return { success: false, error: 'Unauthorized' };
@@ -26,6 +26,7 @@ export async function addExpense(roomId, description, amount, date, userEmail) {
             money: parseFloat(amount),
         };
         if (date) body.created_at = new Date(date).toISOString();
+        if (participantUserIds) body.participant_user_ids = participantUserIds;
 
         await backendJson(`/api/v1/rooms/${roomId}/expenses`, {
             method: 'POST',
@@ -39,7 +40,7 @@ export async function addExpense(roomId, description, amount, date, userEmail) {
     }
 }
 
-export async function addGroceryForFriend(roomId, friendUserId, grocery, price, date) {
+export async function addGroceryForFriend(roomId, friendUserId, grocery, price, date, participantUserIds) {
     try {
         const session = await auth();
         if (!session) return { success: false, error: 'Unauthorized' };
@@ -50,6 +51,7 @@ export async function addGroceryForFriend(roomId, friendUserId, grocery, price, 
             user_id: friendUserId,
         };
         if (date) body.created_at = new Date(date).toISOString();
+        if (participantUserIds) body.participant_user_ids = participantUserIds;
 
         await backendJson(`/api/v1/rooms/${roomId}/expenses/for-member`, {
             method: 'POST',
