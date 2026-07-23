@@ -9,7 +9,6 @@ export async function getSplitsData(roomId) {
         const data = await backendJson(`/api/v1/rooms/${roomId}/splits`);
         return {
             expenses: data.unsettled_expenses || [],
-            payments: [],
             members: (data.members || []).map(m => ({
                 id: m.user_id ?? m.user_email,
                 email: m.user_email,
@@ -19,13 +18,26 @@ export async function getSplitsData(roomId) {
                 pending_amount: m.pending_amount ?? 0,
                 total_spent: m.total_spent ?? 0,
             })),
+            settlements: (data.settlements || []).map(s => ({
+                fromEmail: s.from_user_email,
+                fromName: s.from_name || s.from_user_email,
+                toEmail: s.to_user_email,
+                toName: s.to_name || s.to_user_email,
+                amount: s.amount,
+            })),
         };
     } catch {
-        return { expenses: [], payments: [], members: [] };
+        return { expenses: [], members: [], settlements: [] };
     }
 }
 
-export async function settleAllPending(roomId, memberBalances, filters = {}) {
+// Settling always closes out every member's balance for the whole room —
+// the backend's settle-all has no date/member scoping (settle_all_room()
+// is unconditional), so this must always be called with the FULL,
+// unfiltered member list, never a filtered subset, or members left out
+// of the payload would still get silently settled server-side while the
+// UI implied they weren't touched.
+export async function settleAllPending(roomId, memberBalances) {
     try {
         const session = await auth();
         if (!session) return { success: false, error: 'Unauthorized' };
@@ -38,30 +50,9 @@ export async function settleAllPending(roomId, memberBalances, filters = {}) {
             pending_amount: mb.balance,
         }));
 
-        // member_emails must cover every member the fair-share was computed over
-        // (memberBalances is already scoped to activeMembers), not just those with
-        // a nonzero balance, otherwise the server recomputes fair-share over the
-        // wrong denominator (or, if null, returns 0 pending for everyone).
-        const memberEmails = (memberBalances || []).map(mb => mb.member.email);
-
-        // date_to is a date-only string; make it inclusive of the whole day
-        // before sending, otherwise the backend's created_at <= date_to
-        // comparison treats it as midnight and drops same-day expenses.
-        let dateTo = filters.dateRange?.to || null;
-        if (dateTo) {
-            const d = new Date(dateTo);
-            d.setHours(23, 59, 59, 999);
-            dateTo = d.toISOString();
-        }
-
         await backendJson(`/api/v1/rooms/${roomId}/splits/settle-all`, {
             method: 'POST',
-            body: JSON.stringify({
-                members,
-                date_from: filters.dateRange?.from || null,
-                date_to: dateTo,
-                member_emails: memberEmails.length ? memberEmails : null,
-            }),
+            body: JSON.stringify({ members }),
         });
 
         revalidatePath(`/${roomId}`, 'layout');

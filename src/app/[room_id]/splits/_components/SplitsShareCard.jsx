@@ -10,19 +10,8 @@ const formatAmount = (amount) =>
         maximumFractionDigits: 0,
     }).format(Math.abs(amount));
 
-export default function SplitsShareCard({ shareRef, splitCalculation, filters }) {
-    const { totalPendingExpenses, equalShare, memberBalances } = splitCalculation;
-
-    const from = filters?.dateRange?.from;
-    const to = filters?.dateRange?.to;
-    const formatDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-    const dateLabel = from || to
-        ? from && to
-            ? `${formatDate(from)} – ${formatDate(to)}`
-            : from
-            ? `From ${formatDate(from)}`
-            : `Until ${formatDate(to)}`
-        : null;
+export default function SplitsShareCard({ shareRef, splitCalculation }) {
+    const { totalPendingExpenses, settlements, memberBalances } = splitCalculation;
 
     return (
         <div
@@ -47,20 +36,6 @@ export default function SplitsShareCard({ shareRef, splitCalculation, filters })
                 <div style={{ fontSize: '13px', color: '#9333ea' }}>
                     Expense Splits Summary
                 </div>
-                {dateLabel && (
-                    <div style={{
-                        marginTop: '6px',
-                        display: 'inline-block',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        color: '#6d28d9',
-                        background: '#ede9fe',
-                        borderRadius: '6px',
-                        padding: '3px 8px',
-                    }}>
-                        🗓 {dateLabel}
-                    </div>
-                )}
             </div>
 
             {/* Summary Row */}
@@ -81,10 +56,10 @@ export default function SplitsShareCard({ shareRef, splitCalculation, filters })
                     padding: '12px', textAlign: 'center'
                 }}>
                     <div style={{ fontSize: '11px', color: '#065f46', fontWeight: 600, marginBottom: '4px' }}>
-                        PER PERSON
+                        TRANSFERS
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: 700, color: '#064e3b' }}>
-                        {formatAmount(equalShare)}
+                        {settlements.length}
                     </div>
                 </div>
             </div>

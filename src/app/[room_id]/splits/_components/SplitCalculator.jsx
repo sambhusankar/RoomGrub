@@ -22,7 +22,7 @@ import { settleAllPending } from '../actions';
 import { useRouter } from 'next/navigation';
 import SplitsShareCard from './SplitsShareCard';
 
-export default function SplitCalculator({ expenses, payments, members, filters, roomId, userRole }) {
+export default function SplitCalculator({ expenses, members, settlements, roomId, userRole }) {
     const router = useRouter();
     const shareRef = useRef(null);
     const [isSettling, setIsSettling] = useState(false);
@@ -30,84 +30,29 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    // Calculate the smart split for the current period
+    // Member balances and the who-pays-whom breakdown are precomputed by the
+    // backend (RoomBalanceSummary + greedy debt simplification) — we just
+    // shape them for display here, no client-side recalculation.
     const splitCalculation = useMemo(() => {
-        // Determine which members to include based on filter
-        const activeMembers = filters.selectedMembers.length > 0
-            ? members.filter(m => filters.selectedMembers.includes(m.email))
-            : members;
-
-        // Calculate expenses and settlements for each member
-        const memberExpenses = {};
-        const memberSettlements = {}; // Debit transactions (received)
-
-        // Initialize member data only for active members
-        activeMembers.forEach(member => {
-            memberExpenses[member.email] = 0;
-            memberSettlements[member.email] = 0;
-        });
-
-        // Sum up expenses per member
-        expenses.forEach(expense => {
-            if (memberExpenses.hasOwnProperty(expense.user)) {
-                memberExpenses[expense.user] += parseFloat(expense.money || 0);
-            }
-        });
-
-        // Sum legacy lump-sum debit settlements (spending_id IS NULL records — negative amounts)
-        // New per-expense settlements are tracked via settled=true on the expense itself,
-        // so those expenses never appear in the expenses list above.
-        payments.forEach(payment => {
-            if (memberSettlements.hasOwnProperty(payment.user)) {
-                memberSettlements[payment.user] += parseFloat(payment.amount || 0);
-            }
-        });
-
-        // Pending = unsettled expenses + legacy debit settlements (negative, so subtracts)
-        // Clamped to 0 minimum — a member cannot have negative pending
-        const memberPending = {};
-        activeMembers.forEach(member => {
-            const raw = memberExpenses[member.email] + memberSettlements[member.email];
-            memberPending[member.email] = Math.max(0, raw);
-        });
-
-        // Calculate total pending expenses (only positive pending amounts)
-        const totalPendingExpenses = Object.values(memberPending).reduce((sum, amount) => {
-            return sum + (amount > 0 ? amount : 0);
-        }, 0);
-
-        const numberOfMembers = activeMembers.length;
-        const equalShare = totalPendingExpenses / numberOfMembers;
-
-        // Calculate balances
-        const memberBalances = [];
-        activeMembers.forEach(member => {
-            const spent = memberExpenses[member.email];
-            const pendingAmount = memberPending[member.email];
-            const shouldPay = equalShare;
-            const balance = pendingAmount - shouldPay; // Positive means they should get money back, negative means they owe
-
-            memberBalances.push({
+        const memberBalances = members.map(member => {
+            const balance = member.pending_amount ?? 0;
+            return {
                 member,
-                spent,
-                pendingAmount,
-                shouldPay,
                 balance,
-                status: balance > 0 ? 'credit' : balance < 0 ? 'debit' : 'even'
-            });
+                status: balance > 0.01 ? 'credit' : balance < -0.01 ? 'debit' : 'even',
+            };
         });
 
-        // Count pending settlements
+        const totalPendingExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.money || 0), 0);
         const pendingSettlements = memberBalances.filter(mb => Math.abs(mb.balance) > 0.01);
 
         return {
             totalPendingExpenses,
-            equalShare,
             memberBalances,
-            numberOfMembers,
-            pendingSettlements
+            settlements: settlements || [],
+            pendingSettlements,
         };
-    }, [expenses, payments, members, filters.selectedMembers]);
+    }, [expenses, members, settlements]);
 
     const formatAmount = (amount) => {
         return new Intl.NumberFormat('en-IN', {
@@ -134,7 +79,7 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
         setSuccess('');
 
         try {
-            const result = await settleAllPending(roomId, splitCalculation.memberBalances, filters);
+            const result = await settleAllPending(roomId, splitCalculation.memberBalances);
 
             if (!result.success) {
                 throw new Error(result.error || 'Failed to settle all balances');
@@ -212,16 +157,16 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                     </Typography>
                 </Box>
 
-                {/* Per Person */}
+                {/* Transfers Needed */}
                 <Box sx={{ p: 2, bgcolor: '#f3fbf6', borderRadius: 'xl', boxShadow: 'sm' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                         <Receipt sx={{ fontSize: 18, color: '#16a34a' }} />
                         <Typography level="body-sm" sx={{ color: '#166534', fontWeight: 500 }}>
-                            Per Person
+                            Transfers Needed
                         </Typography>
                     </Box>
                     <Typography level="title-lg" sx={{ fontWeight: 700, color: '#16a34a' }}>
-                        {formatAmount(splitCalculation.equalShare)}
+                        {splitCalculation.settlements.length}
                     </Typography>
                 </Box>
             </Box>
@@ -312,7 +257,9 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                                         {memberBalance.member.name || memberBalance.member.email}
                                     </Typography>
                                     <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
-                                        Pending: {formatAmount(memberBalance.pendingAmount)}
+                                        {memberBalance.status === 'credit' ? 'Gets back'
+                                            : memberBalance.status === 'debit' ? 'Owes'
+                                            : 'Settled up'}
                                     </Typography>
                                 </Box>
                                 {/* Balance Amount - Prominent */}
@@ -332,6 +279,40 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
                             </Box>
                         </Card>
                     ))}
+                </Box>
+            )}
+
+            {/* Who Pays Whom */}
+            {splitCalculation.settlements.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                    <Typography level="body-xs" sx={{ mb: 1, color: 'text.secondary', fontWeight: 600, textTransform: 'uppercase' }}>
+                        Who Pays Whom
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {splitCalculation.settlements.map((s, idx) => (
+                            <Card
+                                key={`${s.fromEmail}-${s.toEmail}-${idx}`}
+                                variant="soft"
+                                sx={{ borderRadius: 'lg', p: 1.5, boxShadow: 'none' }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography level="body-sm" sx={{ fontWeight: 600 }}>
+                                        {s.fromName}
+                                    </Typography>
+                                    <Typography level="body-sm" sx={{ color: 'text.tertiary' }}>
+                                        pays
+                                    </Typography>
+                                    <Typography level="body-sm" sx={{ fontWeight: 600 }}>
+                                        {s.toName}
+                                    </Typography>
+                                    <Box sx={{ flex: 1 }} />
+                                    <Typography level="body-sm" sx={{ fontWeight: 700, color: 'primary.600' }}>
+                                        {formatAmount(s.amount)}
+                                    </Typography>
+                                </Box>
+                            </Card>
+                        ))}
+                    </Box>
                 </Box>
             )}
 
@@ -391,7 +372,6 @@ export default function SplitCalculator({ expenses, payments, members, filters, 
             <SplitsShareCard
                 shareRef={shareRef}
                 splitCalculation={splitCalculation}
-                filters={filters}
             />
         </Box>
     );
