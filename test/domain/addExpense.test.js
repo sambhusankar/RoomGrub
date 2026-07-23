@@ -12,10 +12,10 @@ describe('addExpense', () => {
     auth.mockResolvedValue({ user: { email: 'me@x.com' } });
   });
 
-  it('sends the expected payload without a date', async () => {
+  it('sends the expected payload without a date or participants', async () => {
     backendJson.mockResolvedValue({ id: 1 });
 
-    const result = await addExpense('42', 'Milk', '250', '', 'me@x.com');
+    const result = await addExpense('42', 'Milk', '250', '');
 
     expect(backendJson).toHaveBeenCalledWith('/api/v1/rooms/42/expenses', {
       method: 'POST',
@@ -27,7 +27,7 @@ describe('addExpense', () => {
   it('includes created_at when a date is provided', async () => {
     backendJson.mockResolvedValue({ id: 1 });
 
-    await addExpense('42', 'Milk', '250', '2026-01-15', 'me@x.com');
+    await addExpense('42', 'Milk', '250', '2026-01-15');
 
     expect(backendJson).toHaveBeenCalledWith('/api/v1/rooms/42/expenses', {
       method: 'POST',
@@ -39,10 +39,25 @@ describe('addExpense', () => {
     });
   });
 
+  it('includes participant_user_ids when provided', async () => {
+    backendJson.mockResolvedValue({ id: 1 });
+
+    await addExpense('42', 'Milk', '250', '', ['u1', 'u2']);
+
+    expect(backendJson).toHaveBeenCalledWith('/api/v1/rooms/42/expenses', {
+      method: 'POST',
+      body: JSON.stringify({
+        material: 'Milk',
+        money: 250,
+        participant_user_ids: ['u1', 'u2'],
+      }),
+    });
+  });
+
   it('returns the backend error detail on failure', async () => {
     backendJson.mockRejectedValue({ status: 400, detail: 'Bad request' });
 
-    const result = await addExpense('42', 'Milk', '250', '', 'me@x.com');
+    const result = await addExpense('42', 'Milk', '250', '');
 
     expect(result).toEqual({ success: false, error: 'Bad request' });
   });
@@ -50,7 +65,7 @@ describe('addExpense', () => {
   it('returns Unauthorized without calling the backend when there is no session', async () => {
     auth.mockResolvedValue(null);
 
-    const result = await addExpense('42', 'Milk', '250', '', 'me@x.com');
+    const result = await addExpense('42', 'Milk', '250', '');
 
     expect(backendJson).not.toHaveBeenCalled();
     expect(result).toEqual({ success: false, error: 'Unauthorized' });
@@ -87,6 +102,22 @@ describe('addGroceryForFriend', () => {
         money: 99,
         user_id: 'friend-1',
         created_at: new Date('2026-02-01').toISOString(),
+      }),
+    });
+  });
+
+  it('includes participant_user_ids when provided', async () => {
+    backendJson.mockResolvedValue({ id: 2 });
+
+    await addGroceryForFriend('42', 'friend-1', 'Eggs', '99', '', ['u1', 'friend-1']);
+
+    expect(backendJson).toHaveBeenCalledWith('/api/v1/rooms/42/expenses/for-member', {
+      method: 'POST',
+      body: JSON.stringify({
+        material: 'Eggs',
+        money: 99,
+        user_id: 'friend-1',
+        participant_user_ids: ['u1', 'friend-1'],
       }),
     });
   });

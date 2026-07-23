@@ -15,6 +15,7 @@ jest.mock('next/navigation', () => ({
 }));
 
 const currentUser = { id: 1, user_id: 'u1', name: 'Me', email: 'me@x.com', profile: null };
+const friend = { id: 2, user_id: 'u2', name: 'Friend', email: 'friend@x.com', profile: null };
 
 describe('AddGrocery - add expense flow', () => {
   beforeEach(() => {
@@ -43,7 +44,7 @@ describe('AddGrocery - add expense flow', () => {
     const submitButton = screen.getByRole('button', { name: 'Add Expense' });
     await user.click(submitButton);
 
-    await waitFor(() => expect(addExpense).toHaveBeenCalledWith('42', 'Milk', '250', '', 'me@x.com'));
+    await waitFor(() => expect(addExpense).toHaveBeenCalledWith('42', 'Milk', '250', '', ['u1']));
     expect(addGroceryForFriend).not.toHaveBeenCalled();
 
     expect(await screen.findByText('✅ Expense added!')).toBeInTheDocument();
@@ -80,5 +81,101 @@ describe('AddGrocery - add expense flow', () => {
 
     await user.type(screen.getByPlaceholderText('What did you buy?'), 'Bread');
     expect(submitButton).toBeEnabled();
+  });
+});
+
+describe('AddGrocery - participant picker', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    getRoomMembersForRoom.mockResolvedValue({
+      members: [currentUser, friend],
+      currentUser,
+      currentUserEmail: 'me@x.com',
+    });
+  });
+
+  it('defaults to all room members selected as participants', async () => {
+    addExpense.mockResolvedValue({ success: true });
+    const user = userEvent.setup();
+
+    render(<AddGrocery userRole="Member" />);
+    await waitFor(() => expect(getRoomMembersForRoom).toHaveBeenCalled());
+
+    expect(await screen.findByText('Everyone')).toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText('0'), '100');
+    await user.type(screen.getByPlaceholderText('What did you buy?'), 'Rice');
+    await user.click(screen.getByRole('button', { name: 'Add Expense' }));
+
+    await waitFor(() =>
+      expect(addExpense).toHaveBeenCalledWith('42', 'Rice', '100', '', ['u1', 'u2'])
+    );
+  });
+
+  it('allows deselecting a non-payer participant and sends the reduced list', async () => {
+    addExpense.mockResolvedValue({ success: true });
+    const user = userEvent.setup();
+
+    render(<AddGrocery userRole="Member" />);
+    await waitFor(() => expect(getRoomMembersForRoom).toHaveBeenCalled());
+
+    await user.click(screen.getByText('Everyone'));
+    await user.click(screen.getByText('Friend'));
+
+    expect(await screen.findByText('1 people')).toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText('0'), '100');
+    await user.type(screen.getByPlaceholderText('What did you buy?'), 'Rice');
+    await user.click(screen.getByRole('button', { name: 'Add Expense' }));
+
+    await waitFor(() =>
+      expect(addExpense).toHaveBeenCalledWith('42', 'Rice', '100', '', ['u1'])
+    );
+  });
+
+  it('does not allow deselecting the payer from the participant list', async () => {
+    addExpense.mockResolvedValue({ success: true });
+    const user = userEvent.setup();
+
+    render(<AddGrocery userRole="Member" />);
+    await waitFor(() => expect(getRoomMembersForRoom).toHaveBeenCalled());
+
+    await user.click(screen.getByText('Everyone'));
+    // "Me" is the current payer by default — try to deselect them.
+    const meOption = screen.getByText((content) => content.includes('Me'));
+    await user.click(meOption);
+
+    // Still "Everyone" since the payer could not be removed.
+    expect(await screen.findByText('Everyone')).toBeInTheDocument();
+
+    await user.type(screen.getByPlaceholderText('0'), '100');
+    await user.type(screen.getByPlaceholderText('What did you buy?'), 'Rice');
+    await user.click(screen.getByRole('button', { name: 'Add Expense' }));
+
+    await waitFor(() =>
+      expect(addExpense).toHaveBeenCalledWith('42', 'Rice', '100', '', ['u1', 'u2'])
+    );
+  });
+
+  it('never lets the participant list drop to zero since the payer is always locked in', async () => {
+    addExpense.mockResolvedValue({ success: true });
+    const user = userEvent.setup();
+
+    render(<AddGrocery userRole="Member" />);
+    await waitFor(() => expect(getRoomMembersForRoom).toHaveBeenCalled());
+
+    await user.click(screen.getByText('Everyone'));
+    // Try to remove everyone, including the payer.
+    await user.click(screen.getByText('Friend'));
+    const meOption = screen.getByText((content) => content.includes('Me'));
+    await user.click(meOption);
+
+    await user.type(screen.getByPlaceholderText('0'), '100');
+    await user.type(screen.getByPlaceholderText('What did you buy?'), 'Rice');
+    await user.click(screen.getByRole('button', { name: 'Add Expense' }));
+
+    await waitFor(() =>
+      expect(addExpense).toHaveBeenCalledWith('42', 'Rice', '100', '', ['u1'])
+    );
   });
 });
