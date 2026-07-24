@@ -224,13 +224,13 @@ export default function AddGrocery({ userRole }) {
     const participantSlot = roomMembers.length > 0 && (
         <div className="relative">
             <button
-                disabled
-                title="Participant selection is temporarily disabled"
-                className="flex items-center gap-1.5 text-sm text-purple-300 bg-purple-50 border border-purple-100 rounded-full px-3 py-1.5 select-none font-medium cursor-not-allowed opacity-60"
+                onClick={() => setShowParticipantPicker(p => !p)}
+                className="flex items-center gap-1.5 text-sm text-purple-600 bg-purple-50 border border-purple-200 rounded-full px-3 py-1.5 active:bg-purple-100 select-none font-medium"
             >
-                <span>Everyone</span>
+                <span>{participantIds.length === roomMembers.length ? 'Everyone' : `${participantIds.length} people`}</span>
+                <span className="text-purple-400 text-xs">▾</span>
             </button>
-            {false && showParticipantPicker && (
+            {showParticipantPicker && (
                 <div className="absolute bottom-full mb-2 left-0 bg-white rounded-2xl shadow-xl border border-purple-100 py-2 min-w-[200px] z-10">
                     {roomMembers.map(member => (
                         <button
