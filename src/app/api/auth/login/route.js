@@ -23,19 +23,20 @@ export async function POST(request) {
         const isProd = process.env.NODE_ENV === 'production';
 
         const cookieStore = await cookies();
+        const maxAge = 60 * 60 * 24 * 7;
         cookieStore.set('rg_token', access_token, {
             httpOnly: true,
             secure: isProd,
             sameSite: 'lax',
             path: '/',
-            maxAge: 60 * 60 * 24,
+            maxAge,
         });
         cookieStore.set('rg_user', JSON.stringify({ email: user.email, name: user.name, profile: user.profile }), {
             httpOnly: false,
             secure: isProd,
             sameSite: 'lax',
             path: '/',
-            maxAge: 60 * 60 * 24,
+            maxAge,
         });
 
         return NextResponse.json({ success: true, user });
