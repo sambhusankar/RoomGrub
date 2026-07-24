@@ -112,8 +112,7 @@ describe('AddGrocery - participant picker', () => {
     );
   });
 
-  // Participant picker is temporarily disabled; these interaction tests are skipped until it's re-enabled.
-  it.skip('allows deselecting a non-payer participant and sends the reduced list', async () => {
+  it('allows deselecting a non-payer participant and sends the reduced list', async () => {
     addExpense.mockResolvedValue({ success: true });
     const user = userEvent.setup();
 
@@ -134,7 +133,7 @@ describe('AddGrocery - participant picker', () => {
     );
   });
 
-  it.skip('does not allow deselecting the payer from the participant list', async () => {
+  it('does not allow deselecting the payer from the participant list', async () => {
     addExpense.mockResolvedValue({ success: true });
     const user = userEvent.setup();
 
@@ -158,7 +157,7 @@ describe('AddGrocery - participant picker', () => {
     );
   });
 
-  it.skip('never lets the participant list drop to zero since the payer is always locked in', async () => {
+  it('never lets the participant list drop to zero since the payer is always locked in', async () => {
     addExpense.mockResolvedValue({ success: true });
     const user = userEvent.setup();
 
