@@ -43,28 +43,6 @@ class NotificationService {
         );
     }
 
-    async notifyPaymentSettled(roomId, triggeredBy, userName, amount) {
-        return this.notify(
-            roomId,
-            triggeredBy,
-            'payment',
-            'Payment Settled',
-            `${userName} recorded a payment of ₹${amount}`,
-            { amount }
-        );
-    }
-
-    async notifyContributionMade(roomId, triggeredBy, userName, amount) {
-        return this.notify(
-            roomId,
-            triggeredBy,
-            'payment',
-            'Contribution Made',
-            `${userName} made a contribution of ₹${amount}`,
-            { amount, type: 'contribution' }
-        );
-    }
-
     async notifyMemberJoined(roomId, triggeredBy, userName) {
         return this.notify(
             roomId,

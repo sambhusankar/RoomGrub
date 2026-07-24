@@ -5,13 +5,34 @@ import { Typography } from '@mui/joy';
 import { Box, CircularProgress } from '@mui/joy';
 import FilterPanel from './FilterPanel';
 import ExpenseCard from './ExpenseCard';
-import { fetchPaginatedExpenses } from '../actions';
+import ExpenseDetailModal from './ExpenseDetailModal';
+import { fetchPaginatedExpenses, getExpenseDetail } from '../actions';
 
 export default function ExpenseHistory({ initialExpenses, initialCursor, initialHasMore, roomId, userMap }) {
     const [expenses, setExpenses] = useState(initialExpenses);
     const [cursor, setCursor] = useState(initialCursor);
     const [hasMore, setHasMore] = useState(initialHasMore);
     const [loading, setLoading] = useState(false);
+
+    const [detailOpen, setDetailOpen] = useState(false);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [detailError, setDetailError] = useState(null);
+    const [detail, setDetail] = useState(null);
+
+    const handleExpenseClick = async (expenseId) => {
+        setDetailOpen(true);
+        setDetailLoading(true);
+        setDetailError(null);
+        setDetail(null);
+
+        const result = await getExpenseDetail(roomId, expenseId);
+        if (result.success) {
+            setDetail(result.detail);
+        } else {
+            setDetailError(result.error || 'Failed to load expense details.');
+        }
+        setDetailLoading(false);
+    };
 
     const [filter, setFilter] = useState('');
     const [dateRange, setDateRange] = useState({ from: '', to: '' });
@@ -237,6 +258,7 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
                                             userProfile={expense.Users?.profile}
                                             settled={expense.settled}
                                             settledAt={expense.settledAt}
+                                            onClick={() => handleExpenseClick(expense.id)}
                                             sx={{
                                                 mx: 0,
                                                 my: 0,
@@ -283,6 +305,14 @@ export default function ExpenseHistory({ initialExpenses, initialCursor, initial
                     )}
                 </>
             )}
+
+            <ExpenseDetailModal
+                open={detailOpen}
+                onClose={() => setDetailOpen(false)}
+                loading={detailLoading}
+                error={detailError}
+                detail={detail}
+            />
         </Box>
     );
 }

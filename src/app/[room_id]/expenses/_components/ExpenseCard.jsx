@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Box } from '@mui/joy';
 import { CheckCircleRounded, ShoppingCartRounded } from '@mui/icons-material';
 
-export default function ExpenseCard({ user, amount, date, material, userProfile, settled, settledAt, sx }) {
+export default function ExpenseCard({ user, amount, date, material, userProfile, settled, settledAt, onClick, sx }) {
     const formatDate = (dateStr) => {
         const date = new Date(dateStr);
         return date.toLocaleDateString('en-IN', { 
@@ -24,6 +24,7 @@ export default function ExpenseCard({ user, amount, date, material, userProfile,
     return (
         <Card
             variant="plain"
+            onClick={onClick}
             sx={{
                 mx: 0,
                 mb: 0,
@@ -31,6 +32,7 @@ export default function ExpenseCard({ user, amount, date, material, userProfile,
                 bgcolor: 'background.surface',
                 boxShadow: 'none',
                 border: 'none',
+                cursor: onClick ? 'pointer' : 'default',
                 '&:hover': {
                     bgcolor: 'background.level1',
                     transition: 'background-color 0.2s ease-in-out',

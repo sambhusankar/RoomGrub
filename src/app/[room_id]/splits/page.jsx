@@ -8,13 +8,13 @@ export default async function SplitsPage({ params }) {
     const session = await auth();
     const { room_id } = await params;
     const { data: membership } = await getUserRoomForRoom(session.user.email, room_id);
-    const { expenses, payments, members } = await getSplitsData(room_id);
+    const { expenses, members, settlements } = await getSplitsData(room_id);
 
     return (
         <SplitsDashboard
             expenses={expenses}
-            payments={payments}
             members={members}
+            settlements={settlements}
             roomId={room_id}
             userRole={membership?.role ?? null}
         />

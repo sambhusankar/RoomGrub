@@ -16,6 +16,18 @@ export async function getRoomMembers(roomId) {
     }
 }
 
+export async function getExpenseDetail(roomId, expenseId) {
+    try {
+        const session = await auth();
+        if (!session) return { success: false, error: 'Unauthorized' };
+
+        const detail = await backendJson(`/api/v1/rooms/${roomId}/expenses/${expenseId}`);
+        return { success: true, detail };
+    } catch (error) {
+        return { success: false, error: error.detail };
+    }
+}
+
 export async function fetchPaginatedExpenses({ roomId, cursor = null, limit = 20, filters = {} }) {
     try {
         const session = await auth();
