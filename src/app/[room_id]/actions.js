@@ -44,13 +44,11 @@ export async function fetchRoomDashboard(roomId) {
             status: (m.pending_amount ?? 0) > 0 ? 'pending' : 'settled',
         }));
 
-        const totalRoomStats = memberStats.reduce(
-            (acc, s) => ({
-                totalPurchases: acc.totalPurchases + s.totalPurchases,
-                pendingPayments: acc.pendingPayments + s.pendingAmount,
-            }),
-            { totalPurchases: 0, pendingPayments: 0 }
-        );
+        const summary = await fetchHomeSummary(roomId);
+        const totalRoomStats = {
+            totalPurchases: summary.totalPurchases,
+            pendingPayments: summary.pendingAmount,
+        };
 
         return { totalRoomStats, memberStats };
     } catch {
