@@ -5,7 +5,7 @@ import { Box, Typography, Button, Alert } from '@mui/joy';
 import { useRouter } from 'next/navigation';
 import useUserRole from '@/hooks/useUserRole';
 import { deleteRoom } from '../actions';
-import { exitRoom } from '../../members/actions';
+import { exitRoom } from '@/app/[room_id]/members/actions';
 
 export default function DangerZone({ roomId }) {
     const router = useRouter();
