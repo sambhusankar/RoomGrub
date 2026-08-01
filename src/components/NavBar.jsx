@@ -3,16 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { googleLogout } from '@react-oauth/google';
-import useUserRole from '@/hooks/useUserRole';
-import { exitRoom } from '@/app/[room_id]/members/actions';
 
 const LogoutIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-  </svg>
-);
-
-const ExitRoomIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
   </svg>
@@ -30,7 +22,6 @@ export default function NavBar({ user, signOut }) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
-  const { role } = useUserRole(room_id);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -46,17 +37,6 @@ export default function NavBar({ user, signOut }) {
     setMenuOpen(false);
     googleLogout();
     signOut();
-  }
-
-  async function handleExitRoom() {
-    if (!confirm('Are you sure you want to exit this room? You will need to join a new room.')) return;
-    setMenuOpen(false);
-    const result = await exitRoom(room_id);
-    if (result.success) {
-      router.push('/rooms');
-    } else {
-      alert(`Error: ${result.error}`);
-    }
   }
 
   if (!user) return null;
@@ -119,14 +99,6 @@ export default function NavBar({ user, signOut }) {
               className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-brand-light flex items-center gap-2"
             >
               <SettingsIcon /> Settings
-            </button>
-          )}
-          {room_id && role && role !== 'Admin' && (
-            <button
-              onClick={handleExitRoom}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-            >
-              <ExitRoomIcon /> Exit Room
             </button>
           )}
         </div>
