@@ -28,7 +28,10 @@ export async function fetchRoomDashboard(roomId) {
         const session = await auth();
         if (!session) return { totalRoomStats: null, memberStats: [] };
 
-        const data = await backendJson(`/api/v1/rooms/${roomId}/dashboard`);
+        const [data, summary] = await Promise.all([
+            backendJson(`/api/v1/rooms/${roomId}/dashboard`),
+            fetchHomeSummary(roomId),
+        ]);
         const members = data.members || [];
 
         const memberStats = members.map(m => ({
@@ -44,13 +47,10 @@ export async function fetchRoomDashboard(roomId) {
             status: (m.pending_amount ?? 0) > 0 ? 'pending' : 'settled',
         }));
 
-        const totalRoomStats = memberStats.reduce(
-            (acc, s) => ({
-                totalPurchases: acc.totalPurchases + s.totalPurchases,
-                pendingPayments: acc.pendingPayments + s.pendingAmount,
-            }),
-            { totalPurchases: 0, pendingPayments: 0 }
-        );
+        const totalRoomStats = {
+            totalPurchases: summary.totalPurchases,
+            pendingPayments: summary.pendingAmount,
+        };
 
         return { totalRoomStats, memberStats };
     } catch {

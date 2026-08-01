@@ -5,15 +5,17 @@ import { Box, Typography, Button, Alert } from '@mui/joy';
 import { useRouter } from 'next/navigation';
 import useUserRole from '@/hooks/useUserRole';
 import { deleteRoom } from '../actions';
+import { exitRoom } from '@/app/[room_id]/members/actions';
 
 export default function DangerZone({ roomId }) {
     const router = useRouter();
     const { role, loadings } = useUserRole(roomId);
     const [deleting, setDeleting] = useState(false);
+    const [exiting, setExiting] = useState(false);
     const [error, setError] = useState(null);
     const [pendingExists, setPendingExists] = useState(false);
 
-    if (loadings || role !== 'Admin') return null;
+    if (loadings) return null;
 
     async function handleDeleteRoom() {
         if (!confirm('Are you absolutely sure? This will permanently delete the room and all its data. This action cannot be undone.')) return;
@@ -37,6 +39,72 @@ export default function DangerZone({ roomId }) {
         }
     }
 
+    async function handleExitRoom() {
+        if (!confirm('Are you sure you want to exit this room? You will need to join a new room.')) return;
+
+        setExiting(true);
+        setError(null);
+
+        try {
+            const result = await exitRoom(roomId);
+            if (result.success) {
+                router.push('/rooms');
+            } else {
+                setError(result.error);
+            }
+        } catch (err) {
+            setError('Something went wrong. Please try again.');
+        } finally {
+            setExiting(false);
+        }
+    }
+
+    if (role === 'Admin') {
+        return (
+            <Box
+                sx={{
+                    border: '1px solid',
+                    borderColor: 'danger.300',
+                    borderRadius: 'md',
+                    p: 3,
+                }}
+            >
+                <Typography level="title-lg" color="danger" sx={{ mb: 1 }}>
+                    Danger Zone
+                </Typography>
+                <Typography level="body-sm" sx={{ mb: 2, color: 'text.secondary' }}>
+                    Permanently delete this room and all its data. This action cannot be undone.
+                </Typography>
+
+                {error && (
+                    <Alert color="danger" sx={{ mb: 2 }}>
+                        {error}
+                        {pendingExists && (
+                            <Button
+                                variant="plain"
+                                color="danger"
+                                size="sm"
+                                onClick={() => router.push(`/${roomId}/splits`)}
+                                sx={{ ml: 1, p: 0, minHeight: 'unset', textDecoration: 'underline' }}
+                            >
+                                Go to Splits
+                            </Button>
+                        )}
+                    </Alert>
+                )}
+
+                <Button
+                    variant="outlined"
+                    color="danger"
+                    loading={deleting}
+                    onClick={handleDeleteRoom}
+                >
+                    Delete Room
+                </Button>
+            </Box>
+        );
+    }
+
     return (
         <Box
             sx={{
@@ -50,33 +118,22 @@ export default function DangerZone({ roomId }) {
                 Danger Zone
             </Typography>
             <Typography level="body-sm" sx={{ mb: 2, color: 'text.secondary' }}>
-                Permanently delete this room and all its data. This action cannot be undone.
+                Exit this room. You will need to join a new room to continue using RoomGrub.
             </Typography>
 
             {error && (
                 <Alert color="danger" sx={{ mb: 2 }}>
                     {error}
-                    {pendingExists && (
-                        <Button
-                            variant="plain"
-                            color="danger"
-                            size="sm"
-                            onClick={() => router.push(`/${roomId}/splits`)}
-                            sx={{ ml: 1, p: 0, minHeight: 'unset', textDecoration: 'underline' }}
-                        >
-                            Go to Splits
-                        </Button>
-                    )}
                 </Alert>
             )}
 
             <Button
                 variant="outlined"
                 color="danger"
-                loading={deleting}
-                onClick={handleDeleteRoom}
+                loading={exiting}
+                onClick={handleExitRoom}
             >
-                Delete Room
+                Exit Room
             </Button>
         </Box>
     );
