@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const PUBLIC_PATHS = ['/login', '/callback', '/invite']
+const PUBLIC_PATHS = ['/', '/login', '/callback', '/invite']
 
 function decodeJWT(token) {
   try {
