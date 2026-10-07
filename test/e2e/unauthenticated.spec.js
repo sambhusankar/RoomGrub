@@ -23,6 +23,8 @@ test.describe('unauthenticated access', () => {
     test('/ shows the landing page without redirecting', async ({ page }) => {
         await page.goto('/');
         await expect(page).toHaveURL(/\/$/);
+        await expect(page.getByRole('heading', { level: 1, name: 'Split Bills, Not Friendship' })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Get Started' }).first()).toHaveAttribute('href', '/login');
     });
 
     test('a refresh token the backend rejects redirects to /login and clears the session cookies', async ({ page, context, baseURL }) => {

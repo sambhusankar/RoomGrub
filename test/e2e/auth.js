@@ -21,10 +21,12 @@ function buildFakeJWT({ sub = 1, email = 'e2e-user@example.com', exp } = {}) {
 // The mock backend answers 401 when asked to refresh this token.
 const REJECTED_REFRESH_TOKEN = 'e2e-rejected-refresh-token';
 
+// The signed-in identity always comes from the mock backend (MEMBER in
+// mock-backend.js), so there is no option to log in as a different user.
 async function loginAs(
     context,
     baseURL,
-    { email = 'e2e-user@example.com', name = 'E2E User', refreshToken = 'e2e-refresh-token' } = {},
+    { name = 'E2E User', refreshToken = 'e2e-refresh-token' } = {},
 ) {
     const url = new URL(baseURL);
     await context.addCookies([
@@ -38,7 +40,7 @@ async function loginAs(
         },
         {
             name: 'rg_user',
-            value: encodeURIComponent(JSON.stringify({ name, email, profile: null })),
+            value: encodeURIComponent(JSON.stringify({ name, email: 'e2e-user@example.com', profile: null })),
             domain: url.hostname,
             path: '/',
             httpOnly: false,
