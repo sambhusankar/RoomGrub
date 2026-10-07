@@ -49,18 +49,19 @@ npx jest src/__tests__/business/addGrocery.test.js
 ```
 App (client + server actions) → Next.js app/api routes → Python FastAPI backend
 ```
-- `src/utils/backend.js` — `server-only` helper for use inside Next.js API routes / server actions; reads the `rg_token` JWT cookie and calls the Python backend directly (`NEXT_PUBLIC_BACKEND_URL`, default `http://localhost:8000`). `backendJson()` throws `{ status, detail }` on non-2xx responses — callers must read `error.detail`, not `error.message`
+- `src/utils/backend.js` — `server-only` helper for use inside Next.js API routes / server actions; reads the access token that `src/middleware.js` attaches to the request (`x-rg-access-token` header) and calls the Python backend directly (`NEXT_PUBLIC_BACKEND_URL`, default `http://localhost:8000`). `backendJson()` throws `{ status, detail }` on non-2xx responses — callers must read `error.detail`, not `error.message`
 - `src/app/api/**` — Next.js API routes that proxy specific calls to the Python backend (auth login, invite accept, room members) for use from client components
 - `src/utils/api.js` — client/server helper (`apiCall`) that calls the Next.js API routes above (not the Python backend directly); throws a real `Error`
 - Most data fetching happens directly in `'use server'` action files (e.g. `src/app/[room_id]/actions.js`) calling `backendJson()` against `/api/v1/...` backend endpoints
 
 ### Auth & Authorization
-- Login: Google Identity `GoogleLogin` component → id_token → `POST /api/auth/login` (`src/app/api/auth/login/route.js`) → Python backend returns `{ access_token, user }` → stored as an httpOnly `rg_token` cookie (JWT) plus a non-httpOnly `rg_user` cookie (`{ name, email, profile }` for display only)
-- Session: `auth()` in `src/auth/index.js` decodes `rg_token` (base64, no signature verification client-side — the backend verifies the signature on every proxied request) and checks `exp`
-- `middleware.js` redirects unauthenticated requests to `/login` based on `rg_token` presence/expiry; `PUBLIC_PATHS` (`/login`, `/callback`, `/invite`) are exempt
+- Login: Google Identity `GoogleLogin` component → id_token → `POST /api/auth/login` (`src/app/api/auth/login/route.js`) → Python backend returns `{ access_token, refresh_token, expires_in, user }` → only the opaque `refresh_token` is stored, as the httpOnly `rg_token` cookie, plus a non-httpOnly `rg_user` cookie (`{ name, email, profile }` for display only)
+- Access token: never stored in a cookie. `src/middleware.js` keeps it in server memory (a `Map` keyed by refresh token), gets a new one from the backend's `POST /api/v1/auth/refresh` when it is missing or about to expire, and passes it to server code as the `x-rg-access-token` request header (any client-sent value is overwritten). The backend rotates the refresh token on every refresh, so middleware also rewrites the `rg_token` cookie — this is why refreshing lives in middleware and not in `backendCall()` (Server Components can't set cookies)
+- Session: `auth()` in `src/auth/index.js` decodes the access token from that header (base64, no signature verification — the backend verifies the signature on every proxied request) and checks `exp`
+- `src/middleware.js` (must live in `src/`, next to `app/`, or Next.js ignores it) redirects page requests without a valid session to `/login`; `PUBLIC_PATHS` (`/`, `/login`, `/callback`, `/invite`) are exempt. It also runs on `/api/*` (except `/api/auth/*`) to attach the token, without redirecting
 - Server-side policies in `src/policies/`: `LoginRequired.js` (auth check) and `validRoom.js` (membership check via `getUserRoomForRoom()`, which calls the backend's `/api/v1/rooms/:id/members`)
 - User roles: **admin** (add expenses, manage members) and **member** (read-only). Checked via `useUserRole()` hook (client, via `apiCall`) or `getUserRoomForRoom()` in `src/auth/index.js` (server)
-- Sign out: `signOut()` in `src/auth/index.js` deletes the `rg_token` + `rg_user` cookies
+- Sign out: `signOut()` in `src/auth/index.js` revokes the session via the backend's `POST /api/v1/auth/logout`, then deletes the `rg_token` + `rg_user` cookies
 
 ### Data Layer
 - No ORM/database access from this repo — all persistence lives in the Python FastAPI backend. This app only calls backend REST endpoints under `/api/v1/...` via `backendJson()`
