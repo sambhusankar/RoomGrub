@@ -32,7 +32,7 @@ function forgetSession(session) {
 
 // Refreshes with `refreshToken`, replacing `previous` (the stale session it belongs to, if known) under
 // all of its tokens at once. Resolves to a session, or null when the backend rejects the refresh token.
-// Throws if the backend is unreachable.
+// Throws if the backend is unreachable or its response is malformed.
 async function refreshSession(refreshToken, previous) {
   const res = await fetch(`${BACKEND_URL}/api/v1/auth/refresh`, {
     method: 'POST',
@@ -47,6 +47,14 @@ async function refreshSession(refreshToken, previous) {
   }
 
   const data = await res.json()
+  // A 2xx with a malformed body is a backend fault, not a rejected token: fail like an unreachable backend.
+  if (
+    typeof data?.access_token !== 'string' || !data.access_token ||
+    typeof data.refresh_token !== 'string' || !data.refresh_token ||
+    !(data.expires_in > 0)
+  ) {
+    throw new Error('Refresh failed: malformed response')
+  }
   const session = {
     accessToken: data.access_token,
     expiresAt: Date.now() + data.expires_in * 1000,
