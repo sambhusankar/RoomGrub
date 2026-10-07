@@ -8,24 +8,32 @@ const PUBLIC_PATHS = ['/', '/login', '/callback', '/invite']
 // Refresh this long before the access token expires, so it outlives the request it is attached to.
 const EXPIRY_MARGIN_MS = 30 * 1000
 
-// Access tokens live only here, in server memory: refresh token -> { accessToken, expiresAt, refreshToken }.
-// A rotated session is stored under both the old and the new refresh token, so requests
-// still carrying the old cookie reuse it instead of refreshing again.
+// A session stays reachable under this many refresh tokens: the current one plus the most recently spent ones.
+const MAX_TOKENS_PER_SESSION = 3
+
+// Access tokens live only here, in server memory:
+// refresh token -> { accessToken, expiresAt, refreshToken, tokens }.
+// A rotated session is stored under both the new refresh token and the spent ones (`tokens`, newest
+// first), so requests still carrying an old cookie reuse it instead of refreshing again. Only
+// `session.refreshToken` is ever sent to the backend: the spent ones would be rejected.
 const sessions = new Map()
+// Keyed by the session's current refresh token, so old and rotated cookies share one refresh.
 const inFlight = new Map()
 
-function getCachedSession(refreshToken) {
-  const session = sessions.get(refreshToken)
-  if (!session) return null
-  if (session.expiresAt - EXPIRY_MARGIN_MS <= Date.now()) {
-    sessions.delete(refreshToken)
-    return null
-  }
-  return session
+function isFresh(session) {
+  return session.expiresAt - EXPIRY_MARGIN_MS > Date.now()
 }
 
-// Resolves to a session, or null when the backend rejects the refresh token. Throws if the backend is unreachable.
-async function refreshSession(refreshToken) {
+function forgetSession(session) {
+  for (const token of session.tokens) {
+    if (sessions.get(token) === session) sessions.delete(token)
+  }
+}
+
+// Refreshes with `refreshToken`, replacing `previous` (the stale session it belongs to, if known) under
+// all of its tokens at once. Resolves to a session, or null when the backend rejects the refresh token.
+// Throws if the backend is unreachable.
+async function refreshSession(refreshToken, previous) {
   const res = await fetch(`${BACKEND_URL}/api/v1/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -33,31 +41,38 @@ async function refreshSession(refreshToken) {
     cache: 'no-store',
   })
   if (res.status >= 500) throw new Error(`Refresh failed: HTTP ${res.status}`)
-  if (!res.ok) return null
+  if (!res.ok) {
+    if (previous) forgetSession(previous)
+    return null
+  }
 
   const data = await res.json()
   const session = {
     accessToken: data.access_token,
     expiresAt: Date.now() + data.expires_in * 1000,
     refreshToken: data.refresh_token,
+    tokens: [data.refresh_token, ...(previous?.tokens ?? [refreshToken])].slice(0, MAX_TOKENS_PER_SESSION),
   }
 
+  if (previous) forgetSession(previous)
   for (const [key, value] of sessions) {
     if (value.expiresAt <= Date.now()) sessions.delete(key)
   }
-  sessions.set(refreshToken, session)
-  sessions.set(session.refreshToken, session)
+  for (const token of session.tokens) sessions.set(token, session)
   return session
 }
 
 async function resolveSession(refreshToken) {
-  const cached = getCachedSession(refreshToken)
-  if (cached) return { session: cached, invalid: false }
+  const known = sessions.get(refreshToken)
+  if (known && isFresh(known)) return { session: known, invalid: false }
 
-  let pending = inFlight.get(refreshToken)
+  // The cookie may hold a spent token whose rotated replacement never reached the browser;
+  // refresh with the session's current token instead.
+  const current = known?.refreshToken ?? refreshToken
+  let pending = inFlight.get(current)
   if (!pending) {
-    pending = refreshSession(refreshToken).finally(() => inFlight.delete(refreshToken))
-    inFlight.set(refreshToken, pending)
+    pending = refreshSession(current, known).finally(() => inFlight.delete(current))
+    inFlight.set(current, pending)
   }
 
   try {
