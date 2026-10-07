@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { REFRESH_COOKIE, USER_COOKIE, sessionCookieOptions } from '@/auth/constants';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
@@ -19,25 +20,17 @@ export async function POST(request) {
             return NextResponse.json({ error: data.detail || 'Login failed' }, { status: res.status });
         }
 
-        const { access_token, user } = data;
-        const isProd = process.env.NODE_ENV === 'production';
+        // Only the refresh token is persisted. middleware.js exchanges it for an
+        // access token, which it keeps in memory.
+        const { refresh_token, user } = data;
 
         const cookieStore = await cookies();
-        const maxAge = 60 * 60 * 24 * 7;
-        cookieStore.set('rg_token', access_token, {
-            httpOnly: true,
-            secure: isProd,
-            sameSite: 'lax',
-            path: '/',
-            maxAge,
-        });
-        cookieStore.set('rg_user', JSON.stringify({ email: user.email, name: user.name, profile: user.profile }), {
-            httpOnly: false,
-            secure: isProd,
-            sameSite: 'lax',
-            path: '/',
-            maxAge,
-        });
+        cookieStore.set(REFRESH_COOKIE, refresh_token, sessionCookieOptions({ httpOnly: true }));
+        cookieStore.set(
+            USER_COOKIE,
+            JSON.stringify({ email: user.email, name: user.name, profile: user.profile }),
+            sessionCookieOptions({ httpOnly: false }),
+        );
 
         return NextResponse.json({ success: true, user });
     } catch {

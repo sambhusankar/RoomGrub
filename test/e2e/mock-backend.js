@@ -3,6 +3,7 @@
 // pages hit during SSR, so pages guarded by `validRoom` (which checks room
 // membership against the backend) can render without a real backend running.
 const http = require('http');
+const { buildFakeJWT, REJECTED_REFRESH_TOKEN } = require('./auth');
 
 const PORT = process.env.MOCK_BACKEND_PORT || 8000;
 
@@ -23,6 +24,26 @@ function send(res, status, body) {
 const server = http.createServer((req, res) => {
     const url = req.url.split('?')[0];
 
+    // middleware.js calls this to get an access token. Any refresh token is
+    // accepted except REJECTED_REFRESH_TOKEN.
+    if (url === '/api/v1/auth/refresh') {
+        let body = '';
+        req.on('data', (chunk) => { body += chunk; });
+        req.on('end', () => {
+            if (body.includes(REJECTED_REFRESH_TOKEN)) {
+                return send(res, 401, { detail: 'Invalid refresh token' });
+            }
+            send(res, 200, {
+                access_token: buildFakeJWT({ sub: MEMBER.user_id, email: MEMBER.email }),
+                token_type: 'bearer',
+                expires_in: 3600,
+                // Unique per refresh, like the real backend's rotation, so
+                // middleware.js takes its cookie-rewrite path.
+                refresh_token: `e2e-refresh-token-${Date.now()}`,
+            });
+        });
+        return;
+    }
     if (/^\/api\/v1\/rooms\/[^/]+\/members$/.test(url)) {
         return send(res, 200, [MEMBER]);
     }

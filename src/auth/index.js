@@ -1,7 +1,8 @@
 'server-only'
 import { cache } from 'react'
-import { cookies } from 'next/headers'
-import { backendJson } from '@/utils/backend'
+import { cookies, headers } from 'next/headers'
+import { backendCall, backendJson } from '@/utils/backend'
+import { ACCESS_TOKEN_HEADER, REFRESH_COOKIE, USER_COOKIE } from '@/auth/constants'
 
 function decodeJWT(token) {
     try {
@@ -13,8 +14,7 @@ function decodeJWT(token) {
 }
 
 export const auth = cache(async () => {
-    const cookieStore = await cookies()
-    const token = cookieStore.get('rg_token')?.value
+    const token = (await headers()).get(ACCESS_TOKEN_HEADER)
     if (!token) return null
 
     const payload = decodeJWT(token)
@@ -22,7 +22,7 @@ export const auth = cache(async () => {
 
     let userInfo = {}
     try {
-        const raw = cookieStore.get('rg_user')?.value
+        const raw = (await cookies()).get(USER_COOKIE)?.value
         if (raw) userInfo = JSON.parse(raw)
     } catch { /* ignore */ }
 
@@ -50,8 +50,18 @@ export const getUserRoomForRoom = cache(async (email, roomId) => {
 export const signOut = async () => {
     try {
         const cookieStore = await cookies()
-        cookieStore.delete('rg_token')
-        cookieStore.delete('rg_user')
+        const refreshToken = cookieStore.get(REFRESH_COOKIE)?.value
+        if (refreshToken) {
+            // Revoke the session on the backend; still sign out locally if that fails.
+            try {
+                await backendCall('/api/v1/auth/logout', {
+                    method: 'POST',
+                    body: JSON.stringify({ refresh_token: refreshToken }),
+                })
+            } catch { /* ignore */ }
+        }
+        cookieStore.delete(REFRESH_COOKIE)
+        cookieStore.delete(USER_COOKIE)
         return true
     } catch {
         return false

@@ -1,13 +1,14 @@
 import 'server-only';
-import { cookies } from 'next/headers';
+import { headers } from 'next/headers';
+import { ACCESS_TOKEN_HEADER } from '@/auth/constants';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
 export async function backendCall(path, options = {}) {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('rg_token')?.value;
+    // Attached by middleware.js, which keeps the access token in memory and refreshes it when needed.
+    const token = (await headers()).get(ACCESS_TOKEN_HEADER);
 
-    const headers = {
+    const requestHeaders = {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
@@ -15,7 +16,7 @@ export async function backendCall(path, options = {}) {
 
     const response = await fetch(`${BACKEND_URL}${path}`, {
         ...options,
-        headers,
+        headers: requestHeaders,
     });
 
     return response;

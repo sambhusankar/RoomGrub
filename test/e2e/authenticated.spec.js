@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const { loginAs } = require('./auth');
 
 const PROTECTED_ROUTES = [
-    '/',
+    '/rooms',
     '/create_room',
     '/1',
     '/1/expenses',
@@ -23,4 +23,9 @@ test.describe('authenticated access', () => {
             await expect(page).not.toHaveURL(/\/login/);
         });
     }
+
+    test('/ redirects to /rooms', async ({ page }) => {
+        await page.goto('/');
+        await expect(page).toHaveURL(/\/rooms$/);
+    });
 });
