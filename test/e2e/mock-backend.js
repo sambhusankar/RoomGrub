@@ -37,7 +37,9 @@ const server = http.createServer((req, res) => {
                 access_token: buildFakeJWT({ sub: MEMBER.user_id, email: MEMBER.email }),
                 token_type: 'bearer',
                 expires_in: 3600,
-                refresh_token: 'e2e-refresh-token',
+                // Unique per refresh, like the real backend's rotation, so
+                // middleware.js takes its cookie-rewrite path.
+                refresh_token: `e2e-refresh-token-${Date.now()}`,
             });
         });
         return;
