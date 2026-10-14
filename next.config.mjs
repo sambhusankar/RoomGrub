@@ -30,6 +30,13 @@ const nextConfig = {
       transform: 'date-fns/{{member}}',
     },
   },
+  // Public privacy policy (static file in public/); /privacy-policy is excluded from the auth middleware
+  async redirects() {
+    return [{ source: '/privacy-policy.txt', destination: '/privacy-policy', permanent: true }];
+  },
+  async rewrites() {
+    return [{ source: '/privacy-policy', destination: '/privacy-policy.html' }];
+  },
   experimental: {
     optimizePackageImports: ['@mui/joy', '@mui/material', '@mui/icons-material', 'date-fns'],
   },
