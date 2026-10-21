@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { PLAY_STORE_URL as BASE_PLAY_STORE_URL } from '@/constants/playStore';
 
 function PlayIcon() {
   return (
@@ -18,8 +19,7 @@ function AppleIcon() {
   );
 }
 
-const PLAY_STORE_URL =
-  'https://play.google.com/store/apps/details?id=broccly.roomgrub.twa&pcampaignid=web_share';
+const PLAY_STORE_URL = `${BASE_PLAY_STORE_URL}&pcampaignid=web_share`;
 
 const badges = [
   { Icon: PlayIcon, top: 'GET IT ON', bottom: 'Google Play', href: PLAY_STORE_URL },
