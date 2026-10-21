@@ -2,6 +2,7 @@ import "./globals.css";
 import localFont from 'next/font/local';
 import BottomNav from '@/components/BottomNav';
 import Providers from './providers';
+import AndroidAppBanner from '@/components/AndroidAppBanner';
 
 const geistSans = localFont({ src: "./fonts/GeistVF.woff", variable: "--font-geist-sans", weight: "100 900" });
 const geistMono = localFont({ src: "./fonts/GeistMonoVF.woff", variable: "--font-geist-mono", weight: "100 900" });
@@ -61,6 +62,7 @@ export default function RootLayout({ children }) {
           minHeight: "100vh"
         }}
       >
+        <AndroidAppBanner />
         <Providers>
           {children}
         </Providers>
