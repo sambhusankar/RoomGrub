@@ -80,7 +80,7 @@ See the [README](README.md) for the architecture, project structure and key conc
 ## Making Changes
 
 - Keep changes focused — one feature or fix per pull request
-- Follow the existing code style: mostly JavaScript/JSX (TypeScript used selectively), MUI Joy UI components with Tailwind utilities, Next.js App Router conventions
+- Follow the existing code style: JavaScript/JSX, MUI Joy UI components with Tailwind utilities, Next.js App Router conventions
 - If your change needs new data or business rules, that belongs in [RoomGrub-backend](https://github.com/Broccly/RoomGrub-backend) — open the backend change first
 - Write clear, descriptive commit messages
 - Run `npm test` before submitting (add tests under `test/` where it makes sense)
