@@ -85,7 +85,7 @@ The middleware **must stay in `src/`** (next to `app/`) — Next.js silently ign
 - Client components → `apiCall()` from `src/utils/api.js`, which calls this app's `/api/*` routes.
 - `backendJson()` throws a plain object `{ status, detail }` on errors — read `error.detail`, not `error.message`.
 
-**Roles** — `admin` can add expenses and manage members; `member` is read-only. Check with `getUserRoomForRoom()` (server) or the `useUserRole()` hook (client). The backend enforces the same rules, so UI checks are for UX only.
+**Roles** — `Admin` can add expenses and manage members; `Member` is read-only. Check with `getUserRoomForRoom()` (server) or the `useUserRole()` hook (client). The backend enforces the same rules, so UI checks are for UX only.
 
 
 ## Deployment
