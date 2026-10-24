@@ -19,15 +19,24 @@ No contribution is too small. You don't need to be an expert. If something confu
 
 ## Getting Started
 
-1. **Fork** the repository on GitHub
-2. **Clone** your fork locally:
+### Prerequisites
+
+- **Node.js 18+** and npm
+- **A running RoomGrub backend.** This app has no database of its own — it needs [RoomGrub-backend](https://github.com/Broccly/RoomGrub-backend). Follow that repo's README to get it running locally (by default on `http://localhost:8000`).
+
+### Setup
+
+1. **Fork** [sambhusankar/RoomGrub](https://github.com/sambhusankar/RoomGrub) on GitHub (the *Fork* button, top right).
+2. **Clone your fork** and add the original repo as `upstream` so you can pull in future changes:
    ```bash
-   git clone https://github.com/your-username/RoomGrub.git
-   cd RoomGrub/room-grub
+   git clone https://github.com/<your-username>/RoomGrub.git
+   cd RoomGrub
+   git remote add upstream https://github.com/sambhusankar/RoomGrub.git
    ```
-3. **Install** dependencies:
+3. **Install** dependencies and create your env file:
    ```bash
    npm install
+   cp .env.example .env.local   # then fill in the values — see below
    ```
 4. **Create a branch** for your work:
    ```bash
@@ -37,15 +46,44 @@ No contribution is too small. You don't need to be an expert. If something confu
    ```bash
    npm run dev
    ```
+   Open http://localhost:3001 and sign in with Google.
+
+### Environment variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_BACKEND_URL` | Yes | Backend base URL, without `/api/v1` (default `http://localhost:8000`) |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Yes | Google OAuth Web client ID — must match the backend's `GOOGLE_CLIENT_ID` |
+| `NEXT_PUBLIC_SITE_URL` | Yes | Public URL of this app (`http://localhost:3001` locally); used for invite links, sitemap, etc. |
+
+### Scripts
+
+```bash
+npm run dev            # Dev server on http://localhost:3001
+npm run build          # Production build
+npm start              # Serve the production build on port 3001
+npm run lint           # next lint — ESLint isn't configured yet, so this starts the setup prompt
+npm test               # Jest unit/component tests (test/components, test/domain, test/utils)
+npm run test:watch     # Jest in watch mode
+npm run test:coverage  # Jest with coverage
+npm run test:e2e       # Playwright end-to-end tests (test/e2e)
+```
+
+**End-to-end tests** don't need the real backend: `playwright.config.js` starts a mock backend (`test/e2e/mock-backend.js`) on port 8000 and a production build of the app on port 3001. Make sure nothing else is using those ports, and install the browser once with `npx playwright install chromium`.
+
+CI (`.github/workflows/ci.yml`) runs `npm test` on every push and on pull requests to `main`.
+
+See the [README](README.md) for the architecture, project structure and key concepts.
 
 ---
 
 ## Making Changes
 
 - Keep changes focused — one feature or fix per pull request
-- Follow the existing code style (TypeScript, Tailwind CSS, Next.js conventions)
+- Follow the existing code style: mostly JavaScript/JSX (TypeScript used selectively), MUI Joy UI components with Tailwind utilities, Next.js App Router conventions
+- If your change needs new data or business rules, that belongs in [RoomGrub-backend](https://github.com/Broccly/RoomGrub-backend) — open the backend change first
 - Write clear, descriptive commit messages
-- Test your changes before submitting
+- Run `npm test` before submitting (add tests under `test/` where it makes sense)
 
 ---
 

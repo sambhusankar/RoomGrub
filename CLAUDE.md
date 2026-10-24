@@ -33,7 +33,8 @@ npx jest src/__tests__/business/addGrocery.test.js
 
 ### Routing Structure
 ```
-/                          # My Rooms dashboard (home)
+/                          # Landing page ((marketing)); signed-in users redirect to /rooms
+/rooms                     # My Rooms dashboard
 /(auth)/login              # Google OAuth login (no navbar layout)
 /create_room               # Create a new room
 /invite/[token]            # Accept invite link
@@ -89,5 +90,5 @@ VAPID_SUBJECT
 - Most files are `.js`/`.jsx`; TypeScript (`strict: false`) used selectively
 - Server action files use `'use server'` + ES module `export`
 - Errors thrown by `backendJson()` are plain objects `{ status, detail }` — always read `error.detail` in catch blocks, not `error.message`
-- No Jest tests currently exist for business logic (removed during the backend migration, not yet replaced); `npm test` will pass trivially until new tests are added
+- Jest tests live in `test/{components,domain,utils}` (`npm test`); Playwright e2e tests live in `test/e2e` (`npm run test:e2e`, which starts a mock backend on :8000 via `playwright.config.js`)
 - CI runs `npm test` on all branches via `.github/workflows/ci.yml`
