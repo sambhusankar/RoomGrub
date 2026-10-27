@@ -129,7 +129,7 @@ export async function middleware(request) {
   // Next.js strips the prefetch header before middleware, so a router prefetch also lands here:
   // open other rooms with router.push (as /rooms does), not a prefetching <Link>.
   const roomId = pathname.match(ROOM_PATH)?.[1]
-  if (session && roomId && request.cookies.get(LAST_ROOM_COOKIE)?.value !== roomId) {
+  if (session && roomId) {
     response.cookies.set(LAST_ROOM_COOKIE, roomId, sessionCookieOptions({ httpOnly: true }))
   }
 
