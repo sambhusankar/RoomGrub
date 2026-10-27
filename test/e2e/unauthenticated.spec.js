@@ -29,11 +29,13 @@ test.describe('unauthenticated access', () => {
 
     test('a refresh token the backend rejects redirects to /login and clears the session cookies', async ({ page, context, baseURL }) => {
         await loginAs(context, baseURL, { refreshToken: REJECTED_REFRESH_TOKEN });
+        await context.addCookies([{ name: 'rg_last_room', value: '2', url: baseURL }]);
         await page.goto('/rooms');
         await expect(page).toHaveURL(/\/login$/);
         const names = (await context.cookies()).map((c) => c.name);
         expect(names).not.toContain('rg_token');
         expect(names).not.toContain('rg_user');
+        expect(names).not.toContain('rg_last_room');
     });
 
     test('/invite/:token does not redirect to /login', async ({ page }) => {

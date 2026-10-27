@@ -60,10 +60,22 @@ test.describe('authenticated access', () => {
             await expect(page).toHaveURL(/\/2$/);
         });
 
-        test('a room the user cannot open is not remembered', async ({ page, context }) => {
+        test('a room under /<room_id>/... is remembered too', async ({ page, context }) => {
+            await page.goto('/2/expenses');
+            expect(await lastRoomCookie(context)).toBe('2');
+        });
+
+        test('a room the user cannot open only bounces / to /rooms', async ({ page }) => {
             await page.goto(`/${MISSING_ROOM_ID}`);
             await expect(page).toHaveURL(/\/rooms$/);
-            expect(await lastRoomCookie(context)).toBeUndefined();
+            await page.goto('/');
+            await expect(page).toHaveURL(/\/rooms$/);
+        });
+
+        test('the cookie is httpOnly', async ({ page, context }) => {
+            await page.goto('/2');
+            const cookie = (await context.cookies()).find((c) => c.name === 'rg_last_room');
+            expect(cookie?.httpOnly).toBe(true);
         });
     });
 });

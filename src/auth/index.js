@@ -2,7 +2,7 @@
 import { cache } from 'react'
 import { cookies, headers } from 'next/headers'
 import { backendCall, backendJson } from '@/utils/backend'
-import { ACCESS_TOKEN_HEADER, REFRESH_COOKIE, USER_COOKIE } from '@/auth/constants'
+import { ACCESS_TOKEN_HEADER, LAST_ROOM_COOKIE, REFRESH_COOKIE, USER_COOKIE } from '@/auth/constants'
 
 function decodeJWT(token) {
     try {
@@ -62,8 +62,17 @@ export const signOut = async () => {
         }
         cookieStore.delete(REFRESH_COOKIE)
         cookieStore.delete(USER_COOKIE)
+        cookieStore.delete(LAST_ROOM_COOKIE)
         return true
     } catch {
         return false
+    }
+}
+
+// Call from server actions after the user leaves or deletes a room, so `/` stops reopening it.
+export const forgetLastRoom = async (roomId) => {
+    const cookieStore = await cookies()
+    if (cookieStore.get(LAST_ROOM_COOKIE)?.value === String(roomId)) {
+        cookieStore.delete(LAST_ROOM_COOKIE)
     }
 }

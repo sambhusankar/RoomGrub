@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { auth } from '@/auth';
+import { auth, forgetLastRoom } from '@/auth';
 import { backendJson } from '@/utils/backend';
 
 export async function getMembers(roomId) {
@@ -59,6 +59,7 @@ export async function removeMember(roomId, memberEmail) {
 export async function exitRoom(roomId) {
     try {
         await backendJson(`/api/v1/rooms/${roomId}/members/me`, { method: 'DELETE' });
+        await forgetLastRoom(roomId);
         return { success: true };
     } catch (error) {
         return { success: false, error: error.detail };
