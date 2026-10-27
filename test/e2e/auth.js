@@ -21,6 +21,9 @@ function buildFakeJWT({ sub = 1, email = 'e2e-user@example.com', exp } = {}) {
 // The mock backend answers 401 when asked to refresh this token.
 const REJECTED_REFRESH_TOKEN = 'e2e-rejected-refresh-token';
 
+// The mock backend answers 404 for this room's members, like a room the user left or that was deleted.
+const MISSING_ROOM_ID = 999;
+
 // The signed-in identity always comes from the mock backend (MEMBER in
 // mock-backend.js), so there is no option to log in as a different user.
 async function loginAs(
@@ -49,4 +52,4 @@ async function loginAs(
     ]);
 }
 
-module.exports = { buildFakeJWT, loginAs, REJECTED_REFRESH_TOKEN };
+module.exports = { buildFakeJWT, loginAs, REJECTED_REFRESH_TOKEN, MISSING_ROOM_ID };
