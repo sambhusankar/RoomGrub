@@ -47,7 +47,7 @@ Each repository documents its own setup. If a feature needs new data or a new ru
 ```
 src/
 ├── app/                      # Next.js App Router
-│   ├── (marketing)/          # /  — landing page (signed-in users are sent to /rooms)
+│   ├── (marketing)/          # /  — landing page (signed-in users are sent to their last room, or /rooms)
 │   ├── (auth)/login/         # /login — Google sign-in
 │   ├── rooms/                # /rooms — "My Rooms" dashboard
 │   ├── create_room/          # /create_room

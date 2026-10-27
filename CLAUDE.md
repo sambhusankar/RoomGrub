@@ -33,7 +33,7 @@ npx jest src/__tests__/business/addGrocery.test.js
 
 ### Routing Structure
 ```
-/                          # Landing page ((marketing)); signed-in users redirect to /rooms
+/                          # Landing page ((marketing)); signed-in users redirect to the last opened room (`rg_last_room` cookie), else /rooms
 /rooms                     # My Rooms dashboard
 /(auth)/login              # Google OAuth login (no navbar layout)
 /create_room               # Create a new room
