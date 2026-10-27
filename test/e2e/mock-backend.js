@@ -3,7 +3,7 @@
 // pages hit during SSR, so pages guarded by `validRoom` (which checks room
 // membership against the backend) can render without a real backend running.
 const http = require('http');
-const { buildFakeJWT, REJECTED_REFRESH_TOKEN } = require('./auth');
+const { buildFakeJWT, REJECTED_REFRESH_TOKEN, MISSING_ROOM_ID } = require('./auth');
 
 const PORT = process.env.MOCK_BACKEND_PORT || 8000;
 
@@ -43,6 +43,9 @@ const server = http.createServer((req, res) => {
             });
         });
         return;
+    }
+    if (url === `/api/v1/rooms/${MISSING_ROOM_ID}/members`) {
+        return send(res, 404, { detail: 'Room not found' });
     }
     if (/^\/api\/v1\/rooms\/[^/]+\/members$/.test(url)) {
         return send(res, 200, [MEMBER]);

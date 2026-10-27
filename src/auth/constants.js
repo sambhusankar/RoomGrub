@@ -1,5 +1,7 @@
 export const REFRESH_COOKIE = 'rg_token'
 export const USER_COOKIE = 'rg_user'
+// Id of the room the user opened last; `/` reopens it.
+export const LAST_ROOM_COOKIE = 'rg_last_room'
 
 // Request header carrying the access token from middleware to server code.
 // Middleware overwrites it on every request, so a client-sent value never gets through.

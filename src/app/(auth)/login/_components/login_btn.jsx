@@ -29,7 +29,7 @@ export default function LoginBtn({ inviteToken }) {
                 }
             }
 
-            window.location.href = '/rooms'
+            window.location.href = '/'
         } catch {
             setLoading(false)
             setError('Login failed. Please try again.')

@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
-import { ACCESS_TOKEN_HEADER, REFRESH_COOKIE, USER_COOKIE, sessionCookieOptions } from '@/auth/constants'
+import { ACCESS_TOKEN_HEADER, LAST_ROOM_COOKIE, REFRESH_COOKIE, USER_COOKIE, sessionCookieOptions } from '@/auth/constants'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
 
 const PUBLIC_PATHS = ['/', '/login', '/callback', '/invite']
+
+// `/<room_id>` and anything under it, e.g. `/5/expenses`.
+const ROOM_PATH = /^\/(\d+)(?:\/|$)/
 
 // Refresh this long before the access token expires, so it outlives the request it is attached to.
 const EXPIRY_MARGIN_MS = 30 * 1000
@@ -118,6 +121,16 @@ export async function middleware(request) {
   } else if (invalid) {
     response.cookies.delete(REFRESH_COOKIE)
     response.cookies.delete(USER_COOKIE)
+    response.cookies.delete(LAST_ROOM_COOKIE)
+  }
+
+  // Remember the open room so `/` (app launch, sign-in) can reopen it. Membership isn't checked yet;
+  // a room the user can't open just bounces once from `/` to /rooms via validRoom.
+  // Next.js strips the prefetch header before middleware, so a router prefetch also lands here:
+  // open other rooms with router.push (as /rooms does), not a prefetching <Link>.
+  const roomId = pathname.match(ROOM_PATH)?.[1]
+  if (session && roomId) {
+    response.cookies.set(LAST_ROOM_COOKIE, roomId, sessionCookieOptions({ httpOnly: true }))
   }
 
   return response
