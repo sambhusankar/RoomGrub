@@ -1,5 +1,5 @@
 'use client'
-import React from 'react';
+import React, { useId } from 'react';
 import { Box, Card, Select, Input, Option } from '@mui/joy';
 
 export default function ActivityFilters({
@@ -11,6 +11,9 @@ export default function ActivityFilters({
   setDateRange,
   userMap,
 }) {
+  const fromDateId = useId();
+  const toDateId = useId();
+
   return (
     <Card
       variant="soft"
@@ -59,30 +62,32 @@ export default function ActivityFilters({
 
         <Input
           type="date"
+          startDecorator={<label htmlFor={fromDateId}>From</label>}
+          slotProps={{ input: { id: fromDateId } }}
           value={dateRange.from}
           onChange={e => setDateRange(r => ({ ...r, from: e.target.value }))}
           size="sm"
           sx={{
-            minWidth: 140,
+            minWidth: 190,
             border: '1px solid',
             borderColor: 'neutral.outlinedBorder',
             borderRadius: 'md',
           }}
-          placeholder="From"
         />
 
         <Input
           type="date"
+          startDecorator={<label htmlFor={toDateId}>To</label>}
+          slotProps={{ input: { id: toDateId } }}
           value={dateRange.to}
           onChange={e => setDateRange(r => ({ ...r, to: e.target.value }))}
           size="sm"
           sx={{
-            minWidth: 140,
+            minWidth: 190,
             border: '1px solid',
             borderColor: 'neutral.outlinedBorder',
             borderRadius: 'md',
           }}
-          placeholder="To"
         />
       </Box>
     </Card>
